@@ -21,6 +21,15 @@
         ]
       },
       {
+        "matcher": "startup",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/session-start-update-check"
+          }
+        ]
+      },
+      {
         "matcher": "resume",
         "hooks": [
           {

@@ -1,0 +1,33 @@
+#!/bin/bash
+# SessionStart hook: auto-update if stale, remind if repo is dirty.
+# Only runs after install has been executed (requires .claude-config-dir).
+
+CONFIG_DIR_FILE="$HOME/.claude/.claude-config-dir"
+[[ -f "$CONFIG_DIR_FILE" ]] || exit 0
+
+CLAUDE_CONFIG_DIR=$(cat "$CONFIG_DIR_FILE")
+[[ -d "$CLAUDE_CONFIG_DIR" ]] || exit 0
+
+LAST_UPDATE_FILE="$HOME/.claude/.last-update"
+STALE_SECONDS=$((12 * 3600))
+
+# auto-update if stale
+if [[ -f "$LAST_UPDATE_FILE" ]]; then
+  LAST_UPDATE=$(cat "$LAST_UPDATE_FILE")
+  NOW=$(date +%s)
+  AGE=$((NOW - LAST_UPDATE))
+  if [[ $AGE -ge $STALE_SECONDS ]]; then
+    echo "claude-config: ${AGE}s since last update — running ./update"
+    "$CLAUDE_CONFIG_DIR/update"
+  fi
+else
+  date +%s > "$LAST_UPDATE_FILE"
+fi
+
+# dirty repo reminder
+DIRTY=$(git -C "$CLAUDE_CONFIG_DIR" status --porcelain 2>/dev/null)
+if [[ -n "$DIRTY" ]]; then
+  echo "claude-config has uncommitted changes — commit and push before switching machines"
+fi
+
+exit 0
