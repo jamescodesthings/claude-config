@@ -1,0 +1,13 @@
+#!/usr/bin/env zsh
+# Remove codebase-memory-mcp
+# Note: 'codebase-memory-mcp uninstall' removes config only; preserves databases.
+# Remove the binary separately.
+
+if ! command -v codebase-memory-mcp &> /dev/null; then
+  echo "[ok]   codebase-memory-mcp not installed, skipping"
+  exit 0
+fi
+
+codebase-memory-mcp uninstall || echo "[warn] uninstall command failed"
+rm -f "$HOME/.local/bin/codebase-memory-mcp"
+echo "[ok]   codebase-memory-mcp removed"

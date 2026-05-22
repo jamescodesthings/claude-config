@@ -1,0 +1,15 @@
+#!/usr/bin/env zsh
+# Install codebase-memory-mcp — code knowledge graph MCP server
+# https://github.com/DeusData/codebase-memory-mcp
+
+if command -v codebase-memory-mcp &> /dev/null; then
+  echo "[ok]   codebase-memory-mcp already installed"
+  exit 0
+fi
+
+echo "[info] Installing codebase-memory-mcp..."
+curl -fsSL \
+  https://raw.githubusercontent.com/DeusData/codebase-memory-mcp/main/install.sh \
+  | bash || { echo "[error] codebase-memory-mcp install failed"; exit 1 }
+
+echo "[ok]   codebase-memory-mcp installed"
