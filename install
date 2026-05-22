@@ -1,112 +1,161 @@
 #!/usr/bin/env zsh
 
-local dependencies=(
-  node
-  npx
-  npm
-  http
-)
+SOURCE_DIR=${0:a:h}
 
-plugins=(
-  superpowers
-  claude-md-management
-  code-review
-  code-simplifier
-  commit-commands
-  context7
-  frontend-design
-  playwright
-  skill-creator
-)
+# ── colour helpers ─────────────────────────────────────────────────────────
+info()    { print -P "%F{blue}[info]%f  $1" }
+success() { print -P "%F{green}[ok]%f    $1" }
+warn()    { print -P "%F{yellow}[warn]%f  $1" }
+error()   { print -P "%F{red}[error]%f $1"; exit 1 }
 
-# check that dependencies are installed
-for dep in "${dependencies[@]}"; do
+# ── symlink helper: idempotent, backs up real files ─────────────────────────
+function symlink() {
+  local src=$1 dest=$2
+  if [[ -L "$dest" ]]; then
+    rm "$dest"
+  elif [[ -e "$dest" ]]; then
+    mv "$dest" "$dest.bak"
+    warn "Backed up $dest → $dest.bak"
+  fi
+  ln -s "$src" "$dest"
+  success "Linked $(basename $dest)"
+}
+
+# ── dependency check ────────────────────────────────────────────────────────
+function check_deps() {
+  local deps=(node npx npm http)
+  for dep in "${deps[@]}"; do
     if ! command -v "$dep" &> /dev/null; then
-        echo "$dep is not installed. Please install it first."
-        exit 1
+      error "$dep not found — install it first"
     fi
-done
+  done
+  success "Dependencies OK"
+}
 
+# ── install claude CLI if missing ───────────────────────────────────────────
 function install_claude() {
-  echo "claude is not installed. Installing it now..."
-  http --download --output claude-installer.sh https://claude.ai/install.sh
-  chmod +x claude-installer.sh
-  ./claude-installer.sh
-  if [ $? -ne 0 ]; then
-    echo "Failed to install claude. Please check the installer script for errors in ./claude-installer.sh."
-    exit 1
+  if command -v claude &> /dev/null; then
+    success "claude already installed"
+    return
   fi
+  info "Installing claude CLI..."
+  http --download --output /tmp/claude-installer.sh https://claude.ai/install.sh \
+    || error "Failed to download claude installer"
+  chmod +x /tmp/claude-installer.sh
+  /tmp/claude-installer.sh || error "claude installer failed"
+  rm -f /tmp/claude-installer.sh
 }
 
-function run_claude_and_wait() {
-  echo "Running claude, please sign in and complete the setup."
-  claude
-  if [ $? -ne 0 ]; then
-    echo "Failed to run claude. Please check the output for errors."
-    exit 1
-  fi
+# ── symlink config files ────────────────────────────────────────────────────
+function link_config() {
+  local claude_dir="$HOME/.claude"
+
+  symlink "$SOURCE_DIR/config/CLAUDE.md"     "$claude_dir/CLAUDE.md"
+  symlink "$SOURCE_DIR/config/RTK.md"        "$claude_dir/RTK.md"
+  symlink "$SOURCE_DIR/config/settings.json" "$claude_dir/settings.json"
+  symlink "$SOURCE_DIR/config/.mcp.json"     "$claude_dir/.mcp.json"
+
+  [[ -f "$SOURCE_DIR/config/keybindings.json" ]] && \
+    symlink "$SOURCE_DIR/config/keybindings.json" "$claude_dir/keybindings.json"
 }
 
-# check claude exists or install it
-if ! command -v "claude" &> /dev/null; then
-  install_claude
-  run_claude_and_wait
-else
-    echo "claude is already installed."
-fi
+# ── symlink individual hooks into ~/.claude/hooks/ ──────────────────────────
+function link_hooks() {
+  local hooks_dir="$HOME/.claude/hooks"
+  mkdir -p "$hooks_dir"
 
-echo "All dependencies are installed and claude is set up."
-
-# Install plugins
-for plugin in "${plugins[@]}"; do
-  echo "Installing plugin: $plugin"
-  claude plugin install "$plugin"
-  if [ $? -ne 0 ]; then
-    echo "Failed to install plugin: $plugin. Please check the output for errors."
-    exit 1
-  else
-    echo "Successfully installed plugin: $plugin"
-  fi
-done
-
-echo "All plugins have been installed successfully."
-
-# Install skills from ./skills directory
-if [ -d "./skills" ]; then
-  for skill_file in ./skills/*.json; do
-    if [ -f "$skill_file" ]; then
-      echo "Installing skill from file: $skill_file"
-      ln -s "$skill_file" ~/.claude/skills/
-      if [ $? -ne 0 ]; then
-        echo "Failed to install skill from file: $skill_file. Please check the output for errors."
-        exit 1
-      else
-        echo "Successfully installed skill from file: $skill_file"
-      fi
-    fi
+  for hook_file in "$SOURCE_DIR/config/hooks/"*(N); do
+    [[ -f "$hook_file" ]] || continue
+    local name=$(basename "$hook_file")
+    symlink "$hook_file" "$hooks_dir/$name"
+    chmod +x "$hook_file"
   done
-  echo "All skills from the ./skills directory have been installed successfully."
-else
-  echo "No skills directory found. Skipping skill installation."
-fi
+}
 
-# Install external tools from ./tools directory
-if [ -d "./tools" ]; then
-  for tool_file in ./tools/*.sh; do
-    if [ -x "$tool_file" ]; then
-      echo "Installing external tool from file: $tool_file"
-      "$tool_file"
-      if [ $? -ne 0 ]; then
-        echo "Failed to install external tool from file: $tool_file. Please check the output for errors."
-        exit 1
-      else
-        echo "Successfully installed external tool from file: $tool_file"
-      fi
-    fi
+# ── symlink agents/ directory ───────────────────────────────────────────────
+function link_agents() {
+  symlink "$SOURCE_DIR/agents" "$HOME/.claude/agents"
+}
+
+# ── symlink individual skills ───────────────────────────────────────────────
+function link_skills() {
+  local skills_dir="$HOME/.claude/skills"
+  mkdir -p "$skills_dir"
+
+  for skill_file in "$SOURCE_DIR/skills/"*.md(N); do
+    local name=$(basename "$skill_file")
+    symlink "$skill_file" "$skills_dir/$name"
   done
-  echo "All external tools from the ./tools directory have been installed successfully."
-else
-  echo "No tools directory found. Skipping external tool installation."
-fi
+}
 
+# ── symlink memory/ to project memory path ─────────────────────────────────
+function link_memory() {
+  local project_path=$(echo "$SOURCE_DIR" | sed 's|/|-|g')
+  local memory_dest="$HOME/.claude/projects/$project_path/memory"
 
+  mkdir -p "$(dirname "$memory_dest")"
+  symlink "$SOURCE_DIR/memory" "$memory_dest"
+  info "Memory path: $memory_dest"
+}
+
+# ── install plugins from settings.json enabledPlugins ──────────────────────
+function install_plugins() {
+  local settings="$SOURCE_DIR/config/settings.json"
+  [[ -f "$settings" ]] || { warn "settings.json not found, skipping plugins"; return; }
+
+  local plugins
+  plugins=($(node -e "
+    const s = require('$settings');
+    const p = Object.keys(s.enabledPlugins || {});
+    process.stdout.write(p.join('\n'));
+  " 2>/dev/null))
+
+  for plugin in "${plugins[@]}"; do
+    [[ -z "$plugin" ]] && continue
+    info "Plugin: $plugin"
+    claude plugin install "$plugin" 2>/dev/null \
+      || warn "$plugin: install failed or already installed"
+  done
+  success "Plugins done"
+}
+
+# ── run tool install scripts ────────────────────────────────────────────────
+function install_tools() {
+  for script in "$SOURCE_DIR/tools/install-"*(N); do
+    [[ -x "$script" ]] || continue
+    info "Running $(basename $script)..."
+    "$script" || warn "$(basename $script) failed — check manually"
+  done
+}
+
+# ── install repo git pre-commit hook ───────────────────────────────────────
+function install_git_hook() {
+  local src="$SOURCE_DIR/config/git-hooks/pre-commit-secret-scan"
+  local dest="$SOURCE_DIR/.git/hooks/pre-commit"
+  [[ -f "$src" ]] || return
+  symlink "$src" "$dest"
+  chmod +x "$src"
+}
+
+# ── write metadata ──────────────────────────────────────────────────────────
+function write_metadata() {
+  echo "$SOURCE_DIR" > "$HOME/.claude/.claude-config-dir"
+  date +%s       > "$HOME/.claude/.last-update"
+  success "Metadata written"
+}
+
+# ── main ────────────────────────────────────────────────────────────────────
+check_deps
+install_claude
+link_config
+link_hooks
+link_agents
+link_skills
+link_memory
+install_plugins
+install_tools
+install_git_hook
+write_metadata
+
+print ""
+success "Claude config installed."
