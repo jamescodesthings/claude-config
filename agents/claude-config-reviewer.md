@@ -24,7 +24,9 @@ Review the current state of the config repository at the path provided. Check ea
 ### config/hooks/
 - For each file: check it is executable (`test -x`)
 - For each file ending in `.sh` or with a bash shebang: run `bash -n <file>` and report any syntax errors
-- Cross-reference with `settings.json` hooks — flag any hook listed in settings but missing from disk
+- Cross-reference both directions:
+  - For each file in `config/hooks/`: check `settings.json` contains a command referencing `hooks/<filename>` — if not, report WARNING (hook exists but won't fire)
+  - For each `hooks/<name>` path referenced in `settings.json` commands: check the file exists in `config/hooks/` or `~/.claude/hooks/` — if not, report ERROR (settings references missing hook)
 
 ### skills/*.md
 - Each file must have YAML frontmatter with `name` and `description` fields
