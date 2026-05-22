@@ -1,0 +1,16 @@
+#!/bin/bash
+cat << 'REMINDER'
+POST-AGENT CHECKLIST — run if you just changed code:
+1. requesting-code-review skill
+2. code-simplifier on changed files
+3. check new code matches existing file conventions
+4. update docs/README if behaviour changed
+5. update project CLAUDE.md/AGENTS.md if structure changed
+6. security-review if auth/API/data/deps changed
+7. legal risk check → docs/legal-notes.md (warn, no block)
+8. a11y check if frontend changed
+9. verify + run + playwright if frontend changed
+10. lint + typecheck + tests (retry flaky once)
+11. clean_gone after any branch merge
+12. git add → commit → push
+REMINDER
