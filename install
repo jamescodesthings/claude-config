@@ -1,0 +1,112 @@
+#!/usr/bin/env zsh
+
+local dependencies=(
+  node
+  npx
+  npm
+  http
+)
+
+plugins=(
+  superpowers
+  claude-md-management
+  code-review
+  code-simplifier
+  commit-commands
+  context7
+  frontend-design
+  playwright
+  skill-creator
+)
+
+# check that dependencies are installed
+for dep in "${dependencies[@]}"; do
+    if ! command -v "$dep" &> /dev/null; then
+        echo "$dep is not installed. Please install it first."
+        exit 1
+    fi
+done
+
+function install_claude() {
+  echo "claude is not installed. Installing it now..."
+  http --download --output claude-installer.sh https://claude.ai/install.sh
+  chmod +x claude-installer.sh
+  ./claude-installer.sh
+  if [ $? -ne 0 ]; then
+    echo "Failed to install claude. Please check the installer script for errors in ./claude-installer.sh."
+    exit 1
+  fi
+}
+
+function run_claude_and_wait() {
+  echo "Running claude, please sign in and complete the setup."
+  claude
+  if [ $? -ne 0 ]; then
+    echo "Failed to run claude. Please check the output for errors."
+    exit 1
+  fi
+}
+
+# check claude exists or install it
+if ! command -v "claude" &> /dev/null; then
+  install_claude
+  run_claude_and_wait
+else
+    echo "claude is already installed."
+fi
+
+echo "All dependencies are installed and claude is set up."
+
+# Install plugins
+for plugin in "${plugins[@]}"; do
+  echo "Installing plugin: $plugin"
+  claude plugin install "$plugin"
+  if [ $? -ne 0 ]; then
+    echo "Failed to install plugin: $plugin. Please check the output for errors."
+    exit 1
+  else
+    echo "Successfully installed plugin: $plugin"
+  fi
+done
+
+echo "All plugins have been installed successfully."
+
+# Install skills from ./skills directory
+if [ -d "./skills" ]; then
+  for skill_file in ./skills/*.json; do
+    if [ -f "$skill_file" ]; then
+      echo "Installing skill from file: $skill_file"
+      ln -s "$skill_file" ~/.claude/skills/
+      if [ $? -ne 0 ]; then
+        echo "Failed to install skill from file: $skill_file. Please check the output for errors."
+        exit 1
+      else
+        echo "Successfully installed skill from file: $skill_file"
+      fi
+    fi
+  done
+  echo "All skills from the ./skills directory have been installed successfully."
+else
+  echo "No skills directory found. Skipping skill installation."
+fi
+
+# Install external tools from ./tools directory
+if [ -d "./tools" ]; then
+  for tool_file in ./tools/*.sh; do
+    if [ -x "$tool_file" ]; then
+      echo "Installing external tool from file: $tool_file"
+      "$tool_file"
+      if [ $? -ne 0 ]; then
+        echo "Failed to install external tool from file: $tool_file. Please check the output for errors."
+        exit 1
+      else
+        echo "Successfully installed external tool from file: $tool_file"
+      fi
+    fi
+  done
+  echo "All external tools from the ./tools directory have been installed successfully."
+else
+  echo "No tools directory found. Skipping external tool installation."
+fi
+
+

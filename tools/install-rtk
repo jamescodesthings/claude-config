@@ -1,0 +1,19 @@
+#!/usr/bin/env zsh
+
+http --download --output rtk.sh https://raw.githubusercontent.com/rtk-ai/rtk/refs/heads/master/install.sh
+
+chmod +x rtk.sh
+./rtk.sh
+if [ $? -ne 0 ]; then
+  echo "Failed to install rtk. Please check the installer script for errors in ./rtk.sh."
+  exit 1
+fi
+rm rtk.sh
+
+rtk init -g
+if [ $? -ne 0 ]; then
+  echo "Failed to initialize rtk. Please check the output for errors."
+  exit 1
+fi
+
+echo "rtk is installed successfully."
