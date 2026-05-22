@@ -4,37 +4,53 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this repo is
 
-Cross-machine shared Claude Code configuration. Keeps plugins, skills, tools, and config files in sync across machines via symlinks.
+Cross-machine shared Claude Code configuration. `./install` bootstraps a new machine. `./update` syncs after `git pull`. `./uninstall` removes everything.
 
-## Install / Update
+## Install / Update / Uninstall
 
 ```shell
 ./install          # Fresh install or re-run to pick up changes
-git pull && ./install  # Update
+./update           # git pull + legacy cleanup + re-run install
+./uninstall        # Remove all tools, symlinks, and claude entirely
 ```
 
-`install` will:
-1. Check deps: `node`, `npx`, `npm`, `http` (HTTPie)
-2. Install `claude` CLI if missing
-3. Install all Claude plugins via `claude plugin install`
-4. Symlink `./skills/*.json` → `~/.claude/skills/`
-5. Run any executable `./tools/*.sh` scripts
+## How config is deployed
+
+Files in `config/` are **symlinked** to `~/.claude/` by `./install`. Edits to the repo files take effect immediately. Hooks in `config/hooks/` are symlinked as individual files into `~/.claude/hooks/` (not the whole dir — tool-managed hooks live there independently).
+
+`agents/` and `memory/` are symlinked as whole directories.
+
+## Plugin tracking
+
+Plugins are tracked in `config/settings.json` → `enabledPlugins`. When you install a plugin via the Claude CLI, `settings.json` updates automatically (via symlink). Commit and push to sync to other machines. `./install` re-runs `claude plugin install` for any plugins not yet installed.
+
+**To remove a plugin:** delete it from `enabledPlugins`, add a `legacy/uninstall-plugin-<name>` script containing `claude plugin uninstall <name>`, commit.
 
 ## Adding things
 
-**New plugin**: add the name to the `plugins` array in `install`.
+| What | How |
+|------|-----|
+| New plugin | Install via CLI (auto-tracked in settings.json) or add to `enabledPlugins` directly |
+| New skill | Drop `.md` in `skills/` |
+| New global agent | Drop `.md` in `agents/` |
+| New external tool | Add `tools/install-<name>` + `tools/uninstall-<name>` (executable) |
+| New custom hook | Add to `config/hooks/`, register in `config/settings.json` |
+| Deprecate a tool | Delete `tools/install-<name>`, move `tools/uninstall-<name>` → `legacy/uninstall-<name>` |
 
-**New skill**: drop a `.json` file in `skills/`. The install script symlinks it to `~/.claude/skills/` automatically.
+## Security
 
-**New external tool**: add an executable `.sh` script to `tools/`. Install runs all `tools/*.sh` files.
+**Do not add secrets to `config/settings.json` env block** — this file is committed to git. Use `~/.zshrc` or `~/.zshenv` for environment secrets instead. A pre-commit hook blocks commits if the env block looks like it contains API keys or tokens.
 
-**New shared config file**: place it in `config/` and add a `ln -s` step to `install` targeting the appropriate `~/.claude/` path.
+## Machine-specific notes
 
-## Current plugins installed
+The caveman plugin installer writes machine-specific absolute node paths into `settings.json` hooks. When switching machines, run `./install` (which runs `tools/install-caveman`) to update these paths. Do not commit settings.json changes that only update the caveman hook node path.
 
-superpowers, claude-md-management, code-review, code-simplifier, commit-commands, context7, frontend-design, playwright, skill-creator
+## External tools
 
-## External tools managed here
-
-- [rtk](https://github.com/rtk-ai/rtk) — token-optimized Claude Code proxy (`tools/install-rtk`)
-- [ccstatusline](https://github.com/sirmalloc/ccstatusline), [happy](https://github.com/slopus/happy), [caveman](https://github.com/juliusbrussee/caveman), [codebase-memory-mcp](https://github.com/DeusData/codebase-memory-mcp) — installed separately, not yet scripted here
+| Tool | Purpose |
+|------|---------|
+| [rtk](https://github.com/rtk-ai/rtk) | Token-optimised Claude CLI proxy |
+| [ccstatusline](https://github.com/sirmalloc/ccstatusline) | Status line (managed via `statusLine` in settings.json, no install script) |
+| [happy](https://github.com/slopus/happy) | Mobile/web client for Claude Code |
+| [caveman](https://github.com/JuliusBrussee/caveman) | Token-efficient mode (also a Claude plugin) |
+| [codebase-memory-mcp](https://github.com/DeusData/codebase-memory-mcp) | Code knowledge graph MCP server |
