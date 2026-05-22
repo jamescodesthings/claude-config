@@ -1,0 +1,86 @@
+{
+  "version": 3,
+  "lines": [
+    [
+      {
+        "id": "1",
+        "type": "model",
+        "color": "cyan"
+      },
+      {
+        "id": "3",
+        "type": "context-length",
+        "color": "brightBlack"
+      },
+      {
+        "id": "5",
+        "type": "git-branch",
+        "color": "magenta"
+      },
+      {
+        "id": "7",
+        "type": "git-changes",
+        "color": "yellow"
+      },
+      {
+        "id": "f9621374-d649-4b6e-90ce-5c08804a995d",
+        "type": "context-bar",
+        "backgroundColor": "bgCyan"
+      }
+    ],
+    [
+      {
+        "id": "5116dfb0-14a4-4a00-b872-35ab214f3337",
+        "type": "tokens-total"
+      },
+      {
+        "id": "29d5c881-9732-4bd5-ac09-897185f23773",
+        "type": "total-speed"
+      },
+      {
+        "id": "16e6ee97-0d26-463f-800b-14f7fea73fc8",
+        "type": "reset-timer"
+      },
+      {
+        "id": "3e22e081-107f-47ca-8f91-5f323e02e602",
+        "type": "weekly-reset-timer"
+      },
+      {
+        "id": "97f00346-3cf3-49f7-9dd7-ed049206e9c2",
+        "type": "custom-command",
+        "backgroundColor": "bgBrightYellow",
+        "commandPath": "__HOME__/.claude/hooks/caveman-statusline.sh"
+      }
+    ]
+  ],
+  "flexMode": "full-minus-40",
+  "compactThreshold": 60,
+  "colorLevel": 3,
+  "defaultPadding": " ",
+  "inheritSeparatorColors": false,
+  "globalBold": false,
+  "gitCacheTtlSeconds": 5,
+  "minimalistMode": true,
+  "powerline": {
+    "enabled": true,
+    "separators": [
+      ""
+    ],
+    "separatorInvertBackground": [
+      false
+    ],
+    "startCaps": [
+      ""
+    ],
+    "endCaps": [
+      ""
+    ],
+    "theme": "solarized",
+    "autoAlign": false,
+    "continueThemeAcrossLines": false
+  },
+  "installation": {
+    "method": "auto-update",
+    "packageManager": "npm"
+  }
+}

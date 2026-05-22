@@ -1,0 +1,11 @@
+#!/usr/bin/env zsh
+# Uninstall uv
+
+if ! command -v uv &> /dev/null; then
+  echo "[ok]   uv not installed"
+  exit 0
+fi
+
+uv self uninstall --no-modify-path \
+  || { echo "[warn] uv self uninstall failed — remove ~/.local/bin/uv manually"; exit 1 }
+echo "[ok]   uv removed"

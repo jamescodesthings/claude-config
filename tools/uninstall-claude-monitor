@@ -1,0 +1,16 @@
+#!/usr/bin/env zsh
+# Uninstall claude-monitor
+
+if ! command -v uv &> /dev/null; then
+  echo "[ok]   uv not installed, claude-monitor not present"
+  exit 0
+fi
+
+if ! uv tool list 2>/dev/null | grep -q "^claude-monitor"; then
+  echo "[ok]   claude-monitor not installed"
+  exit 0
+fi
+
+uv tool uninstall claude-monitor \
+  || { echo "[error] uninstall failed"; exit 1 }
+echo "[ok]   claude-monitor removed"

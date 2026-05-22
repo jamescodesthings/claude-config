@@ -35,6 +35,7 @@ Key triggers:
 - 2+ independent tasks with no shared state → `superpowers:dispatching-parallel-agents`
 - Any feature or bugfix in prod/existing-test code → `superpowers:test-driven-development`
 - Touching any third-party library, SDK, or API → `context7` to fetch current docs before implementing
+- Before claiming any implementation task complete → `verification-before-completion` skill
 
 ## Post-Implementation Review
 

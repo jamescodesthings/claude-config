@@ -4,12 +4,15 @@
 
 if command -v codebase-memory-mcp &> /dev/null; then
   echo "[ok]   codebase-memory-mcp already installed"
-  exit 0
+else
+  echo "[info] Installing codebase-memory-mcp..."
+  curl -fsSL \
+    https://raw.githubusercontent.com/DeusData/codebase-memory-mcp/main/install.sh \
+    | bash || { echo "[error] codebase-memory-mcp install failed"; exit 1 }
 fi
 
-echo "[info] Installing codebase-memory-mcp..."
-curl -fsSL \
-  https://raw.githubusercontent.com/DeusData/codebase-memory-mcp/main/install.sh \
-  | bash || { echo "[error] codebase-memory-mcp install failed"; exit 1 }
+echo "[info] Running codebase-memory-mcp install (configure auto-index)..."
+codebase-memory-mcp install \
+  || echo "[warn] codebase-memory-mcp post-install step failed — run 'codebase-memory-mcp install' manually to configure auto-indexing"
 
 echo "[ok]   codebase-memory-mcp installed"

@@ -1,0 +1,4 @@
+#!/bin/bash
+# Stop hook: remind Claude to save memory before session ends.
+echo "Session ending — if key decisions, constraints, or non-obvious feedback were shared this session, save them to project memory now (types: project, feedback, user, reference)."
+exit 0

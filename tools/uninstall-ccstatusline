@@ -1,0 +1,11 @@
+#!/usr/bin/env zsh
+# Uninstall ccstatusline config (leaves npx-run binary alone)
+
+DEST="$HOME/.config/ccstatusline/settings.json"
+
+if [[ ! -f "$DEST" ]]; then
+  echo "[ok]   ccstatusline config not present"
+  exit 0
+fi
+
+rm "$DEST" && echo "[ok]   ccstatusline config removed"

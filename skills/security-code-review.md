@@ -1,6 +1,6 @@
 ---
 name: security-code-review
-description: Use when code, auth, API endpoints, data handling, or dependencies changed — checks for OWASP top 10, secrets, auth issues, and vulnerable deps. Named security-code-review to avoid collision with the code-review plugin's security-review command.
+description: Check changed code for security vulnerabilities. Reports CRITICAL/IMPORTANT/MINOR; fixes Critical and Important before proceeding.
 ---
 
 # Security Review
