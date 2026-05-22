@@ -1,0 +1,11 @@
+#!/usr/bin/env zsh
+# Remove rtk
+
+if ! command -v rtk &> /dev/null; then
+  echo "[ok]   rtk not installed, skipping"
+  exit 0
+fi
+
+RTK_BIN=$(command -v rtk)
+rm -f "$RTK_BIN"
+echo "[ok]   rtk removed ($RTK_BIN)"
