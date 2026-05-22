@@ -1,0 +1,53 @@
+#!/usr/bin/env zsh
+
+SOURCE_DIR=${0:a:h}
+
+info()    { print -P "%F{blue}[info]%f  $1" }
+success() { print -P "%F{green}[ok]%f    $1" }
+warn()    { print -P "%F{yellow}[warn]%f  $1" }
+
+# git pull
+function pull() {
+  info "Pulling..."
+  git -C "$SOURCE_DIR" pull || warn "git pull failed — continuing with local state"
+}
+
+# run legacy cleanup scripts for deprecated tools/plugins
+function run_legacy() {
+  local ran=0
+  for script in "$SOURCE_DIR/legacy/uninstall-"*(N); do
+    [[ -x "$script" ]] || continue
+    info "Legacy cleanup: $(basename $script)..."
+    "$script" || warn "$(basename $script) failed"
+    ran=1
+  done
+  [[ $ran -eq 0 ]] && info "No legacy scripts"
+}
+
+# remove dangling symlinks in ~/.claude managed dirs
+function clean_dangling() {
+  local dirs=(
+    "$HOME/.claude/skills"
+    "$HOME/.claude/hooks"
+    "$HOME/.claude/agents"
+  )
+
+  for dir in "${dirs[@]}"; do
+    [[ -d "$dir" ]] || continue
+    for f in "$dir/"*(N); do
+      if [[ -L "$f" && ! -e "$f" ]]; then
+        rm "$f"
+        info "Removed dangling: $f"
+      fi
+    done
+  done
+  success "Dangling symlinks cleaned"
+}
+
+# main
+pull
+run_legacy
+clean_dangling
+
+info "Syncing via install..."
+"$SOURCE_DIR/install"
