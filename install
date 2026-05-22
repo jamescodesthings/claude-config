@@ -48,6 +48,7 @@ function install_claude() {
 
 # ── symlink config files ────────────────────────────────────────────────────
 function link_config() {
+  mkdir -p "$HOME/.claude"
   local claude_dir="$HOME/.claude"
 
   symlink "$SOURCE_DIR/config/CLAUDE.md"     "$claude_dir/CLAUDE.md"
