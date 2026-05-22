@@ -208,3 +208,7 @@ dist
 
 # End of https://www.toptal.com/developers/gitignore/api/visualstudiocode
 
+
+# Claude config runtime state (machine-specific, not tracked)
+.last-update
+.claude-config-dir
