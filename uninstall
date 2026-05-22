@@ -1,0 +1,87 @@
+#!/usr/bin/env zsh
+
+SOURCE_DIR=${0:a:h}
+
+info()    { print -P "%F{blue}[info]%f  $1" }
+success() { print -P "%F{green}[ok]%f    $1" }
+warn()    { print -P "%F{yellow}[warn]%f  $1" }
+
+# run tool + legacy uninstallers
+function run_uninstallers() {
+  for script in \
+    "$SOURCE_DIR/tools/uninstall-"*(N) \
+    "$SOURCE_DIR/legacy/uninstall-"*(N); do
+    [[ -x "$script" ]] || continue
+    info "$(basename $script)..."
+    "$script" || warn "$(basename $script) failed"
+  done
+}
+
+# remove all symlinks we created
+function remove_symlinks() {
+  local claude_dir="$HOME/.claude"
+
+  # config files
+  for f in CLAUDE.md RTK.md settings.json .mcp.json keybindings.json; do
+    local dest="$claude_dir/$f"
+    [[ -L "$dest" ]] && rm "$dest" && info "Removed $f"
+  done
+
+  # hooks we installed
+  for hook_file in "$SOURCE_DIR/config/hooks/"*(N); do
+    [[ -f "$hook_file" ]] || continue
+    local dest="$claude_dir/hooks/$(basename $hook_file)"
+    [[ -L "$dest" ]] && rm "$dest" && info "Removed hook $(basename $hook_file)"
+  done
+
+  # agents dir symlink
+  [[ -L "$claude_dir/agents" ]] && rm "$claude_dir/agents" && info "Removed agents"
+
+  # skills
+  for skill_file in "$SOURCE_DIR/skills/"*.md(N); do
+    local dest="$claude_dir/skills/$(basename $skill_file)"
+    [[ -L "$dest" ]] && rm "$dest" && info "Removed skill $(basename $skill_file)"
+  done
+
+  # memory
+  local project_path=$(echo "$SOURCE_DIR" | sed 's|/|-|g')
+  local memory_dest="$HOME/.claude/projects/$project_path/memory"
+  [[ -L "$memory_dest" ]] && rm "$memory_dest" && info "Removed memory symlink"
+
+  # git pre-commit hook
+  local pre_commit="$SOURCE_DIR/.git/hooks/pre-commit"
+  [[ -L "$pre_commit" ]] && rm "$pre_commit" && info "Removed pre-commit hook"
+
+  success "Symlinks removed"
+}
+
+# remove claude CLI
+function remove_claude() {
+  # native install
+  if [[ -f "$HOME/.local/bin/claude" ]]; then
+    rm -f "$HOME/.local/bin/claude"
+    rm -rf "$HOME/.local/share/claude"
+    info "Removed native claude binary"
+  fi
+
+  # npm install fallback
+  if npm list -g @anthropic-ai/claude-code &>/dev/null 2>&1; then
+    npm uninstall -g @anthropic-ai/claude-code
+    info "Removed npm claude package"
+  fi
+}
+
+# nuke config dirs
+function remove_config() {
+  rm -rf "$HOME/.claude"
+  rm -f  "$HOME/.claude.json"
+  success "Removed ~/.claude and ~/.claude.json"
+}
+
+# main
+run_uninstallers
+remove_symlinks
+remove_claude
+remove_config
+
+success "Claude fully uninstalled."
