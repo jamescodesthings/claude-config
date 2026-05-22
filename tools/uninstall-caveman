@@ -1,0 +1,8 @@
+#!/usr/bin/env zsh
+# Remove caveman
+
+echo "[info] Uninstalling caveman..."
+npx -y github:JuliusBrussee/caveman -- --uninstall \
+  || echo "[warn] caveman uninstall script may have failed — check manually"
+
+echo "[ok]   caveman uninstalled"
