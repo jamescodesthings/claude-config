@@ -1,0 +1,12 @@
+#!/usr/bin/env zsh
+# Install happy — mobile/web client for Claude Code
+# https://github.com/slopus/happy
+
+if command -v happy &> /dev/null; then
+  echo "[ok]   happy already installed"
+  exit 0
+fi
+
+echo "[info] Installing happy..."
+npm install -g happy || { echo "[error] Failed to install happy"; exit 1 }
+echo "[ok]   happy installed"

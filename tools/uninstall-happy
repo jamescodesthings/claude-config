@@ -1,0 +1,10 @@
+#!/usr/bin/env zsh
+# Remove happy
+
+if ! command -v happy &> /dev/null; then
+  echo "[ok]   happy not installed, skipping"
+  exit 0
+fi
+
+npm uninstall -g happy
+echo "[ok]   happy removed"
