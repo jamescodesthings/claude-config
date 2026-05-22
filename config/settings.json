@@ -88,17 +88,6 @@
           }
         ]
       }
-    ],
-    "Stop": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "~/.claude/hooks/post-agent-reminder",
-            "timeout": 5
-          }
-        ]
-      }
     ]
   },
   "statusLine": {

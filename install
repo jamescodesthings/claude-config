@@ -131,7 +131,7 @@ function install_tools() {
 
 # ── install repo git pre-commit hook ───────────────────────────────────────
 function install_git_hook() {
-  local src="$SOURCE_DIR/config/git-hooks/pre-commit-secret-scan"
+  local src="$SOURCE_DIR/config/git-hooks/pre-commit"
   local dest="$SOURCE_DIR/.git/hooks/pre-commit"
   [[ -f "$src" ]] || return
   symlink "$src" "$dest"
