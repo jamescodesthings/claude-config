@@ -1,3 +1,8 @@
+---
+name: writing-quality
+description: Review user-visible prose for grammar, tone, clarity, and AI-writing patterns. Applies to UI text, error messages, log messages, emails, notifications, and docs.
+---
+
 # Writing Quality Review
 
 Review user-facing content for grammar, tone, and AI-writing anti-patterns.
