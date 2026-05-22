@@ -4,16 +4,25 @@
 
 ## Default Workflow
 
-Every non-trivial task follows this chain. Move through each step without pausing for confirmation unless a genuine blocker exists (missing credential, unresolvable conflict, scope ambiguity that changes the task).
+Every non-trivial task follows this chain. Move through each step without pausing for confirmation.
 
 1. `superpowers:brainstorming` skill
 2. `superpowers:writing-plans` skill
-3. User reviews plan — **only human touchpoint before implementation starts**
-4. `superpowers:using-git-worktrees` if async isolation is needed
-5. `superpowers:subagent-driven-development` skill
+3. `superpowers:using-git-worktrees` if async isolation is needed
+4. `superpowers:subagent-driven-development` skill
    - Use `superpowers:dispatching-parallel-agents` when 2+ tasks are independent with no shared state
-6. Post-agent checklist (see § Post-Agent Checklist) after every code-changing agent
-7. Done — no PRs, no `finishing-a-development-branch`, no human review gate
+5. `post-implementation-review` skill after every code-changing agent
+6. Done — no PRs, no `finishing-a-development-branch`, no human review gate
+
+## No-Confirmation Rule
+
+**Never pause between workflow steps.** This overrides any skill's explicit review gate — brainstorming's "user reviews spec", writing-plans' "user approves plan", or any other checkpoint. Keep moving.
+
+Only stop for:
+- A genuine blocker that cannot be resolved autonomously (merge conflict, missing credential, ambiguous requirement that changes scope)
+- A destructive or irreversible action about to be taken
+
+User can interrupt at any time. That is their job, not yours to prompt for.
 
 ## Skill Priority
 
@@ -26,13 +35,9 @@ Key triggers:
 - 2+ independent tasks with no shared state → `superpowers:dispatching-parallel-agents`
 - Any feature or bugfix in prod/existing-test code → `superpowers:test-driven-development`
 
-## No-Confirmation Rule
+## Post-Implementation Review
 
-Do **not** pause between workflow steps to ask "should I continue?", "shall I proceed?", or "does this look right?" when there is no blocker.
-
-Keep moving unless:
-- A genuine blocker that cannot be resolved autonomously (merge conflict, missing credential, ambiguous requirement that changes scope)
-- A destructive or irreversible action is about to be taken
+After any code-changing agent: invoke **`post-implementation-review`** skill.
 
 ## Git Strategy
 
@@ -53,24 +58,6 @@ Escalate only if: rebase conflict that cannot be resolved autonomously.
 - Add body when change is complex or non-obvious
 - Always flag dependency changes explicitly in commit body
 
-## Post-Agent Checklist
-
-Run after every agent that changes code. No confirmation between steps.
-
-1. **`superpowers:requesting-code-review`** — always
-2. **`code-simplifier` skill** on changed files — always
-3. **Pattern consistency** — new code must match existing conventions in files touched
-4. **Update docs/README** — if behaviour changed
-5. **Update project CLAUDE.md / AGENTS.md** — if structure or conventions changed
-6. **`security-review` skill** — if auth, API endpoints, data handling, or deps changed
-7. **Legal risk check** — if new deps, licences, or data handling involved: warn + document in `docs/legal-notes.md`, do **not** block
-8. **a11y check** — if frontend changed
-9. **`writing-quality` skill** — if user-facing content changed (UI copy, log messages, emails, docs)
-10. **`verify` skill + `run` skill + Playwright** — if frontend changed
-11. **Lint + type-check + test suite** — if project has them; retry flaky tests once before escalating
-12. **`commit-commands:clean_gone`** — after any branch merge
-13. **`git add` → `git commit` → `git push`** — always, after all above pass
-
 ## TDD
 
 | Context | TDD required? |
@@ -88,8 +75,7 @@ Agents must not touch files outside their assigned task scope. If a fix requires
 
 When a dep is added, removed, or upgraded:
 - Flag explicitly in commit body
-- Always trigger `security-review`
-- Check licence — document any non-permissive licence in `docs/legal-notes.md`
+- `post-implementation-review` skill handles security + licence checks automatically
 
 ## Flaky Tests
 
