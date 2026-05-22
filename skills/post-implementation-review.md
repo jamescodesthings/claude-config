@@ -43,10 +43,10 @@ Build your check list from the buckets. Run independent checks in parallel using
 - Invoke `requesting-code-review` skill
 
 **If `code` or `frontend` touching auth, API endpoints, or data handling:**
-- Invoke `security-review` skill
+- Invoke `security-code-review` skill
 
 **If `deps`:**
-- Invoke `security-review` skill (run dep audit)
+- Invoke `security-code-review` skill (run dep audit)
 - Invoke `legal-review` skill (licence check)
 
 **If `user-facing` (cross-cutting — applies regardless of other buckets):**

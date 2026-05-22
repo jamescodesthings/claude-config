@@ -34,6 +34,7 @@ Key triggers:
 - Picking up a written plan in a new session → `superpowers:executing-plans`
 - 2+ independent tasks with no shared state → `superpowers:dispatching-parallel-agents`
 - Any feature or bugfix in prod/existing-test code → `superpowers:test-driven-development`
+- Touching any third-party library, SDK, or API → `context7` to fetch current docs before implementing
 
 ## Post-Implementation Review
 
@@ -57,6 +58,18 @@ Escalate only if: rebase conflict that cannot be resolved autonomously.
 - No conventional commit prefixes (`feat:`, `fix:`, `chore:`, etc.)
 - Add body when change is complex or non-obvious
 - Always flag dependency changes explicitly in commit body
+
+## Model Selection
+
+Default to Sonnet. Deviate when task complexity or cost warrants it.
+
+| Task | Model |
+|---|---|
+| Architecture decisions, novel debugging, complex multi-step planning | Opus |
+| Default — implementation, review, most coding work | Sonnet |
+| Routing, triage, file validation, simple extraction/classification | Haiku |
+
+Subagents: specify `model:` in agent frontmatter. Read-only validators and triage agents → Haiku. Implementation agents → Sonnet. Only escalate to Opus explicitly when a task demands it.
 
 ## TDD
 
