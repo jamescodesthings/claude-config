@@ -8,7 +8,7 @@
 .LSOverride
 
 # Icon must end with two \r
-Icon
+Icon
 
 # Thumbnails
 ._*
@@ -212,3 +212,6 @@ dist
 # Claude config runtime state (machine-specific, not tracked)
 .last-update
 .claude-config-dir
+
+# Machine-specific — managed by codebase-memory-mcp install
+config/.mcp.json
