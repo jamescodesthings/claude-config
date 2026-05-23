@@ -11,7 +11,8 @@ Every non-trivial task follows this chain. Move through each step without pausin
 3. `superpowers:using-git-worktrees` if async isolation is needed
 4. `superpowers:subagent-driven-development` skill
    - Use `superpowers:dispatching-parallel-agents` when 2+ tasks are independent with no shared state
-5. `post-implementation-review` skill after every code-changing agent
+   - **Always delegate file-writing work to subagents** — even in planning/docs repos. Never write files inline as orchestrator.
+5. `post-implementation-review` skill after **any work that creates or modifies files** — subagent or orchestrator, code or docs/markdown
 6. Done — no PRs, no `finishing-a-development-branch`, no human review gate
 
 ## No-Confirmation Rule
@@ -40,7 +41,7 @@ Key triggers:
 
 ## Post-Implementation Review
 
-After any code-changing agent: invoke **`post-implementation-review`** skill.
+After any work that creates or modifies files — subagent or orchestrator, code or docs/markdown — invoke **`post-implementation-review`** skill.
 
 ## Git Strategy
 
