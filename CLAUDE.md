@@ -39,9 +39,7 @@ Plugins are tracked in `config/settings.json` → `enabledPlugins`. When you ins
 
 ## Security
 
-**Do not add secrets to `config/settings.json` env block** — this file is committed to git.
-
-For per-machine secrets (GitHub PATs, API tokens): add them to `config/env.local` (gitignored, created by `./install`). This file is not auto-sourced — export the vars in your shell profile or source it manually before launching Claude. A template is at `config/env.local.example`.
+**Do not add secrets to `config/settings.json` env block** — this file is committed to git. Set credentials in `~/.zshenv` or `~/.zshrc` so Claude Code inherits them from the shell.
 
 Use the `secrets-check` skill before committing to verify staged changes contain no credentials.
 
