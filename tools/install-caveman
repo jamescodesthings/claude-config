@@ -7,21 +7,28 @@ curl -fsSL https://raw.githubusercontent.com/JuliusBrussee/caveman/main/install.
 
 # Normalize absolute hook paths written by caveman installer to portable ~/... form.
 # Handles two formats:
-#   "full/path/to/node" "/abs/.claude/hooks/foo.js"  (asdf/nvm style node)
-#   node "/abs/.claude/hooks/foo.js"                  (node in PATH)
+#   "/full/path/to/node" "/abs/.claude/hooks/foo.js"  (asdf/nvm style node)
+#   node "/abs/.claude/hooks/foo.js"                   (node in PATH)
 local settings="$HOME/.claude/settings.json"
-if [[ -f "$settings" ]] && command -v python3 &>/dev/null; then
-  python3 - << 'PYEOF'
+if [[ -f "$settings" ]]; then
+  if command -v python3 &>/dev/null; then
+    python3 - << 'PYEOF'
 import json, re, os, sys
 
 path = os.path.expanduser('~/.claude/settings.json')
-with open(path) as f:
-    data = json.load(f)
+try:
+    with open(path) as f:
+        data = json.load(f)
+except Exception as e:
+    print(f"[warn] caveman path normalization skipped: {e}", file=sys.stderr)
+    sys.exit(0)
 
 def normalize(cmd):
-    m = re.match(r'"[^"]*\bnode\b[^"]*" "[^"]*\.claude/hooks/([^"]+)"', cmd)
+    # Format: "/abs/path/node" "/abs/.claude/hooks/foo.js"
+    m = re.match(r'"\/[^"]*\bnode\b[^"]*" "\/[^"]*\.claude/hooks/([^"]+)"', cmd)
     if m: return f'node ~/.claude/hooks/{m.group(1)}'
-    m = re.match(r'node "[^"]*\.claude/hooks/([^"]+)"', cmd)
+    # Format: node "/abs/.claude/hooks/foo.js"
+    m = re.match(r'node "\/[^"]*\.claude/hooks/([^"]+)"', cmd)
     if m: return f'node ~/.claude/hooks/{m.group(1)}'
     return cmd
 
@@ -36,22 +43,30 @@ def walk(obj):
             walk(item)
 
 walk(data)
-with open(path, 'w') as f:
-    json.dump(data, f, indent=2)
-    f.write('\n')
+try:
+    with open(path, 'w') as f:
+        json.dump(data, f, indent=2)
+        f.write('\n')
+except Exception as e:
+    print(f"[warn] caveman path normalization write failed: {e}", file=sys.stderr)
+    sys.exit(1)
 PYEOF
-  success "caveman hook paths normalized"
+    [[ $? -eq 0 ]] && success "caveman hook paths normalized" || warn "caveman hook path normalization failed — run 'codebase-memory-mcp install' manually"
+  else
+    warn "python3 not found — caveman hook paths not normalized; run ./install again after installing python3"
+  fi
 fi
 
 # If caveman replaced ~/.claude/settings.json symlink with a regular file,
 # sync normalized content back to the repo source and restore the symlink.
 local config_dir
 config_dir=$(cat "$HOME/.claude/.claude-config-dir" 2>/dev/null)
-if [[ -n "$config_dir" && -f "$settings" && ! -L "$settings" ]]; then
-  cp "$settings" "$config_dir/config/settings.json"
-  rm "$settings"
-  ln -s "$config_dir/config/settings.json" "$settings"
-  success "settings.json symlink restored"
+if [[ -n "$config_dir" && -d "$config_dir" && -f "$settings" && ! -L "$settings" ]]; then
+  cp "$settings" "$config_dir/config/settings.json" \
+    && rm "$settings" \
+    && ln -s "$config_dir/config/settings.json" "$settings" \
+    && success "settings.json symlink restored" \
+    || warn "settings.json symlink restore failed — check $config_dir/config/settings.json manually"
 fi
 
 success "caveman installed"
