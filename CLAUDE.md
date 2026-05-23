@@ -34,20 +34,16 @@ Plugins are tracked in `config/settings.json` → `enabledPlugins`. When you ins
 | New skill | Drop `.md` in `skills/` |
 | New global agent | Drop `.md` in `agents/` |
 | New external tool | Add `tools/install-<name>` + `tools/uninstall-<name>` (executable) |
-| New custom hook | Add to `config/hooks/`, register in `config/settings.json` |
+| New custom hook | Add to `hooks/`, register in `config/settings.json` |
 | Deprecate a tool | Delete `tools/install-<name>`, move `tools/uninstall-<name>` → `legacy/uninstall-<name>` |
 
 ## Security
 
 **Do not add secrets to `config/settings.json` env block** — this file is committed to git.
 
-For per-machine secrets (GitHub PATs, API tokens): add them to `config/env.local` (gitignored, created by `./install`). The install script sources it into `~/.zshenv` so Claude Code and all tools inherit the vars automatically. A template is at `config/env.local.example`.
+For per-machine secrets (GitHub PATs, API tokens): add them to `config/env.local` (gitignored, created by `./install`). This file is not auto-sourced — export the vars in your shell profile or source it manually before launching Claude. A template is at `config/env.local.example`.
 
-A pre-commit hook blocks commits if the env block looks like it contains API keys or tokens.
-
-## Machine-specific notes
-
-The caveman plugin installer writes machine-specific absolute node paths into `settings.json` hooks. When switching machines, run `./install` (which runs `tools/install-caveman`) to update these paths. Do not commit settings.json changes that only update the caveman hook node path.
+Use the `secrets-check` skill before committing to verify staged changes contain no credentials.
 
 ## External tools
 

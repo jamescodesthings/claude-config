@@ -36,6 +36,7 @@ Key triggers:
 - Any feature or bugfix in prod/existing-test code → `superpowers:test-driven-development`
 - Touching any third-party library, SDK, or API → `context7` to fetch current docs before implementing
 - Before claiming any implementation task complete → `verification-before-completion` skill
+- Before committing or staging files with credentials/tokens → `secrets-check` skill
 
 ## Post-Implementation Review
 
