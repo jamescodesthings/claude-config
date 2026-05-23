@@ -5,6 +5,15 @@ info "Installing caveman..."
 curl -fsSL https://raw.githubusercontent.com/JuliusBrussee/caveman/main/install.sh \
   | bash || error "Caveman install failed"
 
+# Normalize absolute hook paths written by caveman installer to portable ~/... form.
+# In settings.json, caveman writes JSON like: "command": "node \"/abs/path/.claude/hooks/foo.js\""
+# We normalize to:                            "command": "node ~/.claude/hooks/foo.js"
+local settings="$HOME/.claude/settings.json"
+if [[ -f "$settings" ]]; then
+  # Match both plain-quote and backslash-escaped-quote variants
+  perl -i -pe 's|node \\"[^"]*\.claude/hooks/([^\\"]+)\\""|node ~/.claude/hooks/$1"|g;
+               s|node "[^"]*\.claude/hooks/([^"]+)"|node ~/.claude/hooks/$1|g' "$settings"
+  success "caveman hook paths normalized"
+fi
+
 success "caveman installed"
-info "Note: caveman installer updates settings.json hook paths for this machine."
-info "Commit settings.json changes only if the plugin list changed, not hook paths."
