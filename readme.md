@@ -36,7 +36,7 @@ cd claude-config
 
 ```shell
 mkdir my-project && cd my-project
-/path/to/claude-config/new-project   # git init + CLAUDE.md from template
+/path/to/claude-config/new-project   # git init (if needed)
 claude                                # describe what you want to build
 ```
 
@@ -44,10 +44,10 @@ Or if you've already got a directory:
 
 ```shell
 cd existing-project
-/path/to/claude-config/new-project
+claude   # describe what you want to build
 ```
 
-`new-project` does two things: `git init` (if needed) and copies `docs/templates/project-CLAUDE.md` to `./CLAUDE.md`. Fill in the template — stack, local setup, test commands — before opening Claude.
+Claude creates `CLAUDE.md` automatically on first use. The global config tells it exactly what structure to use, including the `## Post-implementation checks` hook.
 
 The global config handles everything else:
 
