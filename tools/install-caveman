@@ -24,8 +24,8 @@ except Exception as e:
     sys.exit(0)
 
 def normalize(cmd):
-    # Format: "/abs/path/node" "/abs/.claude/hooks/foo.js"
-    m = re.match(r'"\/[^"]*\bnode\b[^"]*" "\/[^"]*\.claude/hooks/([^"]+)"', cmd)
+    # Format: "/abs/path/node" "<any>.claude/hooks/foo.js" (hook path may already use ~)
+    m = re.match(r'"\/[^"]*\bnode\b[^"]*" "[^"]*\.claude/hooks/([^"]+)"', cmd)
     if m: return f'node ~/.claude/hooks/{m.group(1)}'
     # Format: node "/abs/.claude/hooks/foo.js"
     m = re.match(r'node "\/[^"]*\.claude/hooks/([^"]+)"', cmd)
