@@ -34,4 +34,4 @@ cd claude-config
 
 ## Starting a new project
 
-`git init`, then `claude`. On first use Claude will create a `CLAUDE.md` with the right structure — stack, setup, test commands, and the `## Post-implementation checks` hook for post-implementation review.
+On first use in a new project Claude will create a `CLAUDE.md` with the right structure; stack, setup, test commands, and the `## Post-implementation checks` hook for post-implementation review.
