@@ -127,6 +127,6 @@
       }
     }
   },
-  "theme": "dark",
-  "skipDangerousModePermissionPrompt": true
+  "skipDangerousModePermissionPrompt": true,
+  "theme": "dark"
 }
