@@ -1,5 +1,4 @@
-#!/usr/bin/env zsh
 info()    { print -P "%F{blue}[info]%f  $1" }
 success() { print -P "%F{green}[ok]%f    $1" }
 warn()    { print -P "%F{yellow}[warn]%f  $1" }
-error()   { print -P "%F{red}[error]%f $1"; exit 1 }
+error()   { print -P "%F{red}[error]%f $1" >&2; exit 1 }
