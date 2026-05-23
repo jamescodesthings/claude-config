@@ -16,7 +16,7 @@ Cross-machine shared Claude Code configuration. `./install` bootstraps a new mac
 
 ## How config is deployed
 
-Files in `config/` are **symlinked** to `~/.claude/` by `./install`. Edits to the repo files take effect immediately. Hooks in `config/hooks/` are symlinked as individual files into `~/.claude/hooks/` (not the whole dir — tool-managed hooks live there independently).
+Files in `config/` are **symlinked** to `~/.claude/` by `./install`. Edits to the repo files take effect immediately. Hooks in `hooks/` are symlinked as individual files into `~/.claude/hooks/` (not the whole dir — tool-managed hooks live there independently).
 
 `agents/` and `memory/` are symlinked as whole directories.
 

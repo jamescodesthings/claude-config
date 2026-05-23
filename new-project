@@ -1,0 +1,26 @@
+#!/bin/sh
+# Re-exec with zsh (required)
+if [ -z "$ZSH_VERSION" ]; then
+  command -v zsh >/dev/null || { echo "[error] zsh required"; exit 1; }
+  exec zsh "$0" "$@"
+fi
+
+CONFIG_DIR=$(cat "$HOME/.claude/.claude-config-dir" 2>/dev/null)
+TEMPLATE="$CONFIG_DIR/docs/templates/project-CLAUDE.md"
+
+[[ -n "$CONFIG_DIR" ]] || { print -P "%F{red}[error]%f claude-config not installed — run ./install first"; exit 1 }
+[[ -f "$TEMPLATE" ]] || { print -P "%F{red}[error]%f template not found: $TEMPLATE"; exit 1 }
+
+if [[ ! -d .git ]]; then
+  git init
+  print -P "%F{green}[ok]%f    git init"
+fi
+
+if [[ -f CLAUDE.md ]]; then
+  print -P "%F{yellow}[warn]%f  CLAUDE.md already exists — not overwriting"
+else
+  cp "$TEMPLATE" CLAUDE.md
+  print -P "%F{green}[ok]%f    CLAUDE.md created from template"
+fi
+
+print -P "%F{blue}[info]%f  Fill in CLAUDE.md, then open Claude and describe what you want to build."

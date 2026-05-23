@@ -36,26 +36,24 @@ cd claude-config
 
 ```shell
 mkdir my-project && cd my-project
-git init
-claude init      # creates a project-level CLAUDE.md
-claude           # open Claude and describe what you want to build
+/path/to/claude-config/new-project   # git init + CLAUDE.md from template
+claude                                # describe what you want to build
 ```
 
-That's it. The global config (installed above) handles everything else:
+Or if you've already got a directory:
+
+```shell
+cd existing-project
+/path/to/claude-config/new-project
+```
+
+`new-project` does two things: `git init` (if needed) and copies `docs/templates/project-CLAUDE.md` to `./CLAUDE.md`. Fill in the template — stack, local setup, test commands — before opening Claude.
+
+The global config handles everything else:
 
 - **Workflow** — brainstorming → plan → subagent-driven implementation runs automatically
 - **Skills** — superpowers, code-review, frontend-design, etc. available in every project
-- **Agents** — shared agent definitions picked up globally
 - **Hooks** — code-discovery gate, session reminders, caveman mode all active
+- **Post-implementation checks** — the `## Post-implementation checks` section in your CLAUDE.md is read by the `post-implementation-review` skill; add project-specific checks there
 
-`claude init` generates a project CLAUDE.md from your codebase. Edit it to add project-specific context — stack, conventions, external systems. The global workflow in `~/.claude/CLAUDE.md` stays in effect for every project.
-
-### Optional project setup
-
-If you want plans and specs tracked in the repo:
-
-```shell
-mkdir -p docs/superpowers/{plans,specs}
-```
-
-Claude will write plans to `docs/superpowers/plans/` and specs to `docs/superpowers/specs/` automatically when using the planning workflow.
+Plans and specs are written to `docs/superpowers/plans/` and `docs/superpowers/specs/` automatically.
