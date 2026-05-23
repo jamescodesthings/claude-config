@@ -14,6 +14,10 @@ info "Running codebase-memory-mcp install (configure auto-index)..."
 codebase-memory-mcp install \
   || warn "codebase-memory-mcp post-install step failed — run 'codebase-memory-mcp install' manually to configure auto-indexing"
 
+info "setting auto_index to true for codebase-memory-mcp..."
+codebase-memory-mcp config set auto_index true \
+  || warn "Failed to set auto_index config for codebase-memory-mcp — run 'codebase-memory-mcp config set auto_index true' manually to enable auto-indexing"
+
 # Remove legacy .mcp.json symlink to this repo if present — tool manages it now.
 # Runs after codebase-memory-mcp install to guarantee managed file exists first.
 local mcp_link="$HOME/.claude/.mcp.json"
