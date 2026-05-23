@@ -1,4 +1,18 @@
-#!/usr/bin/env zsh
+#!/bin/sh
+# Re-exec with zsh (required). Install zsh first if missing:
+#   Ubuntu/Debian: sudo apt-get install zsh
+#   Arch:          sudo pacman -S zsh
+#   macOS:         brew install zsh
+if [ -z "$ZSH_VERSION" ]; then
+  if ! command -v zsh >/dev/null 2>&1; then
+    echo "[error] zsh required. Install it first:"
+    echo "  Ubuntu/Debian: sudo apt-get install zsh"
+    echo "  Arch:          sudo pacman -S zsh"
+    echo "  macOS:         brew install zsh"
+    exit 1
+  fi
+  exec zsh "$0" "$@"
+fi
 
 SOURCE_DIR=${0:a:h}
 
@@ -19,7 +33,7 @@ function symlink() {
 
 # ── dependency check ────────────────────────────────────────────────────────
 function check_deps() {
-  local deps=(node npx npm http)
+  local deps=(node npx npm curl)
   for dep in "${deps[@]}"; do
     if ! command -v "$dep" &> /dev/null; then
       error "$dep not found — install it first"
@@ -35,7 +49,7 @@ function install_claude() {
     return
   fi
   info "Installing claude CLI..."
-  http --download --output /tmp/claude-installer.sh https://claude.ai/install.sh \
+  curl -fsSL -o /tmp/claude-installer.sh https://claude.ai/install.sh \
     || error "Failed to download claude installer"
   chmod +x /tmp/claude-installer.sh
   /tmp/claude-installer.sh || error "claude installer failed"
