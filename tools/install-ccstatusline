@@ -1,23 +1,18 @@
 #!/usr/bin/env zsh
-# Install ccstatusline config — status line for Claude Code
-# Binary runs via 'npx -y ccstatusline@latest' (tracked in settings.json statusLine — no install needed).
-# This script deploys the tracked config template to ~/.config/ccstatusline/settings.json
+source "${0:a:h}/lib.sh"
 
 SCRIPT_DIR=${0:a:h}
 TEMPLATE="$SCRIPT_DIR/../config/ccstatusline-settings.json"
 DEST="$HOME/.config/ccstatusline/settings.json"
 
-[[ -f "$TEMPLATE" ]] || { echo "[error] template not found: $TEMPLATE"; exit 1 }
+[[ -f "$TEMPLATE" ]] || error "template not found: $TEMPLATE"
 
 mkdir -p "$(dirname "$DEST")"
 
-# Only overwrite if dest doesn't exist or template is newer
 if [[ -f "$DEST" ]] && [[ "$DEST" -nt "$TEMPLATE" ]]; then
-  echo "[ok]   ccstatusline config already up to date"
+  success "ccstatusline config already up to date"
   exit 0
 fi
 
-sed "s|__HOME__|$HOME|g" "$TEMPLATE" > "$DEST" \
-  || { echo "[error] failed to write $DEST"; exit 1 }
-
-echo "[ok]   ccstatusline config written to $DEST"
+sed "s|__HOME__|$HOME|g" "$TEMPLATE" > "$DEST" || error "failed to write $DEST"
+success "ccstatusline config written to $DEST"

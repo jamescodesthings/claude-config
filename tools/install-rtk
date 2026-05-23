@@ -1,20 +1,18 @@
 #!/usr/bin/env zsh
-# Install rtk — token-optimised Claude Code CLI proxy
-# https://github.com/rtk-ai/rtk
+source "${0:a:h}/lib.sh"
 
 if command -v rtk &> /dev/null; then
-  echo "[ok]   rtk already installed"
+  success "rtk already installed"
   exit 0
 fi
 
-echo "[info] Installing rtk..."
-http --download --output /tmp/rtk-install.sh \
-  https://raw.githubusercontent.com/rtk-ai/rtk/refs/heads/master/install.sh \
-  || { echo "[error] Failed to download rtk installer"; exit 1 }
+info "Installing rtk..."
+curl -fsSL https://raw.githubusercontent.com/rtk-ai/rtk/refs/heads/master/install.sh \
+  -o /tmp/rtk-install.sh || error "Failed to download rtk installer"
 
 chmod +x /tmp/rtk-install.sh
-/tmp/rtk-install.sh || { echo "[error] rtk installer failed"; exit 1 }
+/tmp/rtk-install.sh || error "rtk installer failed"
 rm -f /tmp/rtk-install.sh
 
-rtk init -g || { echo "[error] rtk init -g failed"; exit 1 }
-echo "[ok]   rtk installed"
+rtk init -g || error "rtk init -g failed"
+success "rtk installed"

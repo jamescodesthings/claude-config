@@ -1,18 +1,17 @@
 #!/usr/bin/env zsh
-# Install codebase-memory-mcp — code knowledge graph MCP server
-# https://github.com/DeusData/codebase-memory-mcp
+source "${0:a:h}/lib.sh"
 
 if command -v codebase-memory-mcp &> /dev/null; then
-  echo "[ok]   codebase-memory-mcp already installed"
+  success "codebase-memory-mcp already installed"
 else
-  echo "[info] Installing codebase-memory-mcp..."
+  info "Installing codebase-memory-mcp..."
   curl -fsSL \
     https://raw.githubusercontent.com/DeusData/codebase-memory-mcp/main/install.sh \
-    | bash || { echo "[error] codebase-memory-mcp install failed"; exit 1 }
+    | bash || error "codebase-memory-mcp install failed"
 fi
 
-echo "[info] Running codebase-memory-mcp install (configure auto-index)..."
+info "Running codebase-memory-mcp install (configure auto-index)..."
 codebase-memory-mcp install \
-  || echo "[warn] codebase-memory-mcp post-install step failed — run 'codebase-memory-mcp install' manually to configure auto-indexing"
+  || warn "codebase-memory-mcp post-install step failed — run 'codebase-memory-mcp install' manually to configure auto-indexing"
 
-echo "[ok]   codebase-memory-mcp installed"
+success "codebase-memory-mcp installed"

@@ -2,11 +2,7 @@
 
 SOURCE_DIR=${0:a:h}
 
-# ── colour helpers ─────────────────────────────────────────────────────────
-info()    { print -P "%F{blue}[info]%f  $1" }
-success() { print -P "%F{green}[ok]%f    $1" }
-warn()    { print -P "%F{yellow}[warn]%f  $1" }
-error()   { print -P "%F{red}[error]%f $1"; exit 1 }
+source "$SOURCE_DIR/tools/lib.sh"
 
 # ── symlink helper: idempotent, backs up real files ─────────────────────────
 function symlink() {

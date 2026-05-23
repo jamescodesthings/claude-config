@@ -1,13 +1,10 @@
 #!/usr/bin/env zsh
-# Install caveman — token-efficient communication mode for Claude Code
-# https://github.com/JuliusBrussee/caveman
-# Installs the caveman plugin marketplace and runs the full installer,
-# which also writes the caveman hook configs into settings.json.
+source "${0:a:h}/lib.sh"
 
-echo "[info] Installing caveman..."
+info "Installing caveman..."
 curl -fsSL https://raw.githubusercontent.com/JuliusBrussee/caveman/main/install.sh \
-  | bash || { echo "[error] Caveman install failed"; exit 1 }
+  | bash || error "Caveman install failed"
 
-echo "[ok]   caveman installed"
-echo "[info] Note: caveman installer updates settings.json hook paths for this machine."
-echo "[info] Commit settings.json changes only if the plugin list changed, not hook paths."
+success "caveman installed"
+info "Note: caveman installer updates settings.json hook paths for this machine."
+info "Commit settings.json changes only if the plugin list changed, not hook paths."

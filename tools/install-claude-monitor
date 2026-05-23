@@ -1,20 +1,15 @@
 #!/usr/bin/env zsh
-# Install claude-monitor — Claude Code usage monitoring tool
-# https://github.com/Maciek-roboblog/Claude-Code-Usage-Monitor
-# Requires: uv — https://docs.astral.sh/uv/getting-started/installation/
+source "${0:a:h}/lib.sh"
 
 if ! command -v uv &> /dev/null; then
-  echo "[error] uv not found — install it first: https://docs.astral.sh/uv/getting-started/installation/"
-  exit 1
+  error "uv not found — install it first: https://docs.astral.sh/uv/getting-started/installation/"
 fi
 
 if uv tool list 2>/dev/null | grep -q "^claude-monitor"; then
-  echo "[ok]   claude-monitor already installed"
+  success "claude-monitor already installed"
   exit 0
 fi
 
-echo "[info] Installing claude-monitor..."
-uv tool install claude-monitor \
-  || { echo "[error] claude-monitor install failed"; exit 1 }
-
-echo "[ok]   claude-monitor installed — run: claude-monitor"
+info "Installing claude-monitor..."
+uv tool install claude-monitor || error "claude-monitor install failed"
+success "claude-monitor installed — run: claude-monitor"
