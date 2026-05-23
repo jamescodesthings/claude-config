@@ -6,14 +6,52 @@ curl -fsSL https://raw.githubusercontent.com/JuliusBrussee/caveman/main/install.
   | bash || error "Caveman install failed"
 
 # Normalize absolute hook paths written by caveman installer to portable ~/... form.
-# In settings.json, caveman writes JSON like: "command": "node \"/abs/path/.claude/hooks/foo.js\""
-# We normalize to:                            "command": "node ~/.claude/hooks/foo.js"
+# Handles two formats:
+#   "full/path/to/node" "/abs/.claude/hooks/foo.js"  (asdf/nvm style node)
+#   node "/abs/.claude/hooks/foo.js"                  (node in PATH)
 local settings="$HOME/.claude/settings.json"
-if [[ -f "$settings" ]]; then
-  # Match both plain-quote and backslash-escaped-quote variants
-  perl -i -pe 's|node \\"[^"]*\.claude/hooks/([^\\"]+)\\""|node ~/.claude/hooks/$1"|g;
-               s|node "[^"]*\.claude/hooks/([^"]+)"|node ~/.claude/hooks/$1|g' "$settings"
+if [[ -f "$settings" ]] && command -v python3 &>/dev/null; then
+  python3 - << 'PYEOF'
+import json, re, os, sys
+
+path = os.path.expanduser('~/.claude/settings.json')
+with open(path) as f:
+    data = json.load(f)
+
+def normalize(cmd):
+    m = re.match(r'"[^"]*\bnode\b[^"]*" "[^"]*\.claude/hooks/([^"]+)"', cmd)
+    if m: return f'node ~/.claude/hooks/{m.group(1)}'
+    m = re.match(r'node "[^"]*\.claude/hooks/([^"]+)"', cmd)
+    if m: return f'node ~/.claude/hooks/{m.group(1)}'
+    return cmd
+
+def walk(obj):
+    if isinstance(obj, dict):
+        if 'command' in obj:
+            obj['command'] = normalize(obj['command'])
+        for v in obj.values():
+            walk(v)
+    elif isinstance(obj, list):
+        for item in obj:
+            walk(item)
+
+walk(data)
+with open(path, 'w') as f:
+    json.dump(data, f, indent=2)
+    f.write('\n')
+PYEOF
   success "caveman hook paths normalized"
+fi
+
+# If caveman replaced ~/.claude/settings.json symlink with a regular file,
+# sync normalized content back to the repo source and restore the symlink.
+local config_dir
+config_dir=$(cat "$HOME/.claude/.claude-config-dir" 2>/dev/null)
+if [[ -n "$config_dir" && -f "$settings" && ! -L "$settings" ]]; then
+  cp "$settings" "$config_dir/config/settings.json"
+  rm "$settings"
+  ln -s "$config_dir/config/settings.json" "$settings"
+  success "settings.json symlink restored"
 fi
 
 success "caveman installed"
