@@ -215,3 +215,6 @@ dist
 
 # Machine-specific — managed by codebase-memory-mcp install
 config/.mcp.json
+
+# Per-machine secrets — never commit
+config/env.local

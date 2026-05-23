@@ -158,6 +158,28 @@ function install_git_hook() {
   chmod +x "$src"
 }
 
+# ── source env.local from ~/.zshenv (idempotent) ───────────────────────────
+function setup_env_local() {
+  local env_file="$SOURCE_DIR/config/env.local"
+  local marker="# claude-config env.local"
+  local zshenv="$HOME/.zshenv"
+
+  if [[ ! -f "$env_file" ]]; then
+    [[ -f "$SOURCE_DIR/config/env.local.example" ]] && \
+      cp "$SOURCE_DIR/config/env.local.example" "$env_file"
+    info "Created config/env.local — add secrets there (gitignored)"
+    return
+  fi
+
+  if ! grep -qF "$marker" "$zshenv" 2>/dev/null; then
+    printf '\n%s\n[[ -f "%s" ]] && source "%s"\n' \
+      "$marker" "$env_file" "$env_file" >> "$zshenv"
+    success "env.local wired into ~/.zshenv"
+  else
+    success "env.local already wired"
+  fi
+}
+
 # ── write metadata ──────────────────────────────────────────────────────────
 function write_metadata() {
   echo "$SOURCE_DIR" > "$HOME/.claude/.claude-config-dir"
@@ -174,6 +196,7 @@ link_agents
 link_skills
 link_memory
 install_plugins
+setup_env_local
 install_tools
 install_git_hook
 write_metadata

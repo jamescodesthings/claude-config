@@ -39,7 +39,11 @@ Plugins are tracked in `config/settings.json` → `enabledPlugins`. When you ins
 
 ## Security
 
-**Do not add secrets to `config/settings.json` env block** — this file is committed to git. Use `~/.zshrc` or `~/.zshenv` for environment secrets instead. A pre-commit hook blocks commits if the env block looks like it contains API keys or tokens.
+**Do not add secrets to `config/settings.json` env block** — this file is committed to git.
+
+For per-machine secrets (GitHub PATs, API tokens): add them to `config/env.local` (gitignored, created by `./install`). The install script sources it into `~/.zshenv` so Claude Code and all tools inherit the vars automatically. A template is at `config/env.local.example`.
+
+A pre-commit hook blocks commits if the env block looks like it contains API keys or tokens.
 
 ## Machine-specific notes
 
