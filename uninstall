@@ -85,3 +85,4 @@ remove_claude
 remove_config
 
 success "Claude fully uninstalled."
+info    "Start a new shell session to clear any cached PATH entries."

@@ -16,10 +16,10 @@ cd claude-config
 ./install
 ```
 
-## Update
+## Sync after git pull
 
 ```shell
-./update
+git pull && ./install
 ```
 
 ## Uninstall
@@ -30,7 +30,7 @@ cd claude-config
 
 ## How it works
 
-`config/` files are symlinked to `~/.claude/`. `hooks/` are symlinked individually into `~/.claude/hooks/`. `tools/install-*` scripts install external tools. `legacy/uninstall-*` cleans up deprecated tools on `./update`. See CLAUDE.md for the full reference.
+`config/` files are symlinked to `~/.claude/`. `hooks/` are symlinked individually into `~/.claude/hooks/`. `tools/install-*` scripts install external tools. `legacy/uninstall-*` cleans up deprecated tools on re-install. See CLAUDE.md for the full reference.
 
 ## Starting a new project
 

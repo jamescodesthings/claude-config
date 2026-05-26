@@ -205,3 +205,4 @@ write_metadata
 
 print ""
 success "Claude config installed."
+info    "Start a new shell session (or: source ~/.zshrc) to pick up PATH changes."

@@ -16,7 +16,7 @@
                 "hooks": [
                     {
                         "type": "command",
-                        "command": "~/.claude/hooks/session-start-update-check"
+                        "command": "~/.claude/hooks/cbm-session-reminder"
                     }
                 ]
             },

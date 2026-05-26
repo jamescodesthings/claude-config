@@ -4,13 +4,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this repo is
 
-Cross-machine shared Claude Code configuration. `./install` bootstraps a new machine. `./update` syncs after `git pull`. `./uninstall` removes everything.
+Cross-machine shared Claude Code configuration. `./install` bootstraps a new machine (idempotent — re-run after `git pull` to sync). `./uninstall` removes everything.
 
-## Install / Update / Uninstall
+## Install / Sync / Uninstall
 
 ```shell
 ./install          # Fresh install or re-run to pick up changes
-./update           # git pull + legacy cleanup + re-run install
+git pull && ./install  # Sync after pulling on another machine
 ./uninstall        # Remove all tools, symlinks, and claude entirely
 ```
 
@@ -34,7 +34,7 @@ Plugins are tracked in `config/settings.json` → `enabledPlugins`. When you ins
 | New skill | Drop `.md` in `skills/` |
 | New global agent | Drop `.md` in `agents/` |
 | New external tool | Add `tools/install-<name>` + `tools/uninstall-<name>` (executable) |
-| New custom hook | Add to `hooks/`, register in `config/settings.json` |
+| New custom hook | Add to `config/hooks/`, register in `config/settings.json` |
 | Deprecate a tool | Delete `tools/install-<name>`, move `tools/uninstall-<name>` → `legacy/uninstall-<name>` |
 
 ## Security
