@@ -149,28 +149,37 @@ function install_tools() {
   done
 }
 
-# ── snapshot ~/.zshrc and prompt if tools muddied it ────────────────────────
+# ── snapshot shell rc files and prompt if tools muddied them ────────────────
 ZSHRC_SNAP=""
+BASHRC_SNAP=""
 function snapshot_zshrc() {
   ZSHRC_SNAP=$(mktemp)
-  cp "$HOME/.zshrc" "$ZSHRC_SNAP" 2>/dev/null || true
+  BASHRC_SNAP=$(mktemp)
+  cp "$HOME/.zshrc"  "$ZSHRC_SNAP"  2>/dev/null || true
+  cp "$HOME/.bashrc" "$BASHRC_SNAP" 2>/dev/null || true
 }
 
-function check_zshrc() {
-  [[ -f "$ZSHRC_SNAP" ]] || return
-  if ! diff -q "$ZSHRC_SNAP" "$HOME/.zshrc" >/dev/null 2>&1; then
-    warn "Tool installers modified ~/.zshrc:"
-    diff "$ZSHRC_SNAP" "$HOME/.zshrc" | grep "^[<>]" | head -20
+function _check_rc() {
+  local label=$1 snap=$2 target=$3
+  [[ -f "$snap" ]] || return
+  if ! diff -q "$snap" "$target" >/dev/null 2>&1; then
+    warn "Tool installers modified ~/$label:"
+    diff "$snap" "$target" | grep "^[<>]" | head -20
     printf "  Keep changes? [y/N] "
     read -r answer
     if [[ "$answer" != "y" && "$answer" != "Y" ]]; then
-      cp "$ZSHRC_SNAP" "$HOME/.zshrc"
-      info "~/.zshrc restored to pre-install state"
+      cp "$snap" "$target"
+      info "~/$label restored to pre-install state"
     else
-      info "~/.zshrc changes kept"
+      info "~/$label changes kept"
     fi
   fi
-  rm -f "$ZSHRC_SNAP"
+  rm -f "$snap"
+}
+
+function check_zshrc() {
+  _check_rc ".zshrc"  "$ZSHRC_SNAP"  "$HOME/.zshrc"
+  _check_rc ".bashrc" "$BASHRC_SNAP" "$HOME/.bashrc"
 }
 
 # ── write metadata ──────────────────────────────────────────────────────────
