@@ -34,7 +34,7 @@ Plugins are tracked in `config/settings.json` → `enabledPlugins`. When you ins
 | New skill | Drop `.md` in `skills/` |
 | New global agent | Drop `.md` in `agents/` |
 | New external tool | Add `tools/install-<name>` + `tools/uninstall-<name>` (executable) |
-| New custom hook | Add to `config/hooks/`, register in `config/settings.json` |
+| New custom hook | Add to `hooks/`, register in `config/settings.json` |
 | Deprecate a tool | Delete `tools/install-<name>`, move `tools/uninstall-<name>` → `legacy/uninstall-<name>` |
 
 ## Security

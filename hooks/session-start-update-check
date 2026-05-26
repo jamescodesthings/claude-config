@@ -17,8 +17,8 @@ if [[ -f "$LAST_UPDATE_FILE" ]]; then
   NOW=$(date +%s)
   AGE=$((NOW - LAST_UPDATE))
   if [[ $AGE -ge $STALE_SECONDS ]]; then
-    echo "claude-config: ${AGE}s since last update — running ./update"
-    "$CLAUDE_CONFIG_DIR/update"
+    echo "claude-config: ${AGE}s since last sync — running git pull && install"
+    git -C "$CLAUDE_CONFIG_DIR" pull && "$CLAUDE_CONFIG_DIR/install"
   fi
 else
   date +%s > "$LAST_UPDATE_FILE"
