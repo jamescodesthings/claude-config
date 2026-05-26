@@ -218,3 +218,6 @@ config/.mcp.json
 
 # Per-machine secrets — never commit
 config/env.local
+
+# Internal Claude planning docs — not useful to public consumers
+docs/superpowers/
