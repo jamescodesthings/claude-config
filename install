@@ -149,6 +149,30 @@ function install_tools() {
   done
 }
 
+# ── snapshot ~/.zshrc and prompt if tools muddied it ────────────────────────
+ZSHRC_SNAP=""
+function snapshot_zshrc() {
+  ZSHRC_SNAP=$(mktemp)
+  cp "$HOME/.zshrc" "$ZSHRC_SNAP" 2>/dev/null || true
+}
+
+function check_zshrc() {
+  [[ -f "$ZSHRC_SNAP" ]] || return
+  if ! diff -q "$ZSHRC_SNAP" "$HOME/.zshrc" >/dev/null 2>&1; then
+    warn "Tool installers modified ~/.zshrc:"
+    diff "$ZSHRC_SNAP" "$HOME/.zshrc" | grep "^[<>]" | head -20
+    printf "  Keep changes? [y/N] "
+    read -r answer
+    if [[ "$answer" != "y" && "$answer" != "Y" ]]; then
+      cp "$ZSHRC_SNAP" "$HOME/.zshrc"
+      info "~/.zshrc restored to pre-install state"
+    else
+      info "~/.zshrc changes kept"
+    fi
+  fi
+  rm -f "$ZSHRC_SNAP"
+}
+
 # ── write metadata ──────────────────────────────────────────────────────────
 function write_metadata() {
   echo "$SOURCE_DIR" > "$HOME/.claude/.claude-config-dir"
@@ -200,7 +224,9 @@ link_agents
 link_skills
 link_memory
 install_plugins
+snapshot_zshrc
 install_tools
+check_zshrc
 write_metadata
 
 print ""
