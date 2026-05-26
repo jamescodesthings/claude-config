@@ -49,6 +49,5 @@ Use the `secrets-check` skill before committing to verify staged changes contain
 |------|---------|
 | [rtk](https://github.com/rtk-ai/rtk) | Token-optimised Claude CLI proxy |
 | [ccstatusline](https://github.com/sirmalloc/ccstatusline) | Status line (managed via `statusLine` in settings.json, no install script) |
-| [happy](https://github.com/slopus/happy) | Mobile/web client for Claude Code |
 | [caveman](https://github.com/JuliusBrussee/caveman) | Token-efficient mode (also a Claude plugin) |
 | [codebase-memory-mcp](https://github.com/DeusData/codebase-memory-mcp) | Code knowledge graph MCP server |
