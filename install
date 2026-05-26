@@ -156,9 +156,44 @@ function write_metadata() {
   success "Metadata written"
 }
 
+
+# ── run legacy cleanup scripts ──────────────────────────────────────────────
+function run_legacy() {
+  local ran=0
+  for script in "$SOURCE_DIR/legacy/uninstall-"*(N); do
+    [[ -x "$script" ]] || continue
+    info "Legacy cleanup: $(basename $script)..."
+    "$script" || warn "$(basename $script) failed"
+    ran=1
+  done
+  [[ $ran -eq 0 ]] && info "No legacy scripts"
+}
+
+# ── remove dangling symlinks in ~/.claude managed dirs ──────────────────────
+function clean_dangling() {
+  local dirs=(
+    "$HOME/.claude/skills"
+    "$HOME/.claude/hooks"
+    "$HOME/.claude/agents"
+  )
+
+  for dir in "${dirs[@]}"; do
+    [[ -d "$dir" ]] || continue
+    for f in "$dir/"*(N); do
+      if [[ -L "$f" && ! -e "$f" ]]; then
+        rm "$f"
+        info "Removed dangling: $f"
+      fi
+    done
+  done
+  success "Dangling symlinks cleaned"
+}
+
 # ── main ────────────────────────────────────────────────────────────────────
 check_deps
 install_claude
+run_legacy
+clean_dangling
 link_config
 link_hooks
 link_agents
