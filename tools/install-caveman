@@ -1,6 +1,11 @@
 #!/usr/bin/env zsh
 source "${0:a:h}/lib"
 
+if command -v caveman &> /dev/null; then
+  success "caveman already installed"
+  exit 0
+fi
+
 info "Installing caveman..."
 curl -fsSL https://raw.githubusercontent.com/JuliusBrussee/caveman/main/install.sh \
   | bash || error "Caveman install failed"
