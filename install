@@ -94,15 +94,12 @@ function link_agents() {
 function link_skills() {
   local skills_target="$HOME/.claude/skills"
 
-  # Migrate: remove old per-skill symlinks if skills_target is still a real dir
+  # Back up any real directory (non-symlink) before replacing with symlink
   if [[ -d "$skills_target" && ! -L "$skills_target" ]]; then
-    for link in "$skills_target/"*(N); do
-      [[ -L "$link" ]] || continue
-      local target=$(readlink "$link")
-      [[ "$target" == "$SOURCE_DIR/skills/"* ]] && rm "$link"
-    done
-    rm -f "$skills_target/"*.bak(N)
-    rmdir "$skills_target" 2>/dev/null || warn "$skills_target not empty after cleanup — check before re-running install"
+    local bak="${skills_target}-bak"
+    [[ -e "$bak" ]] && rm -rf "$bak"
+    mv "$skills_target" "$bak"
+    info "Backed up existing skills dir to $(basename $bak)"
   fi
 
   symlink "$SOURCE_DIR/skills" "$skills_target"
