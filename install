@@ -95,17 +95,24 @@ function link_skills() {
   local skills_dir="$HOME/.claude/skills"
   mkdir -p "$skills_dir"
 
-  # Remove dangling symlinks pointing into this repo (handles renames/deletes)
+  # Remove old flat .md symlinks from before skills were subdir-based
   for link in "$skills_dir/"*.md(N); do
     [[ -L "$link" ]] || continue
     local target=$(readlink "$link")
-    [[ "$target" == "$SOURCE_DIR/skills/"* ]] || continue
-    [[ -f "$target" ]] || { rm "$link"; warn "Removed stale skill symlink: $(basename $link)"; }
+    [[ "$target" == "$SOURCE_DIR/skills/"* ]] && { rm "$link"; warn "Removed old flat skill symlink: $(basename $link)"; }
   done
 
-  for skill_file in "$SOURCE_DIR/skills/"*.md(N); do
-    local name=$(basename "$skill_file")
-    symlink "$skill_file" "$skills_dir/$name"
+  # Remove dangling dir symlinks pointing into this repo (handles renames/deletes)
+  for link in "$skills_dir/"*(N/); do
+    [[ -L "$link" ]] || continue
+    local target=$(readlink "$link")
+    [[ "$target" == "$SOURCE_DIR/skills/"* ]] || continue
+    [[ -d "$target" ]] || { rm -f "$link"; warn "Removed stale skill symlink: $(basename $link)"; }
+  done
+
+  for skill_dir in "$SOURCE_DIR/skills/"*(N/); do
+    local name=$(basename "$skill_dir")
+    symlink "$skill_dir" "$skills_dir/$name"
   done
 }
 
