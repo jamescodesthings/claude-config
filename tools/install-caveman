@@ -8,7 +8,7 @@ fi
 
 info "Installing caveman..."
 curl -fsSL https://raw.githubusercontent.com/JuliusBrussee/caveman/main/install.sh \
-  | bash || error "Caveman install failed"
+  | bash -s -- --no-mcp-shrink || error "Caveman install failed"
 
 # Normalize absolute hook paths written by caveman installer to portable ~/... form.
 # Handles two formats:
