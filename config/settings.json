@@ -134,5 +134,6 @@
   "remoteControlAtStartup": true,
   "inputNeededNotifEnabled": true,
   "agentPushNotifEnabled": true,
-  "skillListingBudgetFraction": 0.015
+  "skillListingBudgetFraction": 0.015,
+  "skillListingMaxDescChars": 200
 }
