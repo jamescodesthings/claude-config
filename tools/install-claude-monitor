@@ -2,7 +2,8 @@
 source "${0:a:h}/lib"
 
 if ! command -v uv &> /dev/null; then
-  error "uv not found — install it first: https://docs.astral.sh/uv/getting-started/installation/"
+  warn "uv not found — claude-monitor skipped (install uv first: https://docs.astral.sh/uv/getting-started/installation/)"
+  exit 0
 fi
 
 if uv tool list 2>/dev/null | grep -q "^claude-monitor"; then
