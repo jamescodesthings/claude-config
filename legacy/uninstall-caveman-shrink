@@ -1,0 +1,4 @@
+#!/usr/bin/env zsh
+# caveman installer registers caveman-shrink as a broken MCP server (no upstream command).
+# Remove it on every install run.
+claude mcp remove caveman-shrink 2>/dev/null && echo "[ok]   caveman-shrink MCP removed" || true
