@@ -1,6 +1,6 @@
 ---
 name: secrets-check
-description: Use before committing or staging files to check for secrets, credentials, or sensitive data that must not enter the repo. Triggers on: about to commit, staging changes, "is it safe to commit", reviewing files for sensitive content, handling tokens/API keys/passwords.
+description: Before committing — scan staged files for secrets, credentials, API keys, tokens.
 ---
 
 # Secrets Check
