@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-source "${0:a:h}/lib.sh"
+source "${0:a:h}/lib"
 
 if command -v rtk &> /dev/null; then
   success "rtk already installed"

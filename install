@@ -16,7 +16,8 @@ fi
 
 SOURCE_DIR=${0:a:h}
 
-source "$SOURCE_DIR/tools/lib.sh"
+# Source the lib for helper functions (info, success, warn, error)
+source "$SOURCE_DIR/tools/lib"
 
 # ── symlink helper: idempotent, backs up real files ─────────────────────────
 function symlink() {
@@ -37,6 +38,10 @@ function check_deps() {
   for dep in "${deps[@]}"; do
     if ! command -v "$dep" &> /dev/null; then
       error "$dep not found — install it first"
+      echo "Dependencies:"
+      echo "  node/npx/npm: https://nodejs.org/"
+      echo "  curl:         https://curl.se/"
+      exit 1
     fi
   done
   success "Dependencies OK"
@@ -46,6 +51,7 @@ function check_deps() {
 function install_claude() {
   if command -v claude &> /dev/null; then
     success "claude already installed"
+    update_claude
     return
   fi
   info "Installing claude CLI..."
@@ -54,6 +60,17 @@ function install_claude() {
   chmod +x /tmp/claude-installer.sh
   /tmp/claude-installer.sh || error "claude installer failed"
   rm -f /tmp/claude-installer.sh
+}
+
+# ── Update claude CLI if it exists ───────────────────────────────────────────
+function update_claude() {
+  info "Updating claude..."\
+  OUTPUT=$(claude update 2>/dev/null)
+  if [[ $? -ne 0 ]]; then
+    error "claude update failed:\n$OUTPUT"
+  else
+    success "claude updated"
+  fi
 }
 
 # ── symlink config files ────────────────────────────────────────────────────

@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-source "${0:a:h}/lib.sh"
+source "${0:a:h}/lib"
 
 if command -v codebase-memory-mcp &> /dev/null; then
   success "codebase-memory-mcp already installed"

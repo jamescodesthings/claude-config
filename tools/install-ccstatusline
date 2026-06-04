@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-source "${0:a:h}/lib.sh"
+source "${0:a:h}/lib"
 
 SCRIPT_DIR=${0:a:h}
 TEMPLATE="$SCRIPT_DIR/../config/ccstatusline-settings.json"
