@@ -178,9 +178,9 @@ function _check_rc() {
   if ! diff -q "$snap" "$target" >/dev/null 2>&1; then
     warn "Tool installers modified ~/$label:"
     diff "$snap" "$target" | grep "^[<>]" | head -20
-    printf "  Keep changes? [y/N] "
+    printf "  Revert this change? [y/N] "
     read -r answer
-    if [[ "$answer" != "y" && "$answer" != "Y" ]]; then
+    if [[ "$answer" == "y" || "$answer" == "Y" ]]; then
       cp "$snap" "$target"
       info "~/$label restored to pre-install state"
     else
@@ -190,7 +190,7 @@ function _check_rc() {
   rm -f "$snap"
 }
 
-function check_zshrc() {
+function check_shell_rc() {
   _check_rc ".zshrc"  "$ZSHRC_SNAP"  "$HOME/.zshrc"
   _check_rc ".bashrc" "$BASHRC_SNAP" "$HOME/.bashrc"
 }
@@ -248,7 +248,7 @@ link_memory
 install_plugins
 snapshot_zshrc
 install_tools
-check_zshrc
+check_shell_rc
 write_metadata
 
 print ""
