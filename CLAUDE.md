@@ -31,7 +31,7 @@ Plugins are tracked in `config/settings.json` → `enabledPlugins`. When you ins
 | What | How |
 |------|-----|
 | New plugin | Install via CLI (auto-tracked in settings.json) or add to `enabledPlugins` directly |
-| New skill | Drop `.md` in `skills/` |
+| New skill | Drop `SKILL.md` in a new `skills/<name>/` subdirectory |
 | New global agent | Drop `.md` in `agents/` |
 | New external tool | Add `tools/install-<name>` + `tools/uninstall-<name>` (executable) |
 | New custom hook | Add to `hooks/`, register in `config/settings.json` |
@@ -51,3 +51,4 @@ Use the `secrets-check` skill before committing to verify staged changes contain
 | [ccstatusline](https://github.com/sirmalloc/ccstatusline) | Status line (managed via `statusLine` in settings.json; install script writes `~/.config/ccstatusline/settings.json`) |
 | [caveman](https://github.com/JuliusBrussee/caveman) | Token-efficient mode (also a Claude plugin) |
 | [codebase-memory-mcp](https://github.com/DeusData/codebase-memory-mcp) | Code knowledge graph MCP server |
+| [claude-monitor](https://github.com/badagui/claude-monitor) | Session token/cost monitor (`uv tool install claude-monitor`) |

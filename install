@@ -37,11 +37,10 @@ function check_deps() {
   local deps=(node npx npm curl)
   for dep in "${deps[@]}"; do
     if ! command -v "$dep" &> /dev/null; then
-      error "$dep not found — install it first"
       echo "Dependencies:"
       echo "  node/npx/npm: https://nodejs.org/"
       echo "  curl:         https://curl.se/"
-      exit 1
+      error "$dep not found — install it first"
     fi
   done
   success "Dependencies OK"
