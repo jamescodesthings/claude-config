@@ -1,6 +1,6 @@
 ---
 name: legal-review
-description: Use when dependencies changed or code handles user data, calls external APIs, or adds new integrations — warn and document only, never block
+description: Dep/data legal check — warn only, never block
 ---
 
 # Legal Review

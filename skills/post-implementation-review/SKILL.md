@@ -1,6 +1,6 @@
 ---
 name: post-implementation-review
-description: Use after any code-changing work — assesses what changed, dispatches appropriate checks in parallel, runs fix loop, then commits
+description: Post-code checks — run after any file writes, then commits
 ---
 
 # Post-Implementation Review

@@ -1,6 +1,6 @@
 ---
 name: codebase-memory
-description: Structural code queries — call chains, callers, dependencies, architecture, dead code, refactor candidates. Use for any codebase exploration.
+description: Graph-based code exploration — call chains, deps, architecture, dead code
 ---
 
 # Codebase Memory — Knowledge Graph Tools

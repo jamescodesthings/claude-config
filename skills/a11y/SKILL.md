@@ -1,6 +1,6 @@
 ---
 name: a11y
-description: Use when frontend code changed — checks semantic HTML, ARIA, keyboard navigation, contrast, forms, and images for accessibility violations
+description: Frontend a11y — HTML, ARIA, keyboard, contrast, forms, images
 ---
 
 # Accessibility Review (a11y)

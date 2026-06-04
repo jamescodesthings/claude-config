@@ -1,6 +1,6 @@
 ---
 name: writing-quality
-description: Review user-visible prose for grammar, tone, clarity, and AI-writing patterns. Applies to UI text, error messages, log messages, emails, notifications, and docs.
+description: Prose quality — UI text, errors, logs, emails, notifications, docs
 ---
 
 # Writing Quality Review

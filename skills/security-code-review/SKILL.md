@@ -1,6 +1,6 @@
 ---
 name: security-code-review
-description: Check changed code for security vulnerabilities. Reports CRITICAL/IMPORTANT/MINOR; fixes Critical and Important before proceeding.
+description: Security vulnerability scan — fixes Critical/Important issues
 ---
 
 # Security Review

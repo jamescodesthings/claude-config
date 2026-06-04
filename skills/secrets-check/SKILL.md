@@ -1,6 +1,6 @@
 ---
 name: secrets-check
-description: Before committing — scan staged files for secrets, credentials, API keys, tokens.
+description: Scan staged files for secrets before committing
 ---
 
 # Secrets Check
