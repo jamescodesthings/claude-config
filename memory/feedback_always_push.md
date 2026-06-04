@@ -2,7 +2,6 @@
 name: feedback-always-push
 description: "After committing, always push immediately — do not stop at commit"
 metadata: 
-  node_type: memory
   type: feedback
   originSessionId: b367eacd-e1d3-4e21-90e1-1727f1685a3e
 ---

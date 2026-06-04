@@ -64,7 +64,7 @@ function install_claude() {
 
 # ── Update claude CLI if it exists ───────────────────────────────────────────
 function update_claude() {
-  info "Updating claude..."\
+  info "Updating claude..."
   OUTPUT=$(claude update 2>/dev/null)
   if [[ $? -ne 0 ]]; then
     error "claude update failed:\n$OUTPUT"

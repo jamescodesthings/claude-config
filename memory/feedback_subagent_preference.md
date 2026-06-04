@@ -1,8 +1,7 @@
 ---
-name: feedback_subagent_preference
+name: feedback-subagent-preference
 description: User always prefers subagent-driven development over inline execution when given a choice
 metadata: 
-  node_type: memory
   type: feedback
   originSessionId: da81ef1d-a71c-417d-9967-2927b95396b9
 ---

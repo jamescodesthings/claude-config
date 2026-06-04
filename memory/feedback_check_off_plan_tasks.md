@@ -2,7 +2,6 @@
 name: feedback-check-off-plan-tasks
 description: "Mark tasks [x] in spec/plan markdown docs as each is completed — do not leave them unchecked"
 metadata: 
-  node_type: memory
   type: feedback
   originSessionId: b367eacd-e1d3-4e21-90e1-1727f1685a3e
 ---

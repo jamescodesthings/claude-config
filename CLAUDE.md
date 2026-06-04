@@ -48,6 +48,6 @@ Use the `secrets-check` skill before committing to verify staged changes contain
 | Tool | Purpose |
 |------|---------|
 | [rtk](https://github.com/rtk-ai/rtk) | Token-optimised Claude CLI proxy |
-| [ccstatusline](https://github.com/sirmalloc/ccstatusline) | Status line (managed via `statusLine` in settings.json, no install script) |
+| [ccstatusline](https://github.com/sirmalloc/ccstatusline) | Status line (managed via `statusLine` in settings.json; install script writes `~/.config/ccstatusline/settings.json`) |
 | [caveman](https://github.com/JuliusBrussee/caveman) | Token-efficient mode (also a Claude plugin) |
 | [codebase-memory-mcp](https://github.com/DeusData/codebase-memory-mcp) | Code knowledge graph MCP server |

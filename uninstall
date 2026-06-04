@@ -28,7 +28,7 @@ function remove_symlinks() {
   done
 
   # hooks we installed
-  for hook_file in "$SOURCE_DIR/config/hooks/"*(N); do
+  for hook_file in "$SOURCE_DIR/hooks/"*(N); do
     [[ -f "$hook_file" ]] || continue
     local dest="$claude_dir/hooks/$(basename $hook_file)"
     [[ -L "$dest" ]] && rm "$dest" && info "Removed hook $(basename $hook_file)"
@@ -37,11 +37,8 @@ function remove_symlinks() {
   # agents dir symlink
   [[ -L "$claude_dir/agents" ]] && rm "$claude_dir/agents" && info "Removed agents"
 
-  # skills
-  for skill_file in "$SOURCE_DIR/skills/"*.md(N); do
-    local dest="$claude_dir/skills/$(basename $skill_file)"
-    [[ -L "$dest" ]] && rm "$dest" && info "Removed skill $(basename $skill_file)"
-  done
+  # skills (installed as dir symlink)
+  [[ -L "$claude_dir/skills" ]] && rm "$claude_dir/skills" && info "Removed skills"
 
   # memory
   local project_path=$(echo "$SOURCE_DIR" | sed 's|/|-|g')
