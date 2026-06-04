@@ -132,25 +132,38 @@ function link_memory() {
   info "Memory path: $memory_dest"
 }
 
-# ── install plugins from settings.json enabledPlugins ──────────────────────
+# ── sync plugins: install missing, uninstall extras ─────────────────────────
 function install_plugins() {
   local settings="$SOURCE_DIR/config/settings.json"
   [[ -f "$settings" ]] || { warn "settings.json not found, skipping plugins"; return; }
 
-  local plugins
-  plugins=($(node -e "
+  local desired
+  desired=($(node -e "
     const s = require('$settings');
     const p = Object.keys(s.enabledPlugins || {});
     process.stdout.write(p.join('\n'));
   " 2>/dev/null))
 
-  for plugin in "${plugins[@]}"; do
+  for plugin in "${desired[@]}"; do
     [[ -z "$plugin" ]] && continue
     info "Plugin: $plugin"
     claude plugin install "$plugin" 2>/dev/null \
       || warn "$plugin: install failed or already installed"
   done
-  success "Plugins done"
+
+  local installed
+  installed=($(claude plugin list 2>/dev/null | grep '❯' | awk '{print $2}'))
+
+  for plugin in "${installed[@]}"; do
+    [[ -z "$plugin" ]] && continue
+    if [[ ! " ${desired[@]} " =~ " $plugin " ]]; then
+      info "Removing unlisted plugin: $plugin"
+      claude plugin uninstall "$plugin" 2>/dev/null \
+        || warn "$plugin: uninstall failed"
+    fi
+  done
+
+  success "Plugins synced"
 }
 
 # ── run tool install scripts ────────────────────────────────────────────────
