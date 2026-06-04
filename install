@@ -90,30 +90,22 @@ function link_agents() {
   symlink "$SOURCE_DIR/agents" "$HOME/.claude/agents"
 }
 
-# ── symlink individual skills ───────────────────────────────────────────────
+# ── symlink skills/ directory ───────────────────────────────────────────────
 function link_skills() {
-  local skills_dir="$HOME/.claude/skills"
-  mkdir -p "$skills_dir"
+  local skills_target="$HOME/.claude/skills"
 
-  # Remove old flat .md symlinks from before skills were subdir-based
-  for link in "$skills_dir/"*.md(N); do
-    [[ -L "$link" ]] || continue
-    local target=$(readlink "$link")
-    [[ "$target" == "$SOURCE_DIR/skills/"* ]] && { rm "$link"; warn "Removed old flat skill symlink: $(basename $link)"; }
-  done
+  # Migrate: remove old per-skill symlinks if skills_target is still a real dir
+  if [[ -d "$skills_target" && ! -L "$skills_target" ]]; then
+    for link in "$skills_target/"*(N); do
+      [[ -L "$link" ]] || continue
+      local target=$(readlink "$link")
+      [[ "$target" == "$SOURCE_DIR/skills/"* ]] && rm "$link"
+    done
+    rm -f "$skills_target/"*.bak(N)
+    rmdir "$skills_target" 2>/dev/null || warn "$skills_target not empty after cleanup — check before re-running install"
+  fi
 
-  # Remove dangling dir symlinks pointing into this repo (handles renames/deletes)
-  for link in "$skills_dir/"*(N/); do
-    [[ -L "$link" ]] || continue
-    local target=$(readlink "$link")
-    [[ "$target" == "$SOURCE_DIR/skills/"* ]] || continue
-    [[ -d "$target" ]] || { rm -f "$link"; warn "Removed stale skill symlink: $(basename $link)"; }
-  done
-
-  for skill_dir in "$SOURCE_DIR/skills/"*(N/); do
-    local name=$(basename "$skill_dir")
-    symlink "$skill_dir" "$skills_dir/$name"
-  done
+  symlink "$SOURCE_DIR/skills" "$skills_target"
 }
 
 # ── symlink memory/ to project memory path ─────────────────────────────────
