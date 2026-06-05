@@ -1,141 +1,141 @@
 {
-  "permissions": {
-    "defaultMode": "default"
-  },
-  "hooks": {
-    "SessionStart": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node ~/.claude/hooks/caveman-activate.js",
-            "timeout": 5,
-            "statusMessage": "Loading caveman mode..."
-          }
+    "permissions": {
+        "defaultMode": "default"
+    },
+    "hooks": {
+        "SessionStart": [
+            {
+                "hooks": [
+                    {
+                        "type": "command",
+                        "command": "node ~/.claude/hooks/caveman-activate.js",
+                        "timeout": 5,
+                        "statusMessage": "Loading caveman mode..."
+                    }
+                ]
+            },
+            {
+                "matcher": "startup",
+                "hooks": [
+                    {
+                        "type": "command",
+                        "command": "~/.claude/hooks/cbm-session-reminder"
+                    }
+                ]
+            },
+            {
+                "matcher": "startup",
+                "hooks": [
+                    {
+                        "type": "command",
+                        "command": "~/.claude/hooks/cbm-session-reminder"
+                    }
+                ]
+            },
+            {
+                "matcher": "resume",
+                "hooks": [
+                    {
+                        "type": "command",
+                        "command": "~/.claude/hooks/cbm-session-reminder"
+                    }
+                ]
+            },
+            {
+                "matcher": "clear",
+                "hooks": [
+                    {
+                        "type": "command",
+                        "command": "~/.claude/hooks/cbm-session-reminder"
+                    }
+                ]
+            },
+            {
+                "matcher": "compact",
+                "hooks": [
+                    {
+                        "type": "command",
+                        "command": "~/.claude/hooks/cbm-session-reminder"
+                    }
+                ]
+            }
+        ],
+        "UserPromptSubmit": [
+            {
+                "hooks": [
+                    {
+                        "type": "command",
+                        "command": "node ~/.claude/hooks/caveman-mode-tracker.js",
+                        "timeout": 5,
+                        "statusMessage": "Tracking caveman mode..."
+                    }
+                ]
+            }
+        ],
+        "PreToolUse": [
+            {
+                "matcher": "Bash",
+                "hooks": [
+                    {
+                        "type": "command",
+                        "command": "rtk hook claude"
+                    }
+                ]
+            },
+            {
+                "matcher": "Grep|Glob|Read|Search",
+                "hooks": [
+                    {
+                        "type": "command",
+                        "command": "~/.claude/hooks/cbm-code-discovery-gate"
+                    }
+                ]
+            }
+        ],
+        "Stop": [
+            {
+                "hooks": [
+                    {
+                        "type": "command",
+                        "command": "~/.claude/hooks/session-stop-memory-reminder"
+                    }
+                ]
+            }
         ]
-      },
-      {
-        "matcher": "startup",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "~/.claude/hooks/session-start-update-check"
-          }
-        ]
-      },
-      {
-        "matcher": "startup",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "~/.claude/hooks/cbm-session-reminder"
-          }
-        ]
-      },
-      {
-        "matcher": "resume",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "~/.claude/hooks/cbm-session-reminder"
-          }
-        ]
-      },
-      {
-        "matcher": "clear",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "~/.claude/hooks/cbm-session-reminder"
-          }
-        ]
-      },
-      {
-        "matcher": "compact",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "~/.claude/hooks/cbm-session-reminder"
-          }
-        ]
-      }
-    ],
-    "UserPromptSubmit": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node ~/.claude/hooks/caveman-mode-tracker.js",
-            "timeout": 5,
-            "statusMessage": "Tracking caveman mode..."
-          }
-        ]
-      }
-    ],
-    "PreToolUse": [
-      {
-        "matcher": "Bash",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "rtk hook claude"
-          }
-        ]
-      },
-      {
-        "matcher": "Grep|Glob|Read|Search",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "~/.claude/hooks/cbm-code-discovery-gate"
-          }
-        ]
-      }
-    ],
-    "Stop": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "~/.claude/hooks/session-stop-memory-reminder"
-          }
-        ]
-      }
-    ]
-  },
-  "statusLine": {
-    "type": "command",
-    "command": "npx -y ccstatusline@latest",
-    "padding": 0,
-    "refreshInterval": 10
-  },
-  "enabledPlugins": {
-    "superpowers@claude-plugins-official": true,
-    "context7@claude-plugins-official": true,
-    "code-review@claude-plugins-official": true,
-    "code-simplifier@claude-plugins-official": true,
-    "github@claude-plugins-official": true,
-    "playwright@claude-plugins-official": true,
-    "commit-commands@claude-plugins-official": true,
-    "caveman@caveman": true
-  },
-  "extraKnownMarketplaces": {
-    "caveman": {
-      "source": {
-        "source": "github",
-        "repo": "JuliusBrussee/caveman"
-      }
+    },
+    "statusLine": {
+        "type": "command",
+        "command": "npx -y ccstatusline@latest",
+        "padding": 0,
+        "refreshInterval": 10
+    },
+    "enabledPlugins": {
+        "superpowers@claude-plugins-official": true,
+        "context7@claude-plugins-official": true,
+        "code-review@claude-plugins-official": true,
+        "code-simplifier@claude-plugins-official": true,
+        "github@claude-plugins-official": true,
+        "playwright@claude-plugins-official": true,
+        "commit-commands@claude-plugins-official": true,
+        "caveman@caveman": true
+    },
+    "extraKnownMarketplaces": {
+        "caveman": {
+            "source": {
+                "source": "github",
+                "repo": "JuliusBrussee/caveman"
+            }
+        }
+    },
+    "skipDangerousModePermissionPrompt": true,
+    "theme": "dark",
+    "editorMode": "normal",
+    "preferredNotifChannel": "auto",
+    "remoteControlAtStartup": true,
+    "inputNeededNotifEnabled": true,
+    "agentPushNotifEnabled": true,
+    "skillListingBudgetFraction": 0.02,
+    "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_PAT}"
     }
-  },
-  "skipDangerousModePermissionPrompt": true,
-  "theme": "dark",
-  "editorMode": "normal",
-  "preferredNotifChannel": "auto",
-  "remoteControlAtStartup": true,
-  "inputNeededNotifEnabled": true,
-  "agentPushNotifEnabled": true,
-  "skillListingBudgetFraction": 0.02,
-  "env": {
-    "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_PAT}"
-  }
 }

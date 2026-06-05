@@ -1,8 +1,8 @@
 #!/bin/bash
 # Gate hook: nudges Claude toward codebase-memory-mcp for code discovery.
 # First Grep/Glob/Read/Search per session -> block. Subsequent -> allow.
-# CLAUDE_CODE_SESSION_ID is set by Claude Code and is constant per session.
-GATE=/tmp/cbm-code-discovery-gate-${CLAUDE_CODE_SESSION_ID:-$PPID}
+# PPID = Claude Code process PID, unique per session.
+GATE=/tmp/cbm-code-discovery-gate-$PPID
 find /tmp -name 'cbm-code-discovery-gate-*' -mtime +1 -delete 2>/dev/null
 if [ -f "$GATE" ]; then
     exit 0
