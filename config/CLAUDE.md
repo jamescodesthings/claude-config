@@ -99,6 +99,12 @@ When a dep is added, removed, or upgraded:
 
 If a test fails: retry once. If it fails again, escalate — do not loop or skip.
 
+## Global Memories
+
+User preferences and cross-project feedback that apply to every project live at `~/.claude/memory/`. Read all `*.md` files there at every session start, alongside project-specific memories. These take precedence over project memories for `user` and `feedback` type entries.
+
+At the end of a session, if you discover a preference or feedback that should apply globally (not just to this project), save it to `~/.claude/memory/` in addition to or instead of project memory.
+
 ## Auto-Memory
 
 At the end of each session, save to the project memory directory:
@@ -147,7 +153,7 @@ The `## Post-implementation checks` section is required — it's the hook the `p
 
 ## Project Memory Seeding
 
-When initializing a new project (via `claude init`, first run in a directory, or on request), also seed the project memory directory alongside the CLAUDE.md.
+When initializing a new project (via `claude init`, first run in a directory, or on request), seed the project memory directory alongside the CLAUDE.md.
 
 The memory directory lives at `~/.claude/projects/<encoded-path>/memory/` where `<encoded-path>` is the project path with `/` replaced by `-`. For `/Users/alice/projects/myapp`, that's `~/.claude/projects/-Users-alice-projects-myapp/memory/`. Memory files go directly in `memory/` — no subdirectories.
 
@@ -160,7 +166,7 @@ The memory directory lives at `~/.claude/projects/<encoded-path>/memory/` where 
 # Project Memory
 ```
 
-3. Create an initial `project_context.md` memory capturing what you know about the project from its CLAUDE.md:
+3. Create an initial `project_context.md` capturing what you know about the project from its CLAUDE.md:
 
 ```markdown
 ---
@@ -173,4 +179,4 @@ metadata:
 [Fill in: what the project is, its stack, any non-obvious conventions discovered during init.]
 ```
 
-Fill in the project_context body based on what's in the CLAUDE.md. If there's not enough to say yet, leave a one-line placeholder and update it as the project evolves.
+Fill in the body from the CLAUDE.md. Global user/feedback memories are already available via `~/.claude/memory/` — do not copy them here.
