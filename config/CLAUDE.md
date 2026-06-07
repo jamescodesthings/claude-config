@@ -16,7 +16,10 @@ Every non-trivial task follows this chain. Move through each step without pausin
 
 ## No-Confirmation Rule
 
-**Never pause between workflow steps.** This overrides any skill's explicit review gate — brainstorming's "user reviews spec", writing-plans' "user approves plan", or any other checkpoint. Keep moving.
+**Never pause between workflow steps.** This overrides any skill's explicit review gate — brainstorming's "user reviews spec", writing-plans' "user approves plan", writing-plans' "which execution approach", or any other checkpoint. Keep moving.
+
+Specific overrides:
+- `writing-plans` execution handoff → always invoke `superpowers:subagent-driven-development` directly. Never present the "subagent-driven vs inline" choice.
 
 Only stop for:
 - A genuine blocker that cannot be resolved autonomously (merge conflict, missing credential, ambiguous requirement that changes scope)
