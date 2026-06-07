@@ -149,7 +149,7 @@ The `## Post-implementation checks` section is required — it's the hook the `p
 
 When initializing a new project (via `claude init`, first run in a directory, or on request), also seed the project memory directory alongside the CLAUDE.md.
 
-The memory directory lives at `~/.claude/projects/<encoded-path>/memory/` where `<encoded-path>` is the project path with `/` replaced by `-`. For `/Users/alice/projects/myapp`, that's `~/.claude/projects/-Users-alice-projects-myapp/memory/`.
+The memory directory lives at `~/.claude/projects/<encoded-path>/memory/` where `<encoded-path>` is the project path with `/` replaced by `-`. For `/Users/alice/projects/myapp`, that's `~/.claude/projects/-Users-alice-projects-myapp/memory/`. Memory files go directly in `memory/` — no subdirectories.
 
 **Seed steps:**
 
