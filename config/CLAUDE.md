@@ -144,3 +144,33 @@ When creating or populating a `CLAUDE.md` for a project (via `claude init`, firs
 ```
 
 The `## Post-implementation checks` section is required — it's the hook the `post-implementation-review` skill uses to run project-specific checks after every code-changing agent. Leave it present even if empty. Fill in project-specific commands as the project evolves.
+
+## Project Memory Seeding
+
+When initializing a new project (via `claude init`, first run in a directory, or on request), also seed the project memory directory alongside the CLAUDE.md.
+
+The memory directory lives at `~/.claude/projects/<encoded-path>/memory/` where `<encoded-path>` is the project path with `/` replaced by `-`. For `/Users/alice/projects/myapp`, that's `~/.claude/projects/-Users-alice-projects-myapp/memory/`.
+
+**Seed steps:**
+
+1. Create the memory directory if it doesn't exist
+2. Create `MEMORY.md` as an empty index:
+
+```markdown
+# Project Memory
+```
+
+3. Create an initial `project_context.md` memory capturing what you know about the project from its CLAUDE.md:
+
+```markdown
+---
+name: project-context
+description: Core project identity — stack, purpose, key conventions
+metadata:
+  type: project
+---
+
+[Fill in: what the project is, its stack, any non-obvious conventions discovered during init.]
+```
+
+Fill in the project_context body based on what's in the CLAUDE.md. If there's not enough to say yet, leave a one-line placeholder and update it as the project evolves.
