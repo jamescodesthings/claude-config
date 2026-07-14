@@ -1,4 +1,8 @@
 {
+    "skillListingBudgetFraction": 0.02,
+    "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_PAT}"
+    },
     "permissions": {
         "defaultMode": "default"
     },
@@ -111,9 +115,5 @@
     "preferredNotifChannel": "auto",
     "remoteControlAtStartup": true,
     "inputNeededNotifEnabled": true,
-    "agentPushNotifEnabled": true,
-    "skillListingBudgetFraction": 0.02,
-    "env": {
-        "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_PAT}"
-    }
+    "agentPushNotifEnabled": true
 }
