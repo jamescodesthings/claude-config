@@ -16,42 +16,6 @@
                         "command": "~/.claude/hooks/cbm-session-reminder"
                     }
                 ]
-            },
-            {
-                "matcher": "startup",
-                "hooks": [
-                    {
-                        "type": "command",
-                        "command": "~/.claude/hooks/cbm-session-reminder"
-                    }
-                ]
-            },
-            {
-                "matcher": "resume",
-                "hooks": [
-                    {
-                        "type": "command",
-                        "command": "~/.claude/hooks/cbm-session-reminder"
-                    }
-                ]
-            },
-            {
-                "matcher": "clear",
-                "hooks": [
-                    {
-                        "type": "command",
-                        "command": "~/.claude/hooks/cbm-session-reminder"
-                    }
-                ]
-            },
-            {
-                "matcher": "compact",
-                "hooks": [
-                    {
-                        "type": "command",
-                        "command": "~/.claude/hooks/cbm-session-reminder"
-                    }
-                ]
             }
         ],
         "PreToolUse": [
@@ -61,15 +25,6 @@
                     {
                         "type": "command",
                         "command": "rtk hook claude"
-                    }
-                ]
-            },
-            {
-                "matcher": "Grep|Glob|Read|Search",
-                "hooks": [
-                    {
-                        "type": "command",
-                        "command": "~/.claude/hooks/cbm-code-discovery-gate"
                     }
                 ]
             }
@@ -117,5 +72,6 @@
     "preferredNotifChannel": "auto",
     "remoteControlAtStartup": true,
     "inputNeededNotifEnabled": true,
-    "agentPushNotifEnabled": true
+    "agentPushNotifEnabled": true,
+    "model": "claude-fable-5[1m]"
 }
