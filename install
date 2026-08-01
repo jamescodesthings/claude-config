@@ -208,7 +208,6 @@ function check_shell_rc() {
 # ── write metadata ──────────────────────────────────────────────────────────
 function write_metadata() {
   echo "$SOURCE_DIR" > "$HOME/.claude/.claude-config-dir"
-  date +%s       > "$HOME/.claude/.last-update"
   success "Metadata written"
 }
 
