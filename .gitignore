@@ -45,6 +45,9 @@ Temporary Items
 skills-wip/*
 !skills-wip/.gitkeep
 .env.[0-9]*
+# transient key material / ciphertext staging — must never be committable
+.env.tmp*
+skills-encrypted.tmp.*
 
 # Created by https://www.toptal.com/developers/gitignore/api/node
 # Edit at https://www.toptal.com/developers/gitignore?templates=node

@@ -1,6 +1,11 @@
 #!/usr/bin/env zsh
 # Encrypts every file in skills-wip/ into its matching path under
 # skills-encrypted/ (or an override destination root passed as $1).
+#
+# The destination is kept as an exact mirror of the source:
+#   - a file whose plaintext is unchanged since it was last encrypted is left
+#     alone (re-encrypting re-salts it and churns the whole git tree)
+#   - a destination file with no corresponding source file is pruned
 repo_root="${0:A:h}/.."
 source "$repo_root/tools/lib"
 load_env "$repo_root/.env"
@@ -11,13 +16,36 @@ dst_root="${1:-$repo_root/skills-encrypted}"
 [[ -n "$SKILLS_ENCRYPTION_KEY" ]] || error "SKILLS_ENCRYPTION_KEY not set"
 
 count=0
+unchanged=0
 while IFS= read -r -d '' file; do
   rel="${file#$src_root/}"
   dest="$dst_root/$rel"
+
+  # Skip if the existing ciphertext already decrypts to this exact plaintext.
+  if [[ -f "$dest" ]] && openssl enc -d -aes-256-cbc -pbkdf2 \
+       -pass env:SKILLS_ENCRYPTION_KEY -in "$dest" 2>/dev/null | cmp -s - "$file"; then
+    unchanged=$((unchanged + 1))
+    continue
+  fi
+
   mkdir -p "${dest:h}"
-  openssl enc -aes-256-cbc -pbkdf2 -salt -k "$SKILLS_ENCRYPTION_KEY" -in "$file" -out "$dest" \
+  openssl enc -aes-256-cbc -pbkdf2 -salt -pass env:SKILLS_ENCRYPTION_KEY -in "$file" -out "$dest" \
     || error "Failed to encrypt $rel"
   count=$((count + 1))
 done < <(find "$src_root" -type f ! -name '.gitkeep' -print0)
 
-success "Encrypted $count file(s)"
+# Prune ciphertext whose plaintext no longer exists.
+pruned=0
+while IFS= read -r -d '' file; do
+  rel="${file#$dst_root/}"
+  [[ -f "$src_root/$rel" ]] && continue
+  rm -f "$file" || error "Failed to prune stale ciphertext"
+  pruned=$((pruned + 1))
+done < <(find "$dst_root" -type f ! -name '.gitkeep' -print0 2>/dev/null)
+
+# Drop directories left empty by pruning (nested dirs empty out in stages).
+while [[ -n $(find "$dst_root" -mindepth 1 -type d -empty -print -quit 2>/dev/null) ]]; do
+  find "$dst_root" -mindepth 1 -type d -empty -exec rmdir {} + 2>/dev/null || break
+done
+
+success "Encrypted $count file(s), $unchanged unchanged, $pruned pruned"

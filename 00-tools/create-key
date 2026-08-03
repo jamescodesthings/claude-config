@@ -4,19 +4,30 @@ repo_root="${0:A:h}/.."
 source "$repo_root/tools/lib"
 
 env_file="$repo_root/.env"
+
+# The tmp/bak files below hold the new key in plaintext. Remove them on any
+# exit path so an aborted run never leaves key material lying around untracked.
+cleanup() { rm -f "$env_file.tmp" "$env_file.tmp.bak" }
+trap cleanup EXIT INT TERM
+
 new_key=$(openssl rand -base64 32)
+
+umask 077
 
 if [[ -f "$env_file" ]]; then
   n=1
   while [[ -f "$env_file.$n" ]]; do
     n=$((n + 1))
   done
-  cp "$env_file" "$env_file.$n"
+  cp "$env_file" "$env_file.$n" || error "Failed to back up .env"
+  chmod 600 "$env_file.$n"
   info "Backed up existing .env to .env.$n"
-  cp "$env_file" "$env_file.tmp"
+  cp "$env_file" "$env_file.tmp" || error "Failed to stage new .env"
 else
   : > "$env_file.tmp"
 fi
+
+chmod 600 "$env_file.tmp"
 
 if grep -q '^SKILLS_ENCRYPTION_KEY=' "$env_file.tmp" 2>/dev/null; then
   sed -i.bak "s#^SKILLS_ENCRYPTION_KEY=.*#SKILLS_ENCRYPTION_KEY=$new_key#" "$env_file.tmp"
@@ -27,5 +38,7 @@ else
   print -r -- "SKILLS_ENCRYPTION_KEY=$new_key" >> "$env_file.tmp"
 fi
 
-mv "$env_file.tmp" "$env_file"
+mv "$env_file.tmp" "$env_file" || error "Failed to move new .env into place"
+chmod 600 "$env_file" || error "Failed to restrict permissions on .env"
+trap - EXIT INT TERM
 success "New encryption key written to .env"

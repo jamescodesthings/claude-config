@@ -14,7 +14,8 @@ trap cleanup EXIT
 load_env "$repo_root/.env"
 
 info "Decrypting with current key..."
-"$repo_root/00-tools/decrypt" "$encrypted_root" "$wip_root" \
+# Skip anything already decrypted — never clobber uncommitted plaintext edits.
+SKILLS_DECRYPT_SKIP_EXISTING=1 "$repo_root/00-tools/decrypt" "$encrypted_root" "$wip_root" \
   || error "Decrypt with current key failed, aborting rotation"
 
 old_key="$SKILLS_ENCRYPTION_KEY"
@@ -32,8 +33,15 @@ info "Re-encrypting with new key into temp dir..."
 "$repo_root/00-tools/encrypt" "$tmp_root" \
   || error "Re-encrypt with new key failed — skills-encrypted left untouched"
 
-rm -rf "$encrypted_root"
-mv "$tmp_root" "$encrypted_root"
+rm -rf "$encrypted_root" || error "Failed to clear $encrypted_root — rotation aborted"
+
+if ! mv "$tmp_root" "$encrypted_root"; then
+  # Disarm the cleanup trap first: $tmp_root now holds the only copy of the
+  # freshly re-encrypted tree, so it is the recovery path — do not delete it.
+  trap - EXIT
+  error "Failed to move the re-encrypted tree into place. Your only copy is at ${tmp_root:t} — move it to skills-encrypted/ manually before doing anything else."
+fi
+
 trap - EXIT
 
 success "Key rotation complete"
