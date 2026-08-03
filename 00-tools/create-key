@@ -1,0 +1,29 @@
+#!/usr/bin/env zsh
+# Generates a new symmetric encryption key, backs up the current .env, writes a new one.
+repo_root="${0:A:h}/.."
+source "$repo_root/tools/lib"
+
+env_file="$repo_root/.env"
+new_key=$(openssl rand -base64 32)
+
+if [[ -f "$env_file" ]]; then
+  n=1
+  while [[ -f "$env_file.$n" ]]; do
+    n=$((n + 1))
+  done
+  cp "$env_file" "$env_file.$n"
+  info "Backed up existing .env to .env.$n"
+  cp "$env_file" "$env_file.tmp"
+else
+  : > "$env_file.tmp"
+fi
+
+if grep -q '^SKILLS_ENCRYPTION_KEY=' "$env_file.tmp" 2>/dev/null; then
+  sed -i.bak "s/^SKILLS_ENCRYPTION_KEY=.*/SKILLS_ENCRYPTION_KEY=$new_key/" "$env_file.tmp"
+  rm -f "$env_file.tmp.bak"
+else
+  print -r -- "SKILLS_ENCRYPTION_KEY=$new_key" >> "$env_file.tmp"
+fi
+
+mv "$env_file.tmp" "$env_file"
+success "New encryption key written to .env"
