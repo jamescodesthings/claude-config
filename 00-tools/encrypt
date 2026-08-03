@@ -32,20 +32,32 @@ while IFS= read -r -d '' file; do
   openssl enc -aes-256-cbc -pbkdf2 -salt -pass env:SKILLS_ENCRYPTION_KEY -in "$file" -out "$dest" \
     || error "Failed to encrypt $rel"
   count=$((count + 1))
-done < <(find "$src_root" -type f ! -name '.gitkeep' -print0)
+done < <(find "$src_root" -type f ! -name '.gitkeep' -print0 2>/dev/null)
 
-# Prune ciphertext whose plaintext no longer exists.
+# Prune ciphertext whose plaintext no longer exists — but refuse if the
+# source root is empty or missing while the destination is not. That combo
+# means skills-wip/ hasn't been decrypted yet (fresh clone, key present but
+# decrypt not yet run), not that skills were actually deleted. Pruning in
+# that case would wipe all real ciphertext, and the pre-commit hook would
+# happily stage that mass deletion.
+src_file_count=$(find "$src_root" -type f ! -name '.gitkeep' 2>/dev/null | wc -l | tr -d ' ')
+dst_file_count=$(find "$dst_root" -type f ! -name '.gitkeep' 2>/dev/null | wc -l | tr -d ' ')
+
 pruned=0
-while IFS= read -r -d '' file; do
-  rel="${file#$dst_root/}"
-  [[ -f "$src_root/$rel" ]] && continue
-  rm -f "$file" || error "Failed to prune stale ciphertext"
-  pruned=$((pruned + 1))
-done < <(find "$dst_root" -type f ! -name '.gitkeep' -print0 2>/dev/null)
+if [[ "$src_file_count" -eq 0 && "$dst_file_count" -gt 0 ]]; then
+  warn "skills-wip/ has no files but skills-encrypted/ has $dst_file_count — refusing to prune. Run 00-tools/decrypt first if this is a fresh clone."
+else
+  while IFS= read -r -d '' file; do
+    rel="${file#$dst_root/}"
+    [[ -f "$src_root/$rel" ]] && continue
+    rm -f "$file" || error "Failed to prune stale ciphertext"
+    pruned=$((pruned + 1))
+  done < <(find "$dst_root" -type f ! -name '.gitkeep' -print0 2>/dev/null)
 
-# Drop directories left empty by pruning (nested dirs empty out in stages).
-while [[ -n $(find "$dst_root" -mindepth 1 -type d -empty -print -quit 2>/dev/null) ]]; do
-  find "$dst_root" -mindepth 1 -type d -empty -exec rmdir {} + 2>/dev/null || break
-done
+  # Drop directories left empty by pruning (nested dirs empty out in stages).
+  while [[ -n $(find "$dst_root" -mindepth 1 -type d -empty -print -quit 2>/dev/null) ]]; do
+    find "$dst_root" -mindepth 1 -type d -empty -exec rmdir {} + 2>/dev/null || break
+  done
+fi
 
 success "Encrypted $count file(s), $unchanged unchanged, $pruned pruned"
