@@ -182,3 +182,7 @@ metadata:
 ```
 
 Fill in the body from the CLAUDE.md. Global user/feedback memories are already available via `~/.claude/memory/` — do not copy them here.
+
+## Other AI Tools
+
+Distilled personal-rules copies for other AI tools (Claude Desktop/Mobile, Gemini, ChatGPT, Codex CLI) live in the gitignored `ai-instructions/` folder. When a change significantly alters rules that those copies depend on (e.g. editing the adhd-mode or prose/document-format WIP skills), tell James so he can manually update the affected files there — this is not automated yet.
