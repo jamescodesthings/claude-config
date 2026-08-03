@@ -1,0 +1,57 @@
+#!/usr/bin/env zsh
+# UserPromptSubmit hook: nudges self-care (rabbit-hole, lunch, dinner, bed)
+# based on the local London clock and the state file adhd-mode-session-start
+# maintains. Prints nothing when no threshold is newly crossed.
+state_file="$HOME/.claude/.adhd-mode-state.json"
+[[ -f "$state_file" ]] || exit 0
+
+now=$(TZ=Europe/London date +%s)
+today=$(TZ=Europe/London date +%F)
+hhmm=$(TZ=Europe/London date +%H%M)
+
+session_start=$(grep -o '"session_start": *[0-9]*' "$state_file" | grep -o '[0-9]*$')
+last_rabbithole=$(grep -o '"last_rabbithole_nudge": *[0-9]*' "$state_file" | grep -o '[0-9]*$')
+last_lunch=$(grep -o '"last_lunch_date": *"[^"]*"' "$state_file" | grep -o '"[^"]*"$' | tr -d '"')
+last_dinner=$(grep -o '"last_dinner_date": *"[^"]*"' "$state_file" | grep -o '"[^"]*"$' | tr -d '"')
+last_bed=$(grep -o '"last_bed_date": *"[^"]*"' "$state_file" | grep -o '"[^"]*"$' | tr -d '"')
+
+[[ -n "$session_start" ]] || session_start=$now
+[[ -n "$last_rabbithole" ]] || last_rabbithole=$session_start
+
+messages=()
+
+if (( now - last_rabbithole >= 9000 )); then
+  messages+=("SELF-CARE: 2.5h+ into this session — drink water, eat something, take a bathroom break.")
+  last_rabbithole=$now
+fi
+
+if { [[ "$hhmm" > "1200" ]] || [[ "$hhmm" == "1200" ]]; } && [[ "$hhmm" < "1300" ]] && [[ "$last_lunch" != "$today" ]]; then
+  messages+=("SELF-CARE: it's lunchtime — go eat.")
+  last_lunch=$today
+fi
+
+if { [[ "$hhmm" > "1700" ]] || [[ "$hhmm" == "1700" ]]; } && [[ "$hhmm" < "1800" ]] && [[ "$last_dinner" != "$today" ]]; then
+  messages+=("SELF-CARE: sort dinner and feed the dogs.")
+  last_dinner=$today
+fi
+
+if { [[ "$hhmm" > "2300" ]] || [[ "$hhmm" == "2300" ]]; } && [[ "$last_bed" != "$today" ]]; then
+  messages+=("SELF-CARE: it's 11pm — go to bed.")
+  last_bed=$today
+fi
+
+cat > "$state_file" <<EOF
+{
+  "session_start": $session_start,
+  "last_rabbithole_nudge": $last_rabbithole,
+  "last_lunch_date": "$last_lunch",
+  "last_dinner_date": "$last_dinner",
+  "last_bed_date": "$last_bed"
+}
+EOF
+
+for m in "${messages[@]}"; do
+  print -r -- "$m"
+done
+
+exit 0

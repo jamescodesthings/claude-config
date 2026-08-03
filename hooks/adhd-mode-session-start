@@ -1,0 +1,28 @@
+#!/usr/bin/env zsh
+# SessionStart hook: (re)initializes the adhd-mode self-care state file's
+# session-start timestamp and rabbit-hole nudge marker for a fresh session,
+# preserving the day-scoped lunch/dinner/bed nudge markers across sessions.
+state_file="$HOME/.claude/.adhd-mode-state.json"
+now=$(TZ=Europe/London date +%s)
+
+if [[ -f "$state_file" ]]; then
+  last_lunch=$(grep -o '"last_lunch_date": *"[^"]*"' "$state_file" | grep -o '"[^"]*"$' | tr -d '"')
+  last_dinner=$(grep -o '"last_dinner_date": *"[^"]*"' "$state_file" | grep -o '"[^"]*"$' | tr -d '"')
+  last_bed=$(grep -o '"last_bed_date": *"[^"]*"' "$state_file" | grep -o '"[^"]*"$' | tr -d '"')
+else
+  last_lunch=""
+  last_dinner=""
+  last_bed=""
+fi
+
+cat > "$state_file" <<EOF
+{
+  "session_start": $now,
+  "last_rabbithole_nudge": $now,
+  "last_lunch_date": "$last_lunch",
+  "last_dinner_date": "$last_dinner",
+  "last_bed_date": "$last_bed"
+}
+EOF
+
+exit 0
