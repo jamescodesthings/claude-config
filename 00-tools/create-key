@@ -19,8 +19,10 @@ else
 fi
 
 if grep -q '^SKILLS_ENCRYPTION_KEY=' "$env_file.tmp" 2>/dev/null; then
-  sed -i.bak "s/^SKILLS_ENCRYPTION_KEY=.*/SKILLS_ENCRYPTION_KEY=$new_key/" "$env_file.tmp"
+  sed -i.bak "s#^SKILLS_ENCRYPTION_KEY=.*#SKILLS_ENCRYPTION_KEY=$new_key#" "$env_file.tmp"
   rm -f "$env_file.tmp.bak"
+  grep -qF "SKILLS_ENCRYPTION_KEY=$new_key" "$env_file.tmp" \
+    || error "Failed to write new key into $env_file.tmp (sed substitution did not take effect)"
 else
   print -r -- "SKILLS_ENCRYPTION_KEY=$new_key" >> "$env_file.tmp"
 fi

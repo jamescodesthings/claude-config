@@ -17,11 +17,16 @@ info "Decrypting with current key..."
 "$repo_root/00-tools/decrypt" "$encrypted_root" "$wip_root" \
   || error "Decrypt with current key failed, aborting rotation"
 
+old_key="$SKILLS_ENCRYPTION_KEY"
+
 info "Generating new key..."
 "$repo_root/00-tools/create-key" \
   || error "Key generation failed, aborting rotation"
 
 load_env "$repo_root/.env"
+
+[[ "$SKILLS_ENCRYPTION_KEY" != "$old_key" ]] \
+  || error "create-key did not produce a new key, aborting rotation"
 
 info "Re-encrypting with new key into temp dir..."
 "$repo_root/00-tools/encrypt" "$tmp_root" \
