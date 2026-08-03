@@ -6,6 +6,19 @@ source "$repo_root/tools/lib"
 
 encrypted_root="$repo_root/skills-encrypted"
 wip_root="$repo_root/skills-wip"
+
+# Refuse to run from a linked git worktree. Rotation replaces skills-encrypted/
+# wholesale with a re-encrypt of skills-wip/, and skills-wip/ is gitignored — a
+# worktree's copy only holds whatever plaintext was hand-copied into it, never
+# every WIP skill across all branches. Rotating here would drop every skill not
+# present locally. (00-tools/encrypt skips its prune pass in a worktree for the
+# same reason, but that is not enough here: the rm -rf below is unconditional.)
+git_dir=$(git -C "$repo_root" rev-parse --absolute-git-dir 2>/dev/null)
+git_common_dir=$(cd "$repo_root" && cd "$(git rev-parse --git-common-dir 2>/dev/null)" 2>/dev/null && pwd)
+if [[ -n "$git_dir" && -n "$git_common_dir" && "$git_dir" != "$git_common_dir" ]]; then
+  error "Linked git worktree detected — refusing to rotate the key here. Rotation rebuilds skills-encrypted/ from skills-wip/, which is gitignored and therefore incomplete in a worktree; every skill not copied here would be lost. Run 00-tools/cycle-key from the main checkout."
+fi
+
 tmp_root=$(mktemp -d "$repo_root/skills-encrypted.tmp.XXXXXX")
 
 cleanup() { rm -rf "$tmp_root" }
