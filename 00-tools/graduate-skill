@@ -12,6 +12,13 @@ claude_skills_dir="${CLAUDE_CONFIG_DIR:-$HOME/.claude}/skills"
 [[ -n "$fuzzed_slug" && -n "$real_name" ]] \
   || error "Usage: graduate-skill <fuzzed-slug> <real-name>"
 
+# Both names index into paths and $real_name into a sed replacement — reject
+# anything that could escape skills/ or break the sed delimiter.
+[[ "$fuzzed_slug" =~ '^[a-z0-9][a-z0-9-]*$' ]] \
+  || error "Invalid fuzzed slug — must match [a-z0-9-]"
+[[ "$real_name" =~ '^[a-z0-9][a-z0-9-]*$' ]] \
+  || error "Invalid real name — must match [a-z0-9-]"
+
 wip_dir="$repo_root/skills-wip/$fuzzed_slug"
 [[ -d "$wip_dir" ]] || error "No WIP skill at skills-wip/$fuzzed_slug"
 
@@ -30,6 +37,7 @@ rm -rf "$wip_dir"
 rm -rf "$repo_root/skills-encrypted/$fuzzed_slug"
 [[ -L "$claude_skills_dir/$fuzzed_slug" ]] && rm "$claude_skills_dir/$fuzzed_slug"
 
+mkdir -p "$claude_skills_dir" || error "Failed to create $claude_skills_dir"
 ln -s "$dest_dir" "$claude_skills_dir/$real_name" || error "Failed to symlink $real_name into $claude_skills_dir"
 
 success "Graduated skills-wip/$fuzzed_slug to skills/$real_name"
