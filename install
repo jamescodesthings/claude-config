@@ -15,6 +15,7 @@ if [ -z "$ZSH_VERSION" ]; then
 fi
 
 SOURCE_DIR=${0:a:h}
+CLAUDE_DIR="${CLAUDE_CONFIG_DIR:-$HOME/.claude}"
 
 # Source the lib for helper functions (info, success, warn, error)
 source "$SOURCE_DIR/tools/lib"
@@ -28,7 +29,10 @@ function symlink() {
     mv "$dest" "$dest.bak"
     warn "Backed up $dest → $dest.bak"
   fi
-  ln -s "$src" "$dest"
+  if ! ln -s "$src" "$dest"; then
+    warn "Failed to link $dest"
+    return 1
+  fi
   success "Linked $(basename $dest)"
 }
 
@@ -74,8 +78,8 @@ function update_claude() {
 
 # ── symlink config files ────────────────────────────────────────────────────
 function link_config() {
-  mkdir -p "$HOME/.claude"
-  local claude_dir="$HOME/.claude"
+  mkdir -p "$CLAUDE_DIR"
+  local claude_dir="$CLAUDE_DIR"
 
   symlink "$SOURCE_DIR/config/CLAUDE.md"     "$claude_dir/CLAUDE.md"
   symlink "$SOURCE_DIR/config/RTK.md"        "$claude_dir/RTK.md"
@@ -87,7 +91,7 @@ function link_config() {
 
 # ── symlink individual hooks into ~/.claude/hooks/ ──────────────────────────
 function link_hooks() {
-  local hooks_dir="$HOME/.claude/hooks"
+  local hooks_dir="$CLAUDE_DIR/hooks"
   mkdir -p "$hooks_dir"
 
   for hook_file in "$SOURCE_DIR/hooks/"*(N); do
@@ -103,12 +107,12 @@ function link_hooks() {
 
 # ── symlink agents/ directory ───────────────────────────────────────────────
 function link_agents() {
-  symlink "$SOURCE_DIR/agents" "$HOME/.claude/agents"
+  symlink "$SOURCE_DIR/agents" "$CLAUDE_DIR/agents"
 }
 
 # ── symlink each skill subfolder into ~/.claude/skills/ ─────────────────────
 function link_skills() {
-  local skills_target="$HOME/.claude/skills"
+  local skills_target="$CLAUDE_DIR/skills"
 
   # If a previous install made skills_target itself a symlink (old
   # whole-directory scheme), remove it so it can become a real directory.
@@ -123,7 +127,7 @@ function link_skills() {
 
 # ── decrypt WIP skills, symlink each into ~/.claude/skills/ ─────────────────
 function link_wip_skills() {
-  local skills_target="$HOME/.claude/skills"
+  local skills_target="$CLAUDE_DIR/skills"
   local wip_dir="$SOURCE_DIR/skills-wip"
 
   if [[ ! -f "$SOURCE_DIR/.env" ]]; then
@@ -131,7 +135,10 @@ function link_wip_skills() {
     return
   fi
 
-  "$SOURCE_DIR/00-tools/decrypt" || { warn "WIP skills decrypt failed"; return }
+  # Skip anything already decrypted: skills-wip/ is gitignored, so overwriting
+  # local plaintext edits here would be unrecoverable.
+  SKILLS_DECRYPT_SKIP_EXISTING=1 "$SOURCE_DIR/00-tools/decrypt" \
+    || { warn "WIP skills decrypt failed"; return }
 
   mkdir -p "$skills_target"
 
@@ -145,13 +152,21 @@ function link_git_hook() {
   local hook_src="$SOURCE_DIR/00-tools/pre-commit-encrypt-wip"
   [[ -f "$hook_src" ]] || return
   chmod +x "$hook_src"
-  mkdir -p "$SOURCE_DIR/.git/hooks"
-  symlink "$hook_src" "$SOURCE_DIR/.git/hooks/pre-commit"
+
+  # Resolve the real hooks dir: in a git worktree .git is a file, not a
+  # directory, so the path can't be assumed. rev-parse handles both layouts.
+  local hooks_dir
+  hooks_dir=$(git -C "$SOURCE_DIR" rev-parse --git-path hooks 2>/dev/null) \
+    || { warn "Not a git repo — skipping pre-commit hook"; return }
+  [[ "$hooks_dir" == /* ]] || hooks_dir="$SOURCE_DIR/$hooks_dir"
+
+  mkdir -p "$hooks_dir" || { warn "Could not create $hooks_dir — skipping pre-commit hook"; return }
+  symlink "$hook_src" "$hooks_dir/pre-commit"
 }
 
 # ── symlink memory/ to global memory path ───────────────────────────────────
 function link_global_memory() {
-  local memory_dest="$HOME/.claude/memory"
+  local memory_dest="$CLAUDE_DIR/memory"
 
   symlink "$SOURCE_DIR/memory" "$memory_dest"
   info "Global memory path: $memory_dest"
@@ -235,7 +250,7 @@ function check_shell_rc() {
 
 # ── write metadata ──────────────────────────────────────────────────────────
 function write_metadata() {
-  echo "$SOURCE_DIR" > "$HOME/.claude/.claude-config-dir"
+  echo "$SOURCE_DIR" > "$CLAUDE_DIR/.claude-config-dir"
   success "Metadata written"
 }
 
@@ -255,9 +270,9 @@ function run_legacy() {
 # ── remove dangling symlinks in ~/.claude managed dirs ──────────────────────
 function clean_dangling() {
   local dirs=(
-    "$HOME/.claude/skills"
-    "$HOME/.claude/hooks"
-    "$HOME/.claude/agents"
+    "$CLAUDE_DIR/skills"
+    "$CLAUDE_DIR/hooks"
+    "$CLAUDE_DIR/agents"
   )
 
   for dir in "${dirs[@]}"; do

@@ -1,6 +1,7 @@
 #!/usr/bin/env zsh
 
 SOURCE_DIR=${0:a:h}
+CLAUDE_DIR="${CLAUDE_CONFIG_DIR:-$HOME/.claude}"
 
 info()    { print -P "%F{blue}[info]%f  $1" }
 success() { print -P "%F{green}[ok]%f    $1" }
@@ -19,7 +20,7 @@ function run_uninstallers() {
 
 # remove all symlinks we created
 function remove_symlinks() {
-  local claude_dir="$HOME/.claude"
+  local claude_dir="$CLAUDE_DIR"
 
   # config files
   for f in CLAUDE.md RTK.md settings.json .mcp.json keybindings.json; do
@@ -46,12 +47,16 @@ function remove_symlinks() {
 
   # memory
   local project_path=$(echo "$SOURCE_DIR" | sed 's|/|-|g')
-  local memory_dest="$HOME/.claude/projects/$project_path/memory"
+  local memory_dest="$CLAUDE_DIR/projects/$project_path/memory"
   [[ -L "$memory_dest" ]] && rm "$memory_dest" && info "Removed memory symlink"
 
-  # git pre-commit hook
-  local pre_commit="$SOURCE_DIR/.git/hooks/pre-commit"
-  [[ -L "$pre_commit" ]] && rm "$pre_commit" && info "Removed pre-commit hook"
+  # git pre-commit hook (.git is a file, not a dir, inside a worktree)
+  local hooks_dir
+  if hooks_dir=$(git -C "$SOURCE_DIR" rev-parse --git-path hooks 2>/dev/null); then
+    [[ "$hooks_dir" == /* ]] || hooks_dir="$SOURCE_DIR/$hooks_dir"
+    local pre_commit="$hooks_dir/pre-commit"
+    [[ -L "$pre_commit" ]] && rm "$pre_commit" && info "Removed pre-commit hook"
+  fi
 
   success "Symlinks removed"
 }
@@ -74,7 +79,7 @@ function remove_claude() {
 
 # nuke config dirs
 function remove_config() {
-  rm -rf "$HOME/.claude"
+  rm -rf "$CLAUDE_DIR"
   rm -f  "$HOME/.claude.json"
   success "Removed ~/.claude and ~/.claude.json"
 }
