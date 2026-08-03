@@ -1,0 +1,48 @@
+#!/usr/bin/env zsh
+# Scaffolds a new WIP skill under a fuzzed, meaningless folder name and
+# symlinks it live into ~/.claude/skills for immediate testing.
+repo_root="${0:A:h}/.."
+source "$repo_root/tools/lib"
+
+wip_root="$repo_root/skills-wip"
+claude_skills_dir="${CLAUDE_CONFIG_DIR:-$HOME/.claude}/skills"
+
+fetch_slug() {
+  local resp
+  resp=$(curl -sf "https://random-word-api.herokuapp.com/word?number=2") || return 1
+  local words=("${(@f)$(print -r -- "$resp" | tr -d '[]"' | tr ',' '\n')}")
+  [[ ${#words[@]} -eq 2 ]] || return 1
+  print -r -- "${words[1]}-${words[2]}"
+}
+
+slug=""
+for _ in 1 2 3 4 5; do
+  candidate=$(fetch_slug) || error "Word-source API request failed"
+  if [[ ! -d "$wip_root/$candidate" ]]; then
+    slug="$candidate"
+    break
+  fi
+  warn "Slug $candidate already exists, retrying"
+done
+
+[[ -n "$slug" ]] || error "Could not find an unused fuzzed name after 5 attempts"
+
+echo -n "Description for this skill: "
+read -r description
+
+skill_dir="$wip_root/$slug"
+mkdir -p "$skill_dir"
+cat > "$skill_dir/SKILL.md" <<EOF
+---
+name: $slug
+description: $description
+---
+
+# $slug
+
+EOF
+
+mkdir -p "$claude_skills_dir"
+ln -s "$skill_dir" "$claude_skills_dir/$slug"
+
+success "Created WIP skill at skills-wip/$slug, symlinked into $claude_skills_dir/$slug"
