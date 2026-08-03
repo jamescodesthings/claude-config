@@ -230,3 +230,6 @@ config/env.local
 
 # Internal Claude planning docs — not useful to public consumers
 docs/superpowers/
+
+# Distilled personal rules for other AI tools — derived from private WIP skill content, never commit
+ai-instructions/
