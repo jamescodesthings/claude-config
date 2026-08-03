@@ -1,0 +1,15 @@
+#!/usr/bin/env zsh
+# Pre-commit hook: blocks any staged skills-wip plaintext, then encrypts and
+# stages the skills-encrypted counterpart for any changed WIP skill files.
+repo_root=$(git rev-parse --show-toplevel)
+source "$repo_root/tools/lib"
+
+staged_wip=$(git diff --cached --name-only --diff-filter=ACM | grep -E '^skills-wip/' | grep -v '\.gitkeep$')
+if [[ -n "$staged_wip" ]]; then
+  print -r -- "$staged_wip"
+  error "Refusing commit: plaintext skills-wip file(s) staged directly"
+fi
+
+"$repo_root/00-tools/encrypt" || error "Encrypt failed, aborting commit"
+
+git add "$repo_root/skills-encrypted"
