@@ -1,0 +1,23 @@
+#!/usr/bin/env zsh
+# Decrypts every file in skills-encrypted/ into its matching path under
+# skills-wip/ (or override source/destination roots passed as $1/$2).
+repo_root="${0:A:h}/.."
+source "$repo_root/tools/lib"
+load_env "$repo_root/.env"
+
+src_root="${1:-$repo_root/skills-encrypted}"
+dst_root="${2:-$repo_root/skills-wip}"
+
+[[ -n "$SKILLS_ENCRYPTION_KEY" ]] || error "SKILLS_ENCRYPTION_KEY not set"
+
+count=0
+while IFS= read -r -d '' file; do
+  rel="${file#$src_root/}"
+  dest="$dst_root/$rel"
+  mkdir -p "${dest:h}"
+  openssl enc -d -aes-256-cbc -pbkdf2 -k "$SKILLS_ENCRYPTION_KEY" -in "$file" -out "$dest" \
+    || error "Failed to decrypt $rel"
+  count=$((count + 1))
+done < <(find "$src_root" -type f ! -name '.gitkeep' -print0 2>/dev/null)
+
+success "Decrypted $count file(s)"
