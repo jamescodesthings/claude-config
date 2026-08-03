@@ -41,6 +41,11 @@ Temporary Items
 
 # End of https://www.toptal.com/developers/gitignore/api/dotenv
 
+# Encrypted WIP skills pipeline
+skills-wip/*
+!skills-wip/.gitkeep
+.env.[0-9]*
+
 # Created by https://www.toptal.com/developers/gitignore/api/node
 # Edit at https://www.toptal.com/developers/gitignore?templates=node
 
