@@ -37,8 +37,12 @@ function remove_symlinks() {
   # agents dir symlink
   [[ -L "$claude_dir/agents" ]] && rm "$claude_dir/agents" && info "Removed agents"
 
-  # skills (installed as dir symlink)
-  [[ -L "$claude_dir/skills" ]] && rm "$claude_dir/skills" && info "Removed skills"
+  # skills (installed as per-skill symlinks, both real and WIP)
+  if [[ -d "$claude_dir/skills" && ! -L "$claude_dir/skills" ]]; then
+    for f in "$claude_dir/skills/"*(N); do
+      [[ -L "$f" ]] && rm "$f" && info "Removed skill symlink $(basename $f)"
+    done
+  fi
 
   # memory
   local project_path=$(echo "$SOURCE_DIR" | sed 's|/|-|g')

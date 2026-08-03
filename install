@@ -106,19 +106,47 @@ function link_agents() {
   symlink "$SOURCE_DIR/agents" "$HOME/.claude/agents"
 }
 
-# ── symlink skills/ directory ───────────────────────────────────────────────
+# ── symlink each skill subfolder into ~/.claude/skills/ ─────────────────────
 function link_skills() {
   local skills_target="$HOME/.claude/skills"
 
-  # Back up any real directory (non-symlink) before replacing with symlink
-  if [[ -d "$skills_target" && ! -L "$skills_target" ]]; then
-    local bak="${skills_target}-bak"
-    [[ -e "$bak" ]] && rm -rf "$bak"
-    mv "$skills_target" "$bak"
-    info "Backed up existing skills dir to $(basename $bak)"
+  # If a previous install made skills_target itself a symlink (old
+  # whole-directory scheme), remove it so it can become a real directory.
+  [[ -L "$skills_target" ]] && rm "$skills_target"
+
+  mkdir -p "$skills_target"
+
+  for skill_dir in "$SOURCE_DIR/skills/"*(N/); do
+    symlink "$skill_dir" "$skills_target/$(basename $skill_dir)"
+  done
+}
+
+# ── decrypt WIP skills, symlink each into ~/.claude/skills/ ─────────────────
+function link_wip_skills() {
+  local skills_target="$HOME/.claude/skills"
+  local wip_dir="$SOURCE_DIR/skills-wip"
+
+  if [[ ! -f "$SOURCE_DIR/.env" ]]; then
+    warn ".env not found — skipping WIP skills decrypt"
+    return
   fi
 
-  symlink "$SOURCE_DIR/skills" "$skills_target"
+  "$SOURCE_DIR/00-tools/decrypt" || { warn "WIP skills decrypt failed"; return }
+
+  mkdir -p "$skills_target"
+
+  for skill_dir in "$wip_dir/"*(N/); do
+    symlink "$skill_dir" "$skills_target/$(basename $skill_dir)"
+  done
+}
+
+# ── symlink the pre-commit hook ─────────────────────────────────────────────
+function link_git_hook() {
+  local hook_src="$SOURCE_DIR/00-tools/pre-commit-encrypt-wip"
+  [[ -f "$hook_src" ]] || return
+  chmod +x "$hook_src"
+  mkdir -p "$SOURCE_DIR/.git/hooks"
+  symlink "$hook_src" "$SOURCE_DIR/.git/hooks/pre-commit"
 }
 
 # ── symlink memory/ to global memory path ───────────────────────────────────
@@ -253,6 +281,8 @@ link_config
 link_hooks
 link_agents
 link_skills
+link_wip_skills
+link_git_hook
 link_global_memory
 install_plugins
 snapshot_zshrc
