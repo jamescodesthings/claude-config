@@ -2,27 +2,75 @@
 # SessionStart hook: (re)initializes the adhd-mode self-care state file's
 # session-start timestamp and rabbit-hole nudge marker for a fresh session,
 # preserving the day-scoped lunch/dinner/bed nudge markers across sessions.
+#
+# The hook is registered for startup|resume|clear|compact. Only startup/resume
+# are real new sessions; clear/compact happen mid-session (Claude Code
+# auto-compacts long sessions), so resetting the rabbit-hole clock on those
+# would mean a marathon session never accumulates enough elapsed time to nudge.
+# On clear/compact we therefore carry the existing timers forward.
 state_file="$HOME/.claude/.adhd-mode-state.json"
 now=$(TZ=Europe/London date +%s)
 
+mkdir -p "${state_file:h}"
+
+# SessionStart hook input arrives as JSON on stdin and carries a "source"
+# field (startup|resume|clear|compact). Guard against no stdin (manual runs).
+hook_input=""
+if [[ ! -t 0 ]]; then
+  hook_input=$(cat)
+fi
+source_reason=$(print -r -- "$hook_input" | grep -o '"source" *: *"[^"]*"' | grep -o '"[^"]*"$' | tr -d '"')
+
+prev_session_start=""
+prev_rabbithole=""
+last_lunch=""
+last_dinner=""
+last_bed=""
+
 if [[ -f "$state_file" ]]; then
+  prev_session_start=$(grep -o '"session_start": *[0-9]*' "$state_file" | grep -o '[0-9]*$')
+  prev_rabbithole=$(grep -o '"last_rabbithole_nudge": *[0-9]*' "$state_file" | grep -o '[0-9]*$')
   last_lunch=$(grep -o '"last_lunch_date": *"[^"]*"' "$state_file" | grep -o '"[^"]*"$' | tr -d '"')
   last_dinner=$(grep -o '"last_dinner_date": *"[^"]*"' "$state_file" | grep -o '"[^"]*"$' | tr -d '"')
   last_bed=$(grep -o '"last_bed_date": *"[^"]*"' "$state_file" | grep -o '"[^"]*"$' | tr -d '"')
-else
-  last_lunch=""
-  last_dinner=""
-  last_bed=""
 fi
 
-cat > "$state_file" <<EOF
+# Default: this is a genuinely new session, so restart both timers.
+session_start=$now
+last_rabbithole=$now
+
+if [[ -n "$prev_session_start" && -n "$prev_rabbithole" ]]; then
+  case "$source_reason" in
+    clear|compact)
+      # Mid-session event: the real session duration is still running.
+      session_start=$prev_session_start
+      last_rabbithole=$prev_rabbithole
+      ;;
+    startup|resume)
+      # Real new session: keep the reset defaults.
+      ;;
+    *)
+      # No usable source (manual run, future schema change). Fall back to a
+      # staleness heuristic: recent state means we're probably still inside
+      # the same working session, so don't clobber the timers.
+      if (( now - prev_session_start < 14400 )); then
+        session_start=$prev_session_start
+        last_rabbithole=$prev_rabbithole
+      fi
+      ;;
+  esac
+fi
+
+tmp_file="$state_file.tmp.$$"
+cat > "$tmp_file" <<EOF
 {
-  "session_start": $now,
-  "last_rabbithole_nudge": $now,
+  "session_start": $session_start,
+  "last_rabbithole_nudge": $last_rabbithole,
   "last_lunch_date": "$last_lunch",
   "last_dinner_date": "$last_dinner",
   "last_bed_date": "$last_bed"
 }
 EOF
+mv -f "$tmp_file" "$state_file"
 
 exit 0
