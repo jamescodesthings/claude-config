@@ -1,0 +1,34 @@
+#!/usr/bin/env zsh
+# Rotates the encryption key atomically: decrypt with the current key,
+# generate a new key, re-encrypt into a temp dir, swap in only on full success.
+repo_root="${0:A:h}/.."
+source "$repo_root/tools/lib"
+
+encrypted_root="$repo_root/skills-encrypted"
+wip_root="$repo_root/skills-wip"
+tmp_root=$(mktemp -d "$repo_root/skills-encrypted.tmp.XXXXXX")
+
+cleanup() { rm -rf "$tmp_root" }
+trap cleanup EXIT
+
+load_env "$repo_root/.env"
+
+info "Decrypting with current key..."
+"$repo_root/00-tools/decrypt" "$encrypted_root" "$wip_root" \
+  || error "Decrypt with current key failed, aborting rotation"
+
+info "Generating new key..."
+"$repo_root/00-tools/create-key" \
+  || error "Key generation failed, aborting rotation"
+
+load_env "$repo_root/.env"
+
+info "Re-encrypting with new key into temp dir..."
+"$repo_root/00-tools/encrypt" "$tmp_root" \
+  || error "Re-encrypt with new key failed — skills-encrypted left untouched"
+
+rm -rf "$encrypted_root"
+mv "$tmp_root" "$encrypted_root"
+trap - EXIT
+
+success "Key rotation complete"
