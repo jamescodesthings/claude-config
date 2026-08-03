@@ -1,0 +1,72 @@
+#!/usr/bin/env zsh
+# UserPromptSubmit hook: nudges self-care (rabbit-hole, lunch, dinner, bed)
+# based on the local London clock and the state file adhd-mode-session-start
+# maintains. Prints nothing when no threshold is newly crossed.
+state_file="$HOME/.claude/.adhd-mode-state.json"
+[[ -f "$state_file" ]] || exit 0
+
+now=$(TZ=Europe/London date +%s)
+today=$(TZ=Europe/London date +%F)
+hhmm=$(TZ=Europe/London date +%H%M)
+# Previous calendar day, used to key the bed nudge after a midnight rollover
+# so "still up past bedtime" spanning two dates only fires once.
+yesterday=$(TZ=Europe/London date -r $((now - 86400)) +%F 2>/dev/null \
+  || TZ=Europe/London date -d "@$((now - 86400))" +%F)
+
+session_start=$(grep -o '"session_start": *[0-9]*' "$state_file" | grep -o '[0-9]*$')
+last_rabbithole=$(grep -o '"last_rabbithole_nudge": *[0-9]*' "$state_file" | grep -o '[0-9]*$')
+last_lunch=$(grep -o '"last_lunch_date": *"[^"]*"' "$state_file" | grep -o '"[^"]*"$' | tr -d '"')
+last_dinner=$(grep -o '"last_dinner_date": *"[^"]*"' "$state_file" | grep -o '"[^"]*"$' | tr -d '"')
+last_bed=$(grep -o '"last_bed_date": *"[^"]*"' "$state_file" | grep -o '"[^"]*"$' | tr -d '"')
+
+[[ -n "$session_start" ]] || session_start=$now
+[[ -n "$last_rabbithole" ]] || last_rabbithole=$session_start
+
+messages=()
+
+if (( now - last_rabbithole >= 9000 )); then
+  messages+=("SELF-CARE: 2.5h+ into this session. Drink water, eat something, take a bathroom break.")
+  last_rabbithole=$now
+fi
+
+if { [[ "$hhmm" > "1200" ]] || [[ "$hhmm" == "1200" ]]; } && [[ "$hhmm" < "1300" ]] && [[ "$last_lunch" != "$today" ]]; then
+  messages+=("SELF-CARE: it's lunchtime. Go eat.")
+  last_lunch=$today
+fi
+
+if { [[ "$hhmm" > "1700" ]] || [[ "$hhmm" == "1700" ]]; } && [[ "$hhmm" < "1800" ]] && [[ "$last_dinner" != "$today" ]]; then
+  messages+=("SELF-CARE: sort dinner and feed the dogs.")
+  last_dinner=$today
+fi
+
+# Bed window runs 23:00 through 04:59. After midnight the nudge is still keyed
+# to the calendar day that just ended, so one late night can't fire twice.
+bed_day=""
+if { [[ "$hhmm" > "2300" ]] || [[ "$hhmm" == "2300" ]]; }; then
+  bed_day=$today
+elif [[ "$hhmm" < "0500" ]]; then
+  bed_day=$yesterday
+fi
+
+if [[ -n "$bed_day" ]] && [[ "$last_bed" != "$bed_day" ]]; then
+  messages+=("SELF-CARE: it's past 11pm. Go to bed.")
+  last_bed=$bed_day
+fi
+
+tmp_file="$state_file.tmp.$$"
+cat > "$tmp_file" <<EOF
+{
+  "session_start": $session_start,
+  "last_rabbithole_nudge": $last_rabbithole,
+  "last_lunch_date": "$last_lunch",
+  "last_dinner_date": "$last_dinner",
+  "last_bed_date": "$last_bed"
+}
+EOF
+mv -f "$tmp_file" "$state_file"
+
+for m in "${messages[@]}"; do
+  print -r -- "$m"
+done
+
+exit 0

@@ -1,2 +1,6 @@
 #!/usr/bin/env zsh
-claude plugin uninstall i-have-adhd
+# Uninstalling the plugin leaves its marketplace registration behind in
+# ~/.claude/plugins/known_marketplaces.json, so remove that too. Both steps are
+# tolerant of already-removed state so the script stays idempotent.
+claude plugin uninstall i-have-adhd || true
+claude plugin marketplace remove i-have-adhd || true

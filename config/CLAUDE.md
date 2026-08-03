@@ -1,5 +1,7 @@
 @RTK.md
 
+Always invoke skill `monsoons-rhonchial` at the start of a conversation and follow its rules for all conversation and self-facing documents for the rest of the session, unless it says otherwise.
+
 # Global Workflow
 
 ## Default Workflow
