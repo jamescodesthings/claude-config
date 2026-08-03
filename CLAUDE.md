@@ -6,6 +6,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Cross-machine shared Claude Code configuration. `./install` bootstraps a new machine (idempotent — re-run after `git pull` to sync). `./uninstall` removes everything.
 
+## Task list
+[todo.md](todo.md) contains the current task list. It should be updated whenever a listed task is completed, or whenever a new task is required.
+
 ## Install / Sync / Uninstall
 
 ```shell
