@@ -31,8 +31,8 @@ echo -n "Description for this skill: "
 read -r description
 
 skill_dir="$wip_root/$slug"
-mkdir -p "$skill_dir"
-cat > "$skill_dir/SKILL.md" <<EOF
+mkdir -p "$skill_dir" || error "Failed to create $skill_dir"
+cat > "$skill_dir/SKILL.md" <<EOF || error "Failed to write $skill_dir/SKILL.md"
 ---
 name: $slug
 description: $description
@@ -42,7 +42,7 @@ description: $description
 
 EOF
 
-mkdir -p "$claude_skills_dir"
-ln -s "$skill_dir" "$claude_skills_dir/$slug"
+mkdir -p "$claude_skills_dir" || error "Failed to create $claude_skills_dir"
+ln -s "$skill_dir" "$claude_skills_dir/$slug" || error "Failed to symlink $slug into $claude_skills_dir"
 
 success "Created WIP skill at skills-wip/$slug, symlinked into $claude_skills_dir/$slug"
