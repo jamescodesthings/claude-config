@@ -1,0 +1,34 @@
+#!/usr/bin/env zsh
+# SessionStart hook: injects the monsoons-rhonchial ("ADHD mode") skill body
+# directly into the model's context, so the output rules are active from the
+# first turn without relying on the model remembering to invoke the skill.
+#
+# The instruction in ~/.claude/CLAUDE.md ("always invoke skill
+# monsoons-rhonchial at the start of a conversation") is advisory: nothing
+# enforces it, and a missed invocation is silent. This hook removes that
+# failure mode by making the skill content part of the session prompt.
+#
+# Paired with adhd-mode-session-start (self-care timers) on the same event.
+
+skill_file="$HOME/.claude/skills/monsoons-rhonchial/SKILL.md"
+
+# Skill not installed (or symlink broken): stay silent rather than fail the
+# session. A missing skill is a config problem, not a reason to block startup.
+[[ -r "$skill_file" ]] || exit 0
+
+if ! command -v jq >/dev/null 2>&1; then
+  exit 0
+fi
+
+# Drop the YAML frontmatter: name/description are routing metadata for the
+# skill loader, not instructions, and only add noise once the body is inlined.
+body=$(awk 'BEGIN{fm=0} NR==1 && $0=="---" {fm=1; next} fm==1 && $0=="---" {fm=0; next} fm==0 {print}' "$skill_file")
+
+context="ADHD mode (skill: monsoons-rhonchial) is ACTIVE for this session. Its rules are reproduced in full below and govern all conversation and any document written for James to read. Do not invoke the skill separately; it is already loaded. These rules persist for the whole session and are turned off only when James says \"stop adhd mode\" or \"normal mode\".
+
+$body"
+
+jq -n --arg ctx "$context" \
+  '{hookSpecificOutput: {hookEventName: "SessionStart", additionalContext: $ctx}}'
+
+exit 0
