@@ -185,4 +185,4 @@ Fill in the body from the CLAUDE.md. Global user/feedback memories are already a
 
 ## Other AI Tools
 
-Distilled personal-rules copies for other AI tools (Claude Desktop/Mobile, Gemini, ChatGPT, Codex CLI) live in the gitignored folder at `/Users/jamesmacmillan/projects/personal/claude-config/ai-instructions/`. When a change significantly alters rules that those copies depend on (e.g. editing the `monsoons-rhonchial` or `hodgepodge-anaplasmosis` WIP skills), tell James so he can manually update the affected files there — this is not automated yet.
+Distilled personal-rules copies for other AI tools (Claude Desktop/Mobile, Gemini, ChatGPT, Codex CLI) live in the gitignored folder at `~/projects/personal/claude-config/ai-instructions/`. When a change significantly alters rules that those copies depend on (e.g. editing the `monsoons-rhonchial` or `hodgepodge-anaplasmosis` WIP skills), tell James so he can manually update the affected files there — this is not automated yet.
