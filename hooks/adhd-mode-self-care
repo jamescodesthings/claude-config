@@ -2,25 +2,30 @@
 # UserPromptSubmit hook: nudges self-care (rabbit-hole, lunch, dinner, bed)
 # based on the local London clock and the state file adhd-mode-session-start
 # maintains. Prints nothing when no threshold is newly crossed.
+#
+# Lunch/dinner/bed use a cooldown, not a once-per-day flag: a single lost
+# relay (hook output not surfaced in a response) used to silence that
+# reminder for the rest of the day with no retry. Now it retries every
+# COOLDOWN seconds for as long as the window stays open.
 state_file="$HOME/.claude/.adhd-mode-state.json"
 [[ -f "$state_file" ]] || exit 0
 
+COOLDOWN=1500  # 25 minutes
+
 now=$(TZ=Europe/London date +%s)
-today=$(TZ=Europe/London date +%F)
 hhmm=$(TZ=Europe/London date +%H%M)
-# Previous calendar day, used to key the bed nudge after a midnight rollover
-# so "still up past bedtime" spanning two dates only fires once.
-yesterday=$(TZ=Europe/London date -r $((now - 86400)) +%F 2>/dev/null \
-  || TZ=Europe/London date -d "@$((now - 86400))" +%F)
 
 session_start=$(grep -o '"session_start": *[0-9]*' "$state_file" | grep -o '[0-9]*$')
 last_rabbithole=$(grep -o '"last_rabbithole_nudge": *[0-9]*' "$state_file" | grep -o '[0-9]*$')
-last_lunch=$(grep -o '"last_lunch_date": *"[^"]*"' "$state_file" | grep -o '"[^"]*"$' | tr -d '"')
-last_dinner=$(grep -o '"last_dinner_date": *"[^"]*"' "$state_file" | grep -o '"[^"]*"$' | tr -d '"')
-last_bed=$(grep -o '"last_bed_date": *"[^"]*"' "$state_file" | grep -o '"[^"]*"$' | tr -d '"')
+last_lunch=$(grep -o '"last_lunch_nudge": *[0-9]*' "$state_file" | grep -o '[0-9]*$')
+last_dinner=$(grep -o '"last_dinner_nudge": *[0-9]*' "$state_file" | grep -o '[0-9]*$')
+last_bed=$(grep -o '"last_bed_nudge": *[0-9]*' "$state_file" | grep -o '[0-9]*$')
 
 [[ -n "$session_start" ]] || session_start=$now
 [[ -n "$last_rabbithole" ]] || last_rabbithole=$session_start
+[[ -n "$last_lunch" ]] || last_lunch=0
+[[ -n "$last_dinner" ]] || last_dinner=0
+[[ -n "$last_bed" ]] || last_bed=0
 
 messages=()
 
@@ -29,28 +34,22 @@ if (( now - last_rabbithole >= 9000 )); then
   last_rabbithole=$now
 fi
 
-if { [[ "$hhmm" > "1200" ]] || [[ "$hhmm" == "1200" ]]; } && [[ "$hhmm" < "1300" ]] && [[ "$last_lunch" != "$today" ]]; then
+if { [[ "$hhmm" > "1200" ]] || [[ "$hhmm" == "1200" ]]; } && [[ "$hhmm" < "1300" ]] && (( now - last_lunch >= COOLDOWN )); then
   messages+=("SELF-CARE: it's lunchtime. Go eat.")
-  last_lunch=$today
+  last_lunch=$now
 fi
 
-if { [[ "$hhmm" > "1700" ]] || [[ "$hhmm" == "1700" ]]; } && [[ "$hhmm" < "1800" ]] && [[ "$last_dinner" != "$today" ]]; then
+if { [[ "$hhmm" > "1700" ]] || [[ "$hhmm" == "1700" ]]; } && [[ "$hhmm" < "1800" ]] && (( now - last_dinner >= COOLDOWN )); then
   messages+=("SELF-CARE: sort dinner and feed the dogs.")
-  last_dinner=$today
+  last_dinner=$now
 fi
 
-# Bed window runs 23:00 through 04:59. After midnight the nudge is still keyed
-# to the calendar day that just ended, so one late night can't fire twice.
-bed_day=""
-if { [[ "$hhmm" > "2300" ]] || [[ "$hhmm" == "2300" ]]; }; then
-  bed_day=$today
-elif [[ "$hhmm" < "0500" ]]; then
-  bed_day=$yesterday
-fi
-
-if [[ -n "$bed_day" ]] && [[ "$last_bed" != "$bed_day" ]]; then
+# Bed window runs 23:00 through 04:59. Cooldown-based, so no calendar-day
+# bookkeeping is needed for the midnight rollover — it just keeps retrying
+# every COOLDOWN seconds for as long as the window is open.
+if { { [[ "$hhmm" > "2300" ]] || [[ "$hhmm" == "2300" ]]; } || [[ "$hhmm" < "0500" ]]; } && (( now - last_bed >= COOLDOWN )); then
   messages+=("SELF-CARE: it's past 11pm. Go to bed.")
-  last_bed=$bed_day
+  last_bed=$now
 fi
 
 tmp_file="$state_file.tmp.$$"
@@ -58,9 +57,9 @@ cat > "$tmp_file" <<EOF
 {
   "session_start": $session_start,
   "last_rabbithole_nudge": $last_rabbithole,
-  "last_lunch_date": "$last_lunch",
-  "last_dinner_date": "$last_dinner",
-  "last_bed_date": "$last_bed"
+  "last_lunch_nudge": $last_lunch,
+  "last_dinner_nudge": $last_dinner,
+  "last_bed_nudge": $last_bed
 }
 EOF
 mv -f "$tmp_file" "$state_file"

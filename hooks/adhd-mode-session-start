@@ -1,7 +1,7 @@
 #!/usr/bin/env zsh
 # SessionStart hook: (re)initializes the adhd-mode self-care state file's
 # session-start timestamp and rabbit-hole nudge marker for a fresh session,
-# preserving the day-scoped lunch/dinner/bed nudge markers across sessions.
+# preserving the lunch/dinner/bed cooldown timers across sessions.
 #
 # The hook is registered for startup|resume|clear|compact. Only startup/resume
 # are real new sessions; clear/compact happen mid-session (Claude Code
@@ -23,16 +23,19 @@ source_reason=$(print -r -- "$hook_input" | grep -o '"source" *: *"[^"]*"' | gre
 
 prev_session_start=""
 prev_rabbithole=""
-last_lunch=""
-last_dinner=""
-last_bed=""
+last_lunch=0
+last_dinner=0
+last_bed=0
 
 if [[ -f "$state_file" ]]; then
   prev_session_start=$(grep -o '"session_start": *[0-9]*' "$state_file" | grep -o '[0-9]*$')
   prev_rabbithole=$(grep -o '"last_rabbithole_nudge": *[0-9]*' "$state_file" | grep -o '[0-9]*$')
-  last_lunch=$(grep -o '"last_lunch_date": *"[^"]*"' "$state_file" | grep -o '"[^"]*"$' | tr -d '"')
-  last_dinner=$(grep -o '"last_dinner_date": *"[^"]*"' "$state_file" | grep -o '"[^"]*"$' | tr -d '"')
-  last_bed=$(grep -o '"last_bed_date": *"[^"]*"' "$state_file" | grep -o '"[^"]*"$' | tr -d '"')
+  last_lunch=$(grep -o '"last_lunch_nudge": *[0-9]*' "$state_file" | grep -o '[0-9]*$')
+  last_dinner=$(grep -o '"last_dinner_nudge": *[0-9]*' "$state_file" | grep -o '[0-9]*$')
+  last_bed=$(grep -o '"last_bed_nudge": *[0-9]*' "$state_file" | grep -o '[0-9]*$')
+  [[ -n "$last_lunch" ]] || last_lunch=0
+  [[ -n "$last_dinner" ]] || last_dinner=0
+  [[ -n "$last_bed" ]] || last_bed=0
 fi
 
 # Default: this is a genuinely new session, so restart both timers.
@@ -66,9 +69,9 @@ cat > "$tmp_file" <<EOF
 {
   "session_start": $session_start,
   "last_rabbithole_nudge": $last_rabbithole,
-  "last_lunch_date": "$last_lunch",
-  "last_dinner_date": "$last_dinner",
-  "last_bed_date": "$last_bed"
+  "last_lunch_nudge": $last_lunch,
+  "last_dinner_nudge": $last_dinner,
+  "last_bed_nudge": $last_bed
 }
 EOF
 mv -f "$tmp_file" "$state_file"
