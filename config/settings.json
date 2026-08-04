@@ -6,7 +6,11 @@
   "permissions": {
     "defaultMode": "auto"
   },
-  "model": "opus",
+  "model": "sonnet",
+  "skillOverrides": {
+    "a11y": "off",
+    "legal-review": "off"
+  },
   "hooks": {
     "PreToolUse": [
       {
@@ -71,10 +75,6 @@
     "playwright@claude-plugins-official": false,
     "commit-commands@claude-plugins-official": false,
     "caveman@caveman": true
-  },
-  "skillOverrides": {
-    "a11y": "off",
-    "legal-review": "off"
   },
   "extraKnownMarketplaces": {
     "caveman": {
