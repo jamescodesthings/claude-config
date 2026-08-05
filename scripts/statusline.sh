@@ -29,7 +29,6 @@ debug_log_input() {
 
 USE_ASCII="${CLAUDE_STATUSLINE_ASCII:-0}"
 USE_NERDFONT="${CLAUDE_STATUSLINE_NERDFONT:-0}"
-USE_POWERLINE="${CLAUDE_STATUSLINE_POWERLINE:-$USE_NERDFONT}"
 USE_TRUECOLOR=0
 if [[ "${COLORTERM:-}" == "truecolor" || "${COLORTERM:-}" == "24bit" ]]; then
   USE_TRUECOLOR=1
@@ -52,10 +51,12 @@ MAGENTA='\033[35m'
 # so it stays legible against base03 rather than reading as barely-there.
 if (( USE_TRUECOLOR )); then
   GRAY='\033[38;2;131;148;150m'
-  FOLDER_COLOR='\033[38;2;238;238;238m'
+  SESSION_COLOR='\033[38;2;189;147;249m'
+  FOLDER_COLOR='\033[38;2;255;121;198m'
 else
   GRAY='\033[90m'
-  FOLDER_COLOR='\033[97m'
+  SESSION_COLOR='\033[35m'
+  FOLDER_COLOR='\033[35m'
 fi
 
 # Symbol set
@@ -71,11 +72,7 @@ else
     S_BRANCH="⎇"
     S_TIMER="⏱"
   fi
-  if [[ "$USE_POWERLINE" == "1" ]]; then
-    SEP="  "
-  else
-    SEP=" │ "
-  fi
+  SEP=" │ "
 fi
 
 # ═══════════════════════════════════════════════════════════════
@@ -234,14 +231,25 @@ effort_risk_pct() {
   esac
 }
 
-# Truncates a session name to a fixed character budget with an ellipsis.
+# Truncates a session name to its first two words, splitting on space or
+# dash (so "update claude config" -> "update claude…", "my-session-name"
+# -> "my-session…"). Left whole if it never reaches a second delimiter.
 trim_session() {
-  local s="${1:-}" max=15
-  if (( ${#s} > max )); then
-    printf '%s…' "${s:0:$max}"
-  else
-    printf '%s' "$s"
-  fi
+  local s="${1:-}"
+  awk -v s="$s" 'BEGIN {
+    n = 0
+    out = ""
+    len = length(s)
+    for (i = 1; i <= len; i++) {
+      c = substr(s, i, 1)
+      if (c == " " || c == "-") {
+        n++
+        if (n == 2) { printf "%s…", out; exit }
+      }
+      out = out c
+    }
+    printf "%s", out
+  }'
 }
 
 # ═══════════════════════════════════════════════════════════════
@@ -414,15 +422,15 @@ rate5h_int=${rate5h%.*}; rate5h_int=${rate5h_int:-0}
 rate7d_int=${rate7d%.*}; rate7d_int=${rate7d_int:-0}
 
 # ═══════════════════════════════════════════════════════════════
-# Build first line: model+effort, session name, git, directory
+# Build first line: model+effort, session name, directory, git
 # ═══════════════════════════════════════════════════════════════
 
 line1="$(model_color "$model")${model}${RST}${effort_segment}"
 if [[ -n "$session_name" ]]; then
-  line1+="${SEP}${GRAY}\"$(trim_session "$session_name")\"${RST}"
+  line1+="${SEP}${SESSION_COLOR}\"$(trim_session "$session_name")\"${RST}"
 fi
-line1+="${git_segment}"
 line1+="${SEP}${FOLDER_COLOR}${dir_label}${RST}"
+line1+="${git_segment}"
 
 # ═══════════════════════════════════════════════════════════════
 # Build second line: C, 5h, 7d bars, each pill one solid severity color
@@ -445,6 +453,14 @@ rate_pill() {
 
 bar_parts=()
 
+if (( rate7d_int >= 0 )); then
+  bar_parts+=("$(rate_pill "7d" "$rate7d_int" "$seven_day_resets_at")")
+fi
+
+if (( rate5h_int >= 0 )); then
+  bar_parts+=("$(rate_pill "5h" "$rate5h_int" "$five_hour_resets_at")")
+fi
+
 if (( ctx_size > 0 )); then
   c_color=$(tier_color "$pct_int")
   c_bar=$(render_bar "$pct_int" "$c_color")
@@ -453,17 +469,9 @@ if (( ctx_size > 0 )); then
   bar_parts+=("${c_color}C:${c_bar} ${c_color}${pct_int}% ${c_used}/${c_total}${RST}")
 fi
 
-if (( rate5h_int >= 0 )); then
-  bar_parts+=("$(rate_pill "5h" "$rate5h_int" "$five_hour_resets_at")")
-fi
-
-if (( rate7d_int >= 0 )); then
-  bar_parts+=("$(rate_pill "7d" "$rate7d_int" "$seven_day_resets_at")")
-fi
-
 line2=""
 for i in "${!bar_parts[@]}"; do
-  (( i > 0 )) && line2+=" ${SEP}"
+  (( i > 0 )) && line2+="${SEP}"
   line2+="${bar_parts[$i]}"
 done
 
