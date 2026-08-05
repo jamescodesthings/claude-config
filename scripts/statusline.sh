@@ -66,8 +66,8 @@ if [[ "$USE_ASCII" == "1" ]]; then
   SEP=" | "
 else
   if [[ "$USE_NERDFONT" == "1" ]]; then
-    S_BRANCH=" "
-    S_TIMER=$'\xEF\x80\x97'   # nf-fa-clock-o (U+F017)
+    S_BRANCH=$'\xEF\x90\x98 '  # nf-oct-git_branch (U+F418)
+    S_TIMER=$'\xEF\x80\x97'    # nf-fa-clock-o (U+F017)
   else
     S_BRANCH="⎇"
     S_TIMER="⏱"
