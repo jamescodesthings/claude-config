@@ -11,6 +11,11 @@
     "a11y": "off",
     "legal-review": "off"
   },
+  "statusLine": {
+    "type": "command",
+    "command": "~/.claude/statusline.sh",
+    "timeout": 10
+  },
   "hooks": {
     "PreToolUse": [
       {

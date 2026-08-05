@@ -23,7 +23,7 @@ function remove_symlinks() {
   local claude_dir="$CLAUDE_DIR"
 
   # config files
-  for f in CLAUDE.md RTK.md settings.json .mcp.json keybindings.json; do
+  for f in CLAUDE.md RTK.md settings.json .mcp.json keybindings.json statusline.sh; do
     local dest="$claude_dir/$f"
     [[ -L "$dest" ]] && rm "$dest" && info "Removed $f"
   done
