@@ -52,36 +52,23 @@ MAGENTA='\033[35m'
 # so it stays legible against base03 rather than reading as barely-there.
 if (( USE_TRUECOLOR )); then
   GRAY='\033[38;2;131;148;150m'
+  FOLDER_COLOR='\033[38;2;238;238;238m'
 else
   GRAY='\033[90m'
+  FOLDER_COLOR='\033[97m'
 fi
-
-# Gradient stops (truecolor): green -> yellow -> orange -> red.
-# Shared by the context/rate-limit bars, gradient_color(), and effort color.
-GRAD_R=(46 116 186 241 239 236 233 231 211 192)
-GRAD_G=(204 195 186 196 161 126 101 76 66 57)
-GRAD_B=(113 89 64 15 24 34 44 60 50 43)
 
 # Symbol set
 if [[ "$USE_ASCII" == "1" ]]; then
   S_BRANCH=">"
-  S_COST=""
-  S_THINK="[think]"
-  S_FAST="[fast]"
   S_TIMER=""
   SEP=" | "
 else
   if [[ "$USE_NERDFONT" == "1" ]]; then
     S_BRANCH=" "
-    S_COST=" "
-    S_THINK=$'\xEF\x97\x9C'   # nf-md-brain (U+F5DC)
-    S_FAST=$'\xEF\x83\xA7'    # nf-fa-bolt (U+F0E7)
     S_TIMER=$'\xEF\x80\x97'   # nf-fa-clock-o (U+F017)
   else
     S_BRANCH="⎇"
-    S_COST=""
-    S_THINK="🧠"
-    S_FAST="⚡"
     S_TIMER="⏱"
   fi
   if [[ "$USE_POWERLINE" == "1" ]]; then
@@ -103,7 +90,7 @@ fallback_prompt() {
 command -v jq &>/dev/null || fallback_prompt "─ │ jq not found"
 
 # ═══════════════════════════════════════════════════════════════
-# Helpers: human-readable counts, reset countdowns, color gradient
+# Helpers: human-readable counts, reset countdowns, color scale
 # ═══════════════════════════════════════════════════════════════
 
 human_count() {
@@ -150,33 +137,40 @@ clamp_pct() {
   printf '%s' "$pct"
 }
 
-# Green/yellow/red for a percentage, given the red and yellow thresholds.
-# Used wherever truecolor is unavailable, so the gradient can't be applied.
-threshold_color() {
-  local pct="$1" red_at="$2" yellow_at="$3"
-  if (( pct >= red_at )); then printf '%b' "$RED"
-  elif (( pct >= yellow_at )); then printf '%b' "$YELLOW"
-  else printf '%b' "$GREEN"
-  fi
-}
-
-# Returns a truecolor escape (or ANSI fallback color) for a 0-100 percentage,
-# interpolated across the shared GRAD_R/G/B stops.
-gradient_color() {
+# Severity color scale, not linear: grey (near-zero, ignore it) -> green ->
+# blue (steady state, holds through the middle) -> yellow (getting warm) ->
+# orange at 85 -> red at 90 -> a brighter, bold red at 95+.
+tier_color() {
   local pct
   pct=$(clamp_pct "${1:-0}")
   if (( ! USE_TRUECOLOR )); then
-    threshold_color "$pct" 80 50
+    if (( pct >= 95 )); then printf '\033[1m%b' "$RED"
+    elif (( pct >= 90 )); then printf '%b' "$RED"
+    elif (( pct >= 65 )); then printf '%b' "$YELLOW"
+    elif (( pct >= 40 )); then printf '%b' "$BLUE"
+    elif (( pct >= 5 )); then printf '%b' "$GREEN"
+    else printf '%b' "$GRAY"
+    fi
     return
   fi
-  local idx=$(( pct * 9 / 100 ))
-  printf '\033[38;2;%d;%d;%dm' "${GRAD_R[$idx]}" "${GRAD_G[$idx]}" "${GRAD_B[$idx]}"
+  if (( pct >= 95 )); then printf '\033[1m\033[38;2;255;69;69m'
+  elif (( pct >= 90 )); then printf '\033[38;2;231;76;60m'
+  elif (( pct >= 85 )); then printf '\033[38;2;230;126;34m'
+  elif (( pct >= 65 )); then printf '\033[38;2;241;196;15m'
+  elif (( pct >= 40 )); then printf '\033[38;2;38;139;210m'
+  elif (( pct >= 5 )); then printf '\033[38;2;46;204;113m'
+  else printf '\033[38;2;108;113;120m'
+  fi
 }
 
-# Renders a 10-segment bar for a 0-100 percentage, honoring USE_ASCII/USE_TRUECOLOR.
+# Renders a 10-segment bar for a 0-100 percentage. Filled segments use the
+# given color (so the whole pill can share one color); unfilled segments use
+# a muted grey (Solarized base01) so the empty part stays visible on dark bg.
+# No trailing reset — caller owns exactly one ${RST} at the end of the pill.
 render_bar() {
-  local pct
+  local pct color
   pct=$(clamp_pct "${1:-0}")
+  color="${2:-}"
   local filled=$(( pct / 10 ))
   local bar="" i
 
@@ -188,26 +182,14 @@ render_bar() {
     return
   fi
 
-  # Truecolor: every filled segment takes its own gradient stop. Unfilled
-  # segments use Solarized base01 (#586e75) rather than near-black, so the
-  # empty part of the bar stays visible against a dark background.
-  if (( USE_TRUECOLOR )); then
-    for (( i=0; i<10; i++ )); do
-      if (( i < filled )); then
-        bar+="\\033[38;2;${GRAD_R[$i]};${GRAD_G[$i]};${GRAD_B[$i]}m█"
-      else
-        bar+="\\033[38;2;88;110;117m░"
-      fi
-    done
-    printf '%s' "${bar}${RST}"
-    return
-  fi
-
-  # Otherwise: one threshold color for the whole bar.
   for (( i=0; i<10; i++ )); do
-    if (( i < filled )); then bar+="█"; else bar+="░"; fi
+    if (( i < filled )); then
+      bar+="${color}█"
+    else
+      bar+="\\033[38;2;88;110;117m░"
+    fi
   done
-  printf '%s' "$(threshold_color "$pct" 90 70)${bar}${RST}"
+  printf '%s' "$bar"
 }
 
 # Model pill color, gradient by pricing tier: Haiku -> Sonnet -> Opus -> Fable.
@@ -239,8 +221,8 @@ effort_shorthand() {
   esac
 }
 
-# Maps effort level to a 0-100 "cost risk" position on the same gradient used
-# elsewhere, so a session accidentally left on max effort reads as loud/red.
+# Maps effort level onto the same 0-100 severity scale as tier_color, so a
+# session accidentally left on max effort reads as loud/red.
 effort_risk_pct() {
   case "$1" in
     low)    printf '0' ;;
@@ -250,6 +232,16 @@ effort_risk_pct() {
     max)    printf '100' ;;
     *)      printf '40' ;;
   esac
+}
+
+# Truncates a session name to a fixed character budget with an ellipsis.
+trim_session() {
+  local s="${1:-}" max=15
+  if (( ${#s} > max )); then
+    printf '%s…' "${s:0:$max}"
+  else
+    printf '%s' "$s"
+  fi
 }
 
 # ═══════════════════════════════════════════════════════════════
@@ -262,7 +254,6 @@ debug_log_input "$input"
 parsed=$(echo "$input" | jq -r '
   (.model.display_name // ""),
   (.context_window.used_percentage // 0 | tostring),
-  (.cost.total_cost_usd // 0 | tostring),
   (.workspace.current_dir // "." | split("/") | last),
   (.worktree.branch // ""),
   (.rate_limits.five_hour.used_percentage // -1 | tostring),
@@ -272,9 +263,6 @@ parsed=$(echo "$input" | jq -r '
   (.session_name // ""),
   (.effort.level // ""),
   (.workspace.repo.name // ""),
-  (.thinking.enabled // false),
-  (.fast_mode // false),
-  (.exceeds_200k_tokens // false),
   (.rate_limits.five_hour.resets_at // "" | tostring),
   (.rate_limits.seven_day.resets_at // "" | tostring),
   (.context_window.total_input_tokens // 0 | tostring),
@@ -285,7 +273,6 @@ parsed=$(echo "$input" | jq -r '
 {
   IFS= read -r model_name
   IFS= read -r ctx_pct
-  IFS= read -r cost
   IFS= read -r dir
   IFS= read -r branch
   IFS= read -r rate5h
@@ -295,9 +282,6 @@ parsed=$(echo "$input" | jq -r '
   IFS= read -r session_name
   IFS= read -r effort_level
   IFS= read -r repo_name
-  IFS= read -r thinking_enabled
-  IFS= read -r fast_mode
-  IFS= read -r exceeds_200k
   IFS= read -r five_hour_resets_at
   IFS= read -r seven_day_resets_at
   IFS= read -r ctx_input_tokens
@@ -318,32 +302,18 @@ model="${model_name:-─}"
 pct_int=$(clamp_pct "$ctx_pct")
 
 # ═══════════════════════════════════════════════════════════════
-# Cost (hidden entirely at $0)
-# ═══════════════════════════════════════════════════════════════
-
-cost_fmt=$(printf '%.2f' "${cost:-0}" 2>/dev/null || echo "0.00")
-cost_int=${cost%.*}
-cost_int=${cost_int:-0}
-
-cost_segment=""
-if [[ "$cost_fmt" != "0.00" ]]; then
-  if (( cost_int >= 10 )); then cost_color="$RED"; else cost_color="$YELLOW"; fi
-  cost_segment="${SEP}${cost_color}${S_COST}\$${cost_fmt}${RST}"
-fi
-
-# ═══════════════════════════════════════════════════════════════
-# Effort (shorthand + risk-colored so max doesn't go unnoticed)
+# Effort (shorthand in parens, colored by the same severity scale)
 # ═══════════════════════════════════════════════════════════════
 
 effort_segment=""
 if [[ -n "$effort_level" ]]; then
   effort_label=$(effort_shorthand "$effort_level")
-  effort_color=$(gradient_color "$(effort_risk_pct "$effort_level")")
-  effort_segment=" ${effort_color}${effort_label}${RST}"
+  effort_color=$(tier_color "$(effort_risk_pct "$effort_level")")
+  effort_segment=" ${effort_color}(${effort_label})${RST}"
 fi
 
 # ═══════════════════════════════════════════════════════════════
-# Directory (repo name > cwd basename > ~ alias)
+# Directory (repo name > cwd basename > ~ alias), light grey/white
 # ═══════════════════════════════════════════════════════════════
 
 if [[ -n "$repo_name" ]]; then
@@ -355,7 +325,7 @@ else
 fi
 
 # ═══════════════════════════════════════════════════════════════
-# Git branch, dirty marker, ahead/behind (with cache)
+# Git branch, dirty marker, ahead/behind (with per-directory cache)
 # ═══════════════════════════════════════════════════════════════
 
 git_cache_key=$(printf '%s' "${cwd_full:-}" | md5 -q 2>/dev/null || echo "nodir")
@@ -414,77 +384,73 @@ fi
 
 git_segment=""
 if (( in_git_repo )) && [[ -n "$git_branch" ]]; then
+  git_needs_action=0
+  [[ -n "$dirty" ]] && git_needs_action=1
+  (( git_ahead > 0 || git_behind > 0 )) && git_needs_action=1
+
+  if (( git_ahead + git_behind >= 10 )); then
+    git_color=$(tier_color 95)
+  elif (( git_needs_action )); then
+    git_color=$(tier_color 88)
+  else
+    git_color="$GRAY"
+  fi
+
   ab=""
   if (( git_ahead > 0 || git_behind > 0 )); then
-    ab_color="$GRAY"
-    (( git_ahead + git_behind >= 10 )) && ab_color="\033[1m${RED}"
-    ab=" ${ab_color}"
+    ab=" "
     (( git_ahead > 0 ))  && ab+="↑${git_ahead}"
     (( git_ahead > 0 && git_behind > 0 )) && ab+=" "
     (( git_behind > 0 )) && ab+="↓${git_behind}"
-    ab+="${RST}"
   fi
-  git_segment="${SEP}${GRAY}${S_BRANCH}${git_branch}${dirty}${RST}${ab}"
+  git_segment="${SEP}${git_color}${S_BRANCH}${git_branch}${dirty}${ab}${RST}"
 fi
 
 # ═══════════════════════════════════════════════════════════════
-# Rate limits (5h / 7d) with reset countdowns
+# Rate limits (5h / 7d)
 # ═══════════════════════════════════════════════════════════════
 
 rate5h_int=${rate5h%.*}; rate5h_int=${rate5h_int:-0}
 rate7d_int=${rate7d%.*}; rate7d_int=${rate7d_int:-0}
 
 # ═══════════════════════════════════════════════════════════════
-# Global tone: escalates only with the worse of 5h/7d, never context
-# ═══════════════════════════════════════════════════════════════
-
-global_tone_pct=$rate5h_int
-(( rate7d_int > global_tone_pct )) && global_tone_pct=$rate7d_int
-tone_bold=""
-(( global_tone_pct >= 80 )) && tone_bold='\033[1m'
-
-# ═══════════════════════════════════════════════════════════════
-# Tags (far right, no background)
-# ═══════════════════════════════════════════════════════════════
-
-tags=""
-if [[ "$thinking_enabled" == "true" ]]; then tags+=" ${S_THINK}"; fi
-if [[ "$fast_mode" == "true" ]]; then tags+=" ${YELLOW}${S_FAST}${RST}"; fi
-if [[ "$exceeds_200k" == "true" ]]; then tags+=" ${GRAY}!200k${RST}"; fi
-
-# ═══════════════════════════════════════════════════════════════
-# Build first line: model+effort, dir, git, cost, session name
+# Build first line: model+effort, session name, git, directory
 # ═══════════════════════════════════════════════════════════════
 
 line1="$(model_color "$model")${model}${RST}${effort_segment}"
-line1+="${SEP}${BLUE}${dir_label}${RST}"
-line1+="${git_segment}"
-line1+="${cost_segment}"
 if [[ -n "$session_name" ]]; then
-  line1+="${SEP}${GRAY}${session_name}${RST}"
+  line1+="${SEP}${GRAY}\"$(trim_session "$session_name")\"${RST}"
 fi
+line1+="${git_segment}"
+line1+="${SEP}${FOLDER_COLOR}${dir_label}${RST}"
 
 # ═══════════════════════════════════════════════════════════════
-# Build second line: C bar (context, merged with the old S detail), 5h, 7d, tags
+# Build second line: C, 5h, 7d bars, each pill one solid severity color
 # ═══════════════════════════════════════════════════════════════
 
-# Renders one rate-limit pill: "<label>:<pct>% <timer-icon><countdown>".
+# Renders one rate-limit pill: "<label>:<bar> <pct>% <timer-icon> <countdown>",
+# the whole thing in one color end to end.
 rate_pill() {
   local label="$1" pct="$2" resets_at="$3"
-  local pill="${tone_bold}${label}:$(gradient_color "$pct")${pct}%${RST}"
+  local color bar pill
+  color=$(tier_color "$pct")
+  bar=$(render_bar "$pct" "$color")
+  pill="${color}${label}:${bar} ${color}${pct}%"
   if [[ -n "$resets_at" ]]; then
-    pill+=" ${GRAY}${S_TIMER}$(time_until "$resets_at")${RST}"
+    pill+=" ${color}${S_TIMER} $(time_until "$resets_at")"
   fi
+  pill+="${RST}"
   printf '%s' "$pill"
 }
 
 bar_parts=()
 
 if (( ctx_size > 0 )); then
-  c_bar=$(render_bar "$pct_int")
+  c_color=$(tier_color "$pct_int")
+  c_bar=$(render_bar "$pct_int" "$c_color")
   c_used=$(human_count "$(( ${ctx_input_tokens:-0} + ${ctx_output_tokens:-0} ))")
   c_total=$(human_count "${ctx_size:-0}")
-  bar_parts+=("${tone_bold}C:${c_bar} $(gradient_color "$pct_int")${pct_int}%${RST} ${GRAY}${c_used}/${c_total}${RST}")
+  bar_parts+=("${c_color}C:${c_bar} ${c_color}${pct_int}% ${c_used}/${c_total}${RST}")
 fi
 
 if (( rate5h_int >= 0 )); then
@@ -500,7 +466,6 @@ for i in "${!bar_parts[@]}"; do
   (( i > 0 )) && line2+=" ${SEP}"
   line2+="${bar_parts[$i]}"
 done
-line2+="${tags}"
 
 # ═══════════════════════════════════════════════════════════════
 # Output
