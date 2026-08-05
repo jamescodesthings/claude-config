@@ -11,11 +11,6 @@
     "a11y": "off",
     "legal-review": "off"
   },
-  "statusLine": {
-    "type": "command",
-    "command": "~/.claude/statusline.sh",
-    "timeout": 10
-  },
   "hooks": {
     "PreToolUse": [
       {
@@ -65,14 +60,18 @@
     ]
   },
   "enableWorkflows": true,
+  "statusLine": {
+    "type": "command",
+    "command": "~/.claude/statusline.sh"
+  },
   "enabledPlugins": {
     "superpowers@claude-plugins-official": true,
-    "context7@claude-plugins-official": false,
-    "code-review@claude-plugins-official": false,
+    "context7@claude-plugins-official": true,
+    "code-review@claude-plugins-official": true,
     "code-simplifier@claude-plugins-official": true,
-    "github@claude-plugins-official": false,
-    "playwright@claude-plugins-official": false,
-    "commit-commands@claude-plugins-official": false,
+    "github@claude-plugins-official": true,
+    "playwright@claude-plugins-official": true,
+    "commit-commands@claude-plugins-official": true,
     "caveman@caveman": true
   },
   "extraKnownMarketplaces": {

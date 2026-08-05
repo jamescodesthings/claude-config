@@ -1,8 +1,26 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Temporary hard-coded debug switch. Set to 1 to log each input payload.
+DEBUG=1
+DEBUG_LOG_DIR="$HOME/.claude/status-logs"
+
 # Originally: https://github.com/kcchien/claude-code-statusline
 # modified for my needs
+
+debug_log_input() {
+  [[ "$DEBUG" == "1" ]] || return 0
+
+  local ts log_file
+  ts=$(date +"%Y-%m-%dT%H:%M:%S%z")
+  log_file="$DEBUG_LOG_DIR/statusline-$(date +%Y-%m-%d).log"
+
+  mkdir -p "$DEBUG_LOG_DIR" 2>/dev/null || return 0
+  {
+    printf '--- %s pid=%s ---\n' "$ts" "$$"
+    printf '%s\n\n' "$1"
+  } >> "$log_file" 2>/dev/null || true
+}
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -89,6 +107,7 @@ command -v jq &>/dev/null || fallback_prompt "─ │ jq not found"
 # ═══════════════════════════════════════════════════════════════
 
 input=$(cat)
+debug_log_input "$input"
 
 parsed=$(echo "$input" | jq -r '
   (.model.display_name // ""),

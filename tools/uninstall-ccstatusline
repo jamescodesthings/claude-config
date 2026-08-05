@@ -2,10 +2,12 @@
 # Uninstall ccstatusline config (leaves npx-run binary alone)
 
 DEST="$HOME/.config/ccstatusline/settings.json"
+DEST_DIR="${DEST:h}"
 
-if [[ ! -f "$DEST" ]]; then
-  echo "[ok]   ccstatusline config not present"
-  exit 0
+if [[ -f "$DEST" ]]; then
+  rm -f "$DEST" || true
 fi
 
-rm "$DEST" && echo "[ok]   ccstatusline config removed"
+# Remove the config directory if it is now empty.
+rmdir "$DEST_DIR" 2>/dev/null || true
+exit 0
