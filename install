@@ -17,6 +17,7 @@ fi
 SOURCE_DIR=${0:a:h}
 CLAUDE_DIR="${CLAUDE_CONFIG_DIR:-$HOME/.claude}"
 GEMINI_DIR="${GEMINI_CONFIG_DIR:-$HOME/.gemini}"
+ANTIGRAVITY_HOOKS_DIR="${ANTIGRAVITY_CONFIG_DIR:-$HOME/.gemini/config/hooks}"
 ANTIGRAVITY_DIR="${ANTIGRAVITY_CONFIG_DIR:-$HOME/.gemini/antigravity-cli}"
 
 # Source the lib for helper functions (info, success, warn, error)
@@ -167,6 +168,7 @@ function install_antigravity() {
 function link_antigravity() {
   mkdir -p "$GEMINI_DIR/skills" "$GEMINI_DIR/hooks" "$GEMINI_DIR/config"
   mkdir -p "$ANTIGRAVITY_DIR"
+  mkdir -p "$ANTIGRAVITY_HOOKS_DIR"
 
   [[ -f "$SOURCE_DIR/antigravity/GEMINI.md" ]] && \
     symlink "$SOURCE_DIR/antigravity/GEMINI.md" "$GEMINI_DIR/GEMINI.md"
@@ -179,7 +181,7 @@ function link_antigravity() {
 
   for hook_file in "$SOURCE_DIR/antigravity/hooks/"*(N); do
     [[ -f "$hook_file" ]] || continue
-    symlink "$hook_file" "$GEMINI_DIR/config/hooks/$(basename "$hook_file")"
+    symlink "$hook_file" "$ANTIGRAVITY_HOOKS_DIR/$(basename "$hook_file")"
     chmod +x "$hook_file"
   done
 
