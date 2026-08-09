@@ -100,7 +100,7 @@ function link_hooks() {
     local name=$(basename "$hook_file")
     symlink "$hook_file" "$hooks_dir/$name"
     chmod +x "$hook_file"
-    if ! grep -q "hooks/$name" "$SOURCE_DIR/claude/config/settings.json" 2>/dev/null; then
+    if ! grep -q "hooks/$name" "$SOURCE_DIR/claude/config/settings.json" &> /dev/null; then
       error "$name not registered in settings.json — hook won't fire until added"
     fi
   done
@@ -153,11 +153,12 @@ function install_antigravity() {
   if command -v agy &> /dev/null; then
     success "antigravity CLI already installed"
     info "Updating antigravity..."
-    agy update 2>/dev/null || error "agy update failed"
+    agy update  &> /dev/null || error "agy update failed"
+    success "antigravity up to date"
     return
   fi
   info "Installing Antigravity CLI..."
-  curl -fsSL https://antigravity.google/cli/install.sh | bash \
+  curl -fsSL https://antigravity.google/cli/install.sh &> /dev/null | bash \
     || error "Antigravity installer failed"
 }
 
@@ -218,7 +219,7 @@ function link_git_hook() {
   # Resolve the real hooks dir: in a git worktree .git is a file, not a
   # directory, so the path can't be assumed. rev-parse handles both layouts.
   local hooks_dir
-  hooks_dir=$(git -C "$SOURCE_DIR" rev-parse --git-path hooks 2>/dev/null) \
+  hooks_dir=$(git -C "$SOURCE_DIR" rev-parse --git-path hooks &> /dev/null) \
     || { warn "Not a git repo — skipping pre-commit hook"; return }
   [[ "$hooks_dir" == /* ]] || hooks_dir="$SOURCE_DIR/$hooks_dir"
 
@@ -253,23 +254,23 @@ function install_plugins() {
     const s = require('$settings');
     const p = Object.keys(s.enabledPlugins || {});
     process.stdout.write(p.join('\n'));
-  " 2>/dev/null))
+  " &> /dev/null))
 
   for plugin in "${desired[@]}"; do
     [[ -z "$plugin" ]] && continue
     info "Plugin: $plugin"
-    claude plugin install "$plugin" 2>/dev/null \
+    claude plugin install "$plugin"  &> /dev/null \
       || warn "$plugin: install failed or already installed"
   done
 
   local installed
-  installed=($(claude plugin list 2>/dev/null | grep '❯' | awk '{print $2}'))
+  installed=($(claude plugin list &> /dev/null | grep '❯' | awk '{print $2}'))
 
   for plugin in "${installed[@]}"; do
     [[ -z "$plugin" ]] && continue
     if [[ ! " ${desired[@]} " =~ " $plugin " ]]; then
       info "Removing unlisted plugin: $plugin"
-      claude plugin uninstall "$plugin" 2>/dev/null \
+      claude plugin uninstall "$plugin" &> /dev/null \
         || error "$plugin: uninstall failed"
     fi
   done
@@ -292,8 +293,8 @@ BASHRC_SNAP=""
 function snapshot_zshrc() {
   ZSHRC_SNAP=$(mktemp)
   BASHRC_SNAP=$(mktemp)
-  cp "$HOME/.zshrc"  "$ZSHRC_SNAP"  2>/dev/null || true
-  cp "$HOME/.bashrc" "$BASHRC_SNAP" 2>/dev/null || true
+  cp "$HOME/.zshrc"  "$ZSHRC_SNAP"  &> /dev/null || true
+  cp "$HOME/.bashrc" "$BASHRC_SNAP" &> /dev/null || true
 }
 
 function _check_rc() {
@@ -322,7 +323,7 @@ function check_shell_rc() {
 # ── zsh aliases integration ────────────────────────────────────────────────
 function setup_shell_aliases() {
   local zshrc="$HOME/.zshrc"
-  if ! grep -q "AI_CONFIG_DIR" "$zshrc" 2>/dev/null; then
+  if ! grep -q "AI_CONFIG_DIR" "$zshrc" &> /dev/null; then
     info "Setting up shell aliases in ~/.zshrc..."
     {
       echo ""

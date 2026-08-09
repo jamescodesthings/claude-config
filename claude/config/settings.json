@@ -65,7 +65,6 @@
     "command": "~/.claude/statusline.sh"
   },
   "enabledPlugins": {
-    "superpowers@claude-plugins-official": true,
     "caveman@caveman": true
   },
   "extraKnownMarketplaces": {

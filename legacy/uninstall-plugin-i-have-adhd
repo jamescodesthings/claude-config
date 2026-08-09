@@ -3,24 +3,26 @@
 # ~/.claude/plugins/known_marketplaces.json, so remove that too. Both steps are
 # tolerant of already-removed state so the script stays idempotent.
 
+source "${0:a:h}/../tools/lib"
+
 plugin_output=$(claude plugin uninstall i-have-adhd 2>&1)
 plugin_rc=$?
 if [[ $plugin_rc -eq 0 ]]; then
-	echo "[ok]   i-have-adhd plugin uninstalled"
+	success "i-have-adhd plugin uninstalled"
 elif echo "$plugin_output" | grep -qi "not found"; then
-	echo "[warn] i-have-adhd plugin already absent"
+	warn "i-have-adhd plugin already absent"
 else
-	echo "[warn] i-have-adhd plugin uninstall failed (non-fatal)"
+	warn "i-have-adhd plugin uninstall failed (non-fatal)"
 fi
 
 market_output=$(claude plugin marketplace remove i-have-adhd 2>&1)
 market_rc=$?
 if [[ $market_rc -eq 0 ]]; then
-	echo "[ok]   i-have-adhd marketplace removed"
+	success "i-have-adhd marketplace removed"
 elif echo "$market_output" | grep -qi "not found"; then
-	echo "[warn] i-have-adhd marketplace already absent"
+	warn "i-have-adhd marketplace already absent"
 else
-	echo "[warn] i-have-adhd marketplace removal failed (non-fatal)"
+	warn "i-have-adhd marketplace removal failed (non-fatal)"
 fi
 
 exit 0
