@@ -264,7 +264,7 @@ function setup_shell_aliases() {
     info "Setting up shell aliases in ~/.zshrc..."
     {
       echo ""
-      echo 'export AI_CONFIG_DIR="$SOURCE_DIR"'
+      echo "export AI_CONFIG_DIR=\"$SOURCE_DIR\""
       echo '[[ -f "$AI_CONFIG_DIR/zsh/aliases.zsh" ]] && source "$AI_CONFIG_DIR/zsh/aliases.zsh"'
     } >> "$zshrc"
     success "Added zsh/aliases.zsh sourcing to ~/.zshrc"
