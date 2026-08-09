@@ -1,4 +1,5 @@
 #!/usr/bin/env zsh
+unsetopt MONITOR
 # Encrypts every file in skills-wip/ into its matching path under
 # skills-encrypted/ (or an override destination root passed as $1).
 #
@@ -10,29 +11,30 @@ repo_root="${0:A:h}/.."
 source "$repo_root/tools/lib"
 load_env "$repo_root/.env"
 
-src_root="$repo_root/skills-wip"
-dst_root="${1:-$repo_root/skills-encrypted}"
+src_root="$repo_root/shared/skills-wip"
+dst_root="${1:-$repo_root/shared/skills-encrypted}"
 
 [[ -n "$SKILLS_ENCRYPTION_KEY" ]] || error "SKILLS_ENCRYPTION_KEY not set"
 
 count=0
 unchanged=0
-while IFS= read -r -d '' file; do
+for file in ${src_root}/**/*(N.); do
+  [[ "${file:t}" == ".gitkeep" ]] && continue
   rel="${file#$src_root/}"
   dest="$dst_root/$rel"
 
   # Skip if the existing ciphertext already decrypts to this exact plaintext.
   if [[ -f "$dest" ]] && openssl enc -d -aes-256-cbc -pbkdf2 \
-       -pass env:SKILLS_ENCRYPTION_KEY -in "$dest" 2>/dev/null | cmp -s - "$file"; then
+       -pass env:SKILLS_ENCRYPTION_KEY -in "$dest" < /dev/null 2>/dev/null | cmp -s - "$file"; then
     unchanged=$((unchanged + 1))
     continue
   fi
 
   mkdir -p "${dest:h}"
-  openssl enc -aes-256-cbc -pbkdf2 -salt -pass env:SKILLS_ENCRYPTION_KEY -in "$file" -out "$dest" \
+  openssl enc -aes-256-cbc -pbkdf2 -salt -pass env:SKILLS_ENCRYPTION_KEY -in "$file" -out "$dest" < /dev/null \
     || error "Failed to encrypt $rel"
   count=$((count + 1))
-done < <(find "$src_root" -type f ! -name '.gitkeep' -print0 2>/dev/null)
+done
 
 # Prune ciphertext whose plaintext no longer exists — but only when we can
 # trust skills-wip/ to be a complete view of every WIP skill.
@@ -62,12 +64,13 @@ if [[ -n "$git_dir" && -n "$git_common_dir" && "$git_dir" != "$git_common_dir" ]
 elif [[ "$src_file_count" -eq 0 && "$dst_file_count" -gt 0 ]]; then
   warn "skills-wip/ has no files but skills-encrypted/ has $dst_file_count — refusing to prune. Run 00-tools/decrypt first if this is a fresh clone."
 else
-  while IFS= read -r -d '' file; do
+  for file in ${dst_root}/**/*(N.); do
+    [[ "${file:t}" == ".gitkeep" ]] && continue
     rel="${file#$dst_root/}"
     [[ -f "$src_root/$rel" ]] && continue
     rm -f "$file" || error "Failed to prune stale ciphertext"
     pruned=$((pruned + 1))
-  done < <(find "$dst_root" -type f ! -name '.gitkeep' -print0 2>/dev/null)
+  done
 
   # Drop directories left empty by pruning (nested dirs empty out in stages).
   while [[ -n $(find "$dst_root" -mindepth 1 -type d -empty -print -quit 2>/dev/null) ]]; do

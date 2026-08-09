@@ -4,8 +4,8 @@
 repo_root="${0:A:h}/.."
 source "$repo_root/tools/lib"
 
-encrypted_root="$repo_root/skills-encrypted"
-wip_root="$repo_root/skills-wip"
+encrypted_root="$repo_root/shared/skills-encrypted"
+wip_root="$repo_root/shared/skills-wip"
 
 # Refuse to run from a linked git worktree. Rotation replaces skills-encrypted/
 # wholesale with a re-encrypt of skills-wip/, and skills-wip/ is gitignored — a
@@ -19,7 +19,7 @@ if [[ -n "$git_dir" && -n "$git_common_dir" && "$git_dir" != "$git_common_dir" ]
   error "Linked git worktree detected — refusing to rotate the key here. Rotation rebuilds skills-encrypted/ from skills-wip/, which is gitignored and therefore incomplete in a worktree; every skill not copied here would be lost. Run 00-tools/cycle-key from the main checkout."
 fi
 
-tmp_root=$(mktemp -d "$repo_root/skills-encrypted.tmp.XXXXXX")
+tmp_root=$(mktemp -d "$repo_root/shared/skills-encrypted.tmp.XXXXXX")
 
 cleanup() { rm -rf "$tmp_root" }
 trap cleanup EXIT
@@ -52,7 +52,7 @@ if ! mv "$tmp_root" "$encrypted_root"; then
   # Disarm the cleanup trap first: $tmp_root now holds the only copy of the
   # freshly re-encrypted tree, so it is the recovery path — do not delete it.
   trap - EXIT
-  error "Failed to move the re-encrypted tree into place. Your only copy is at ${tmp_root:t} — move it to skills-encrypted/ manually before doing anything else."
+  error "Failed to move the re-encrypted tree into place. Your only copy is at ${tmp_root:t} — move it to shared/skills-encrypted/ manually before doing anything else."
 fi
 
 trap - EXIT

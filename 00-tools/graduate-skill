@@ -19,13 +19,13 @@ claude_skills_dir="${CLAUDE_CONFIG_DIR:-$HOME/.claude}/skills"
 [[ "$real_name" =~ '^[a-z0-9][a-z0-9-]*$' ]] \
   || error "Invalid real name — must match [a-z0-9-]"
 
-wip_dir="$repo_root/skills-wip/$fuzzed_slug"
-[[ -d "$wip_dir" ]] || error "No WIP skill at skills-wip/$fuzzed_slug"
+wip_dir="$repo_root/shared/skills-wip/$fuzzed_slug"
+[[ -d "$wip_dir" ]] || error "No WIP skill at shared/skills-wip/$fuzzed_slug"
 
-dest_dir="$repo_root/skills/$real_name"
-[[ -d "$dest_dir" ]] && error "skills/$real_name already exists"
+dest_dir="$repo_root/shared/skills/$real_name"
+[[ -d "$dest_dir" ]] && error "shared/skills/$real_name already exists"
 
-echo -n "Graduate skills-wip/$fuzzed_slug to skills/$real_name? [y/N] "
+echo -n "Graduate shared/skills-wip/$fuzzed_slug to shared/skills/$real_name? [y/N] "
 read -r confirm
 [[ "$confirm" == "y" || "$confirm" == "Y" ]] || error "Aborted"
 
@@ -34,10 +34,10 @@ sed -i.bak "s/^name: .*/name: $real_name/" "$dest_dir/SKILL.md" || error "Failed
 rm -f "$dest_dir/SKILL.md.bak"
 
 rm -rf "$wip_dir"
-rm -rf "$repo_root/skills-encrypted/$fuzzed_slug"
+rm -rf "$repo_root/shared/skills-encrypted/$fuzzed_slug"
 [[ -L "$claude_skills_dir/$fuzzed_slug" ]] && rm "$claude_skills_dir/$fuzzed_slug"
 
 mkdir -p "$claude_skills_dir" || error "Failed to create $claude_skills_dir"
 ln -s "$dest_dir" "$claude_skills_dir/$real_name" || error "Failed to symlink $real_name into $claude_skills_dir"
 
-success "Graduated skills-wip/$fuzzed_slug to skills/$real_name"
+success "Graduated shared/skills-wip/$fuzzed_slug to shared/skills/$real_name"

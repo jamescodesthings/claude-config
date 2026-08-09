@@ -4,7 +4,7 @@
 repo_root="${0:A:h}/.."
 source "$repo_root/tools/lib"
 
-wip_root="$repo_root/skills-wip"
+wip_root="$repo_root/shared/skills-wip"
 claude_skills_dir="${CLAUDE_CONFIG_DIR:-$HOME/.claude}/skills"
 
 fetch_slug() {
@@ -45,4 +45,4 @@ EOF
 mkdir -p "$claude_skills_dir" || error "Failed to create $claude_skills_dir"
 ln -s "$skill_dir" "$claude_skills_dir/$slug" || error "Failed to symlink $slug into $claude_skills_dir"
 
-success "Created WIP skill at skills-wip/$slug, symlinked into $claude_skills_dir/$slug"
+success "Created WIP skill at shared/skills-wip/$slug, symlinked into $claude_skills_dir/$slug"

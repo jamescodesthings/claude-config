@@ -27,11 +27,12 @@ Temporary Items
 .apdisk
 
 # Encrypted WIP skills pipeline
-skills-wip/*
-!skills-wip/.gitkeep
+shared/skills-wip/*
+!shared/skills-wip/.gitkeep
 .env.[0-9]*
 # transient key material / ciphertext staging — must never be committable
 .env.tmp*
+shared/skills-encrypted.tmp.*
 skills-encrypted.tmp.*
 
 # Created by https://www.toptal.com/developers/gitignore/api/node
@@ -202,7 +203,7 @@ dist
 .claude-config-dir
 
 # Machine-specific — managed by codebase-memory-mcp install
-config/.mcp.json
+claude/config/.mcp.json
 
 # Per-machine secrets — never commit
-config/env.local
+claude/config/env.local

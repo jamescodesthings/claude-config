@@ -10,4 +10,5 @@ load_env() {
   set -a
   source "$env_file"
   set +a
+  [[ -n "$SKILLS_ENCRYPTION_KEY" ]] && export SKILLS_ENCRYPTION_KEY
 }
