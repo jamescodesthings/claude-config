@@ -3,7 +3,8 @@ set -euo pipefail
 
 # Temporary hard-coded debug switch. Set to 1 to log each input payload.
 DEBUG=1
-DEBUG_LOG_DIR="$HOME/.claude/status-logs"
+LOG_DIR_PARENT="${AGENT_FORGE_DIR:-~/Downloads}"
+DEBUG_LOG_DIR="$LOG_DIR_PARENT/logs"
 
 # Originally: https://github.com/kcchien/claude-code-statusline
 # modified for my needs
