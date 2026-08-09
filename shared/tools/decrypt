@@ -7,7 +7,7 @@ unsetopt MONITOR
 # exists untouched. Routine callers (install, cycle-key) use this so a sync run
 # can never overwrite uncommitted plaintext edits — skills-wip/ is gitignored,
 # so a clobber there is unrecoverable.
-SCRIPT_DIR="$(cd "$(dirname "${(%):-%x}")" 2>/dev/null && pwd || cd "$(dirname "$0")" && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
 source "$SCRIPT_DIR/lib"
 load_env "$ROOT_DIR/.env"

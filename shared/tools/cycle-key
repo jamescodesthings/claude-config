@@ -1,7 +1,7 @@
 #!/usr/bin/env zsh
 # Rotates the encryption key atomically: decrypt with the current key,
 # generate a new key, re-encrypt into a temp dir, swap in only on full success.
-SCRIPT_DIR="$(cd "$(dirname "${(%):-%x}")" 2>/dev/null && pwd || cd "$(dirname "$0")" && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
 source "$SCRIPT_DIR/lib"
 

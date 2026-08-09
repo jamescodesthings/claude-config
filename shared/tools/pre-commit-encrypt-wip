@@ -1,11 +1,8 @@
 #!/usr/bin/env zsh
 # Pre-commit hook: blocks any staged skills-wip plaintext, then encrypts and
 # stages the skills-encrypted counterpart for any changed WIP skill files.
-SCRIPT_DIR="$(cd "$(dirname "${(%):-%x}")" 2>/dev/null && pwd || cd "$(dirname "$0")" && pwd)"
-ROOT_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
-source "$SCRIPT_DIR/lib"
-
-repo_root="$ROOT_DIR"
+repo_root="$(git rev-parse --show-toplevel)"
+source "$repo_root/shared/tools/lib"
 
 # The plaintext block runs unconditionally — it is the guarantee this hook
 # exists for, and must hold even before a key has been set up on this machine.
@@ -22,7 +19,7 @@ if [[ ! -f "$repo_root/.env" ]] || ! grep -q '^SKILLS_ENCRYPTION_KEY=.' "$repo_r
   exit 0
 fi
 
-"$SCRIPT_DIR/encrypt" || error "Encrypt failed, aborting commit"
+"$repo_root/shared/tools/encrypt" || error "Encrypt failed, aborting commit"
 
 [[ -d "$repo_root/shared/skills-encrypted" ]] && git add "$repo_root/shared/skills-encrypted"
 

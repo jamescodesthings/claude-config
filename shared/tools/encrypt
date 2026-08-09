@@ -7,7 +7,7 @@ unsetopt MONITOR
 #   - a file whose plaintext is unchanged since it was last encrypted is left
 #     alone (re-encrypting re-salts it and churns the whole git tree)
 #   - a destination file with no corresponding source file is pruned
-SCRIPT_DIR="$(cd "$(dirname "${(%):-%x}")" 2>/dev/null && pwd || cd "$(dirname "$0")" && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
 source "$SCRIPT_DIR/lib"
 load_env "$ROOT_DIR/.env"
