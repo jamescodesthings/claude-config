@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # Temporary hard-coded debug switch. Set to 1 to log each input payload.
-DEBUG=0
+DEBUG=1
 DEBUG_LOG_DIR="$HOME/.claude/status-logs"
 
 # Originally: https://github.com/kcchien/claude-code-statusline
@@ -11,9 +11,18 @@ DEBUG_LOG_DIR="$HOME/.claude/status-logs"
 debug_log_input() {
   [[ "$DEBUG" == "1" ]] || return 0
 
-  local ts log_file
+  local ts log_file model_name model_slug
   ts=$(date +"%Y-%m-%dT%H:%M:%S%z")
-  log_file="$DEBUG_LOG_DIR/statusline-$(date +%Y-%m-%d).log"
+
+  if command -v jq >/dev/null 2>&1; then
+    model_name=$(printf '%s' "$1" | jq -r '.model.display_name // empty' 2>/dev/null || true)
+  fi
+  if [[ -n "${model_name:-}" ]]; then
+    model_slug=$(printf '%s' "$model_name" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9]+/-/g; s/^-+//; s/-+$//; s/-+/-/g')
+  fi
+  model_slug="${model_slug:-unknown}"
+
+  log_file="$DEBUG_LOG_DIR/statusline-${model_slug}-$(date +%Y-%m-%d).log"
 
   mkdir -p "$DEBUG_LOG_DIR" 2>/dev/null || return 0
   {
