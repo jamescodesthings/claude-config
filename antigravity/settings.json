@@ -1,0 +1,6 @@
+{
+  "permissions": {
+    "defaultMode": "auto"
+  },
+  "model": "gemini-3.6-flash"
+}

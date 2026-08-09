@@ -1,0 +1,25 @@
+{
+  "hooks": {
+    "PreInvocation": [
+      {
+        "matcher": ".*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.gemini/hooks/adhd-mode-inject-skill"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.gemini/hooks/session-stop-memory-reminder"
+          }
+        ]
+      }
+    ]
+  }
+}
