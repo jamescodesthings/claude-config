@@ -18,8 +18,8 @@ agent-forge/
 ├── Makefile                          # Unified targets (install, claude, antigravity, uninstall, etc.)
 ├── install                           # Master installer (delegates to sub-installers)
 ├── uninstall                         # Master uninstaller (delegates to sub-uninstallers)
-├── AGENTS.md                         # Core reference
-├── CLAUDE.md                         # Claude instructions
+├── AGENTS.md                         # Core reference for root repository
+├── CLAUDE.md -> AGENTS.md            # Symlink to AGENTS.md
 ├── README.md                         # Documentation
 ├── antigravity/                      # Antigravity CLI module
 │   ├── config/                       # GEMINI.md, settings.json, hooks.json, manifest.txt
@@ -41,7 +41,7 @@ agent-forge/
 │   ├── scripts/                      # CLI runtime scripts
 │   ├── skills/                       # Shared skills
 │   ├── skills-wip/                   # Shared WIP skills
-│   ├── system-prompt/                # Workflow definitions
+│   ├── system-prompt/                # Workflow definitions & session state rules (workflow.md)
 │   └── tools/                        # Repo tools & lib (create-key, decrypt, encrypt, install-*, lib)
 │       ├── install-caveman           # Shared tool installer
 │       ├── install-claude-monitor     # Shared tool installer
@@ -56,6 +56,7 @@ agent-forge/
 - **Remove:** Root-level empty `agents/` folder.
 - **Move:** `00-tools/*` -> `shared/tools/`.
 - **Move:** `tools/*` -> `shared/tools/` (or CLI-specific `claude/tools/` / `antigravity/tools/`).
+- **Symlink:** Root `CLAUDE.md` -> `AGENTS.md`.
 - **Update References:** Update all `.env.example`, `pre-commit`, `encrypt`, `decrypt`, `cycle-key`, and documentation files to point to `shared/tools/`.
 
 ---
