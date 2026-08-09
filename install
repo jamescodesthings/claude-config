@@ -151,6 +151,8 @@ function link_wip_skills() {
 function install_antigravity() {
   if command -v agy &> /dev/null; then
     success "antigravity CLI already installed"
+    info "Updating antigravity..."
+    agy update 2>/dev/null || error "agy update failed"
     return
   fi
   info "Installing Antigravity CLI..."
