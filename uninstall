@@ -1,155 +1,35 @@
 #!/usr/bin/env zsh
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+ROOT_DIR="$SCRIPT_DIR"
+source "$ROOT_DIR/shared/tools/lib"
 
-SOURCE_DIR=${0:a:h}
-CLAUDE_DIR="${CLAUDE_CONFIG_DIR:-$HOME/.claude}"
-GEMINI_DIR="${GEMINI_CONFIG_DIR:-$HOME/.gemini}"
+info "Starting Agent Forge Master Uninstallation..."
 
-info()    { print -P "%F{blue}[info]%f  $1" }
-success() { print -P "%F{green}[ok]%f    $1" }
-warn()    { print -P "%F{yellow}[warn]%f  $1" }
+if [[ -x "$ROOT_DIR/claude/uninstall" ]]; then
+  "$ROOT_DIR/claude/uninstall" || warn "Claude uninstaller failed"
+fi
 
-# run tool + legacy uninstallers
-function run_uninstallers() {
-  for script in \
-    "$SOURCE_DIR/tools/uninstall-"*(N) \
-    "$SOURCE_DIR/legacy/uninstall-"*(N); do
-    [[ -x "$script" ]] || continue
-    info "$(basename $script)..."
-    "$script" || warn "$(basename $script) failed"
-  done
-}
+if [[ -x "$ROOT_DIR/antigravity/uninstall" ]]; then
+  "$ROOT_DIR/antigravity/uninstall" || warn "Antigravity uninstaller failed"
+fi
 
-# remove shell aliases integration from ~/.zshrc
-function remove_shell_aliases() {
-  local zshrc="$HOME/.zshrc"
-  [[ -f "$zshrc" ]] || return
-  if grep -q "AI_CONFIG_DIR" "$zshrc" 2>/dev/null; then
-    info "Removing AI_CONFIG_DIR and shell aliases block from ~/.zshrc..."
-    if [[ "$OSTYPE" == "darwin"* ]]; then
-      sed -i '' '/AI_CONFIG_DIR/d' "$zshrc" 2>/dev/null
-    else
-      sed -i '/AI_CONFIG_DIR/d' "$zshrc" 2>/dev/null
-    fi
-    success "Removed shell aliases block from ~/.zshrc"
+# Remove pre-commit hook
+if hooks_dir=$(git -C "$ROOT_DIR" rev-parse --git-path hooks 2>/dev/null); then
+  [[ "$hooks_dir" == /* ]] || hooks_dir="$ROOT_DIR/$hooks_dir"
+  pre_commit="$hooks_dir/pre-commit"
+  [[ -L "$pre_commit" ]] && rm "$pre_commit" && info "Removed pre-commit hook"
+fi
+
+# Remove zsh aliases
+zshrc="$HOME/.zshrc"
+if [[ -f "$zshrc" ]] && grep -q "AI_CONFIG_DIR" "$zshrc" &>/dev/null; then
+  info "Removing AI_CONFIG_DIR from ~/.zshrc..."
+  if [[ "$OSTYPE" == "darwin"* ]]; then
+    sed -i '' '/AI_CONFIG_DIR/d' "$zshrc" 2>/dev/null
+  else
+    sed -i '/AI_CONFIG_DIR/d' "$zshrc" 2>/dev/null
   fi
-}
+  success "Removed shell aliases block from ~/.zshrc"
+fi
 
-# remove all symlinks we created
-function remove_symlinks() {
-  local claude_dir="$CLAUDE_DIR"
-  local gemini_dir="$GEMINI_DIR"
-
-  # Claude config files
-  for f in CLAUDE.md RTK.md settings.json .mcp.json keybindings.json statusline.sh; do
-    local dest="$claude_dir/$f"
-    [[ -L "$dest" ]] && rm "$dest" && info "Removed Claude $f"
-  done
-
-  # Claude hooks installed from claude/hooks/
-  for hook_file in "$SOURCE_DIR/claude/hooks/"*(N); do
-    [[ -f "$hook_file" ]] || continue
-    local dest="$claude_dir/hooks/$(basename $hook_file)"
-    [[ -L "$dest" ]] && rm "$dest" && info "Removed Claude hook $(basename $hook_file)"
-  done
-
-  # Claude agents dir symlink (points to shared/agents)
-  [[ -L "$claude_dir/agents" ]] && rm "$claude_dir/agents" && info "Removed Claude agents"
-
-  # Claude skills (installed as per-skill symlinks from shared/skills and shared/skills-wip)
-  if [[ -d "$claude_dir/skills" && ! -L "$claude_dir/skills" ]]; then
-    for f in "$claude_dir/skills/"*(N); do
-      [[ -L "$f" ]] && rm "$f" && info "Removed Claude skill symlink $(basename $f)"
-    done
-  fi
-
-  # Claude memory symlink (points to shared/memory)
-  [[ -L "$claude_dir/memory" ]] && rm "$claude_dir/memory" && info "Removed Claude memory symlink"
-  local project_path=$(echo "$SOURCE_DIR" | sed 's|/|-|g')
-  local legacy_memory_dest="$CLAUDE_DIR/projects/$project_path/memory"
-  [[ -L "$legacy_memory_dest" ]] && rm "$legacy_memory_dest" && info "Removed legacy project memory symlink"
-
-  # Antigravity config files
-  for f in GEMINI.md settings.json hooks.json; do
-    local dest="$gemini_dir/$f"
-    [[ -L "$dest" ]] && rm "$dest" && info "Removed Antigravity $f"
-  done
-
-  # Antigravity hooks installed from antigravity/hooks/
-  for hook_file in "$SOURCE_DIR/antigravity/hooks/"*(N); do
-    [[ -f "$hook_file" ]] || continue
-    local dest="$gemini_dir/hooks/$(basename $hook_file)"
-    [[ -L "$dest" ]] && rm "$dest" && info "Removed Antigravity hook $(basename $hook_file)"
-  done
-
-  # Antigravity skills (installed as per-skill symlinks from shared/skills)
-  if [[ -d "$gemini_dir/skills" && ! -L "$gemini_dir/skills" ]]; then
-    for f in "$gemini_dir/skills/"*(N); do
-      [[ -L "$f" ]] && rm "$f" && info "Removed Antigravity skill symlink $(basename $f)"
-    done
-  fi
-
-  # Clean dangling symlinks in Gemini dirs
-  for dir in "$gemini_dir/skills" "$gemini_dir/hooks"; do
-    [[ -d "$dir" ]] || continue
-    for f in "$dir/"*(N); do
-      if [[ -L "$f" && ! -e "$f" ]]; then
-        rm "$f"
-        info "Removed dangling Antigravity link: $f"
-      fi
-    done
-  done
-
-  # git pre-commit hook (.git is a file, not a dir, inside a worktree)
-  local hooks_dir
-  if hooks_dir=$(git -C "$SOURCE_DIR" rev-parse --git-path hooks 2>/dev/null); then
-    [[ "$hooks_dir" == /* ]] || hooks_dir="$SOURCE_DIR/$hooks_dir"
-    local pre_commit="$hooks_dir/pre-commit"
-    [[ -L "$pre_commit" ]] && rm "$pre_commit" && info "Removed pre-commit hook"
-  fi
-
-  success "Symlinks removed"
-}
-
-# remove claude CLI
-function remove_claude() {
-  # native install
-  if [[ -f "$HOME/.local/bin/claude" ]]; then
-    rm -f "$HOME/.local/bin/claude"
-    rm -rf "$HOME/.local/share/claude"
-    info "Removed native claude binary"
-  fi
-
-  # npm install fallback
-  if npm list -g @anthropic-ai/claude-code &>/dev/null 2>&1; then
-    npm uninstall -g @anthropic-ai/claude-code
-    info "Removed npm claude package"
-  fi
-}
-
-# remove antigravity CLI
-function remove_antigravity() {
-  if [[ -f "$HOME/.local/bin/agy" ]]; then
-    rm -f "$HOME/.local/bin/agy"
-    rm -rf "$HOME/.local/share/antigravity"
-    info "Removed native agy binary"
-  fi
-}
-
-# nuke config dirs
-function remove_config() {
-  rm -rf "$CLAUDE_DIR"
-  rm -f  "$HOME/.claude.json"
-  rm -rf "$GEMINI_DIR"
-  success "Removed ~/.claude, ~/.claude.json, and ~/.gemini"
-}
-
-# main
-run_uninstallers
-remove_symlinks
-remove_shell_aliases
-remove_claude
-remove_antigravity
-remove_config
-
-success "Agent Forge fully uninstalled."
-info    "Start a new shell session to clear any cached PATH entries."
+success "Agent Forge uninstalled."

@@ -1,20 +1,27 @@
-SHELL := bash
+SHELL := zsh
 .ONESHELL:
 .SILENT:
-.SHELLFLAGS := -euo pipefail -c
-
-define docker-compose-run
-	docker compose build
-	docker compose run --rm $(1) && exit_status=$$? || exit_status=$$?
-	[ "$$exit_status" -ne 0 ] && docker compose ps && docker compose logs
-	docker compose down
-	(exit $$exit_status)
-endef
 
 install:
 	./install
 .PHONY: install
 
+claude:
+	./claude/install
+.PHONY: claude
+
+antigravity:
+	./antigravity/install
+.PHONY: antigravity
+
 uninstall:
 	./uninstall
 .PHONY: uninstall
+
+uninstall-claude:
+	./claude/uninstall
+.PHONY: uninstall-claude
+
+uninstall-antigravity:
+	./antigravity/uninstall
+.PHONY: uninstall-antigravity
