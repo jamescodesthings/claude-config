@@ -241,6 +241,7 @@ function link_statusline() {
 
   [[ -f "$statusline_src" ]] || { error "statusline.sh not found — skipping"; return; }
   symlink "$statusline_src" "$statusline_dest"
+  symlink "$statusline_src" "$GEMINI_DIR/statusline.sh"
 }
 
 # ── sync plugins: install missing, uninstall extras ─────────────────────────

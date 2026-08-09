@@ -5,8 +5,8 @@
   "model": "Gemini 3.6 Flash (Medium)",
   "showFeedbackSurvey": false,
   "statusLine": {
-    "type": "",
-    "command": "",
+    "type": "command",
+    "command": "~/.gemini/statusline.sh",
     "enabled": true
   },
   "toolPermission": "always-proceed",
