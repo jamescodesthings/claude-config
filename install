@@ -81,12 +81,12 @@ function link_config() {
   mkdir -p "$CLAUDE_DIR"
   local claude_dir="$CLAUDE_DIR"
 
-  symlink "$SOURCE_DIR/config/CLAUDE.md"     "$claude_dir/CLAUDE.md"
-  symlink "$SOURCE_DIR/config/RTK.md"        "$claude_dir/RTK.md"
-  symlink "$SOURCE_DIR/config/settings.json" "$claude_dir/settings.json"
+  symlink "$SOURCE_DIR/claude/config/CLAUDE.md"     "$claude_dir/CLAUDE.md"
+  symlink "$SOURCE_DIR/claude/config/RTK.md"        "$claude_dir/RTK.md"
+  symlink "$SOURCE_DIR/claude/config/settings.json" "$claude_dir/settings.json"
 
-  [[ -f "$SOURCE_DIR/config/keybindings.json" ]] && \
-    symlink "$SOURCE_DIR/config/keybindings.json" "$claude_dir/keybindings.json"
+  [[ -f "$SOURCE_DIR/claude/config/keybindings.json" ]] && \
+    symlink "$SOURCE_DIR/claude/config/keybindings.json" "$claude_dir/keybindings.json"
 }
 
 # ── symlink individual hooks into ~/.claude/hooks/ ──────────────────────────
@@ -94,12 +94,12 @@ function link_hooks() {
   local hooks_dir="$CLAUDE_DIR/hooks"
   mkdir -p "$hooks_dir"
 
-  for hook_file in "$SOURCE_DIR/hooks/"*(N); do
+  for hook_file in "$SOURCE_DIR/claude/hooks/"*(N); do
     [[ -f "$hook_file" ]] || continue
     local name=$(basename "$hook_file")
     symlink "$hook_file" "$hooks_dir/$name"
     chmod +x "$hook_file"
-    if ! grep -q "hooks/$name" "$SOURCE_DIR/config/settings.json" 2>/dev/null; then
+    if ! grep -q "hooks/$name" "$SOURCE_DIR/claude/config/settings.json" 2>/dev/null; then
       warn "$name not registered in settings.json — hook won't fire until added"
     fi
   done
@@ -107,7 +107,7 @@ function link_hooks() {
 
 # ── symlink agents/ directory ───────────────────────────────────────────────
 function link_agents() {
-  symlink "$SOURCE_DIR/agents" "$CLAUDE_DIR/agents"
+  symlink "$SOURCE_DIR/shared/agents" "$CLAUDE_DIR/agents"
 }
 
 # ── symlink each skill subfolder into ~/.claude/skills/ ─────────────────────
@@ -120,7 +120,7 @@ function link_skills() {
 
   mkdir -p "$skills_target"
 
-  for skill_dir in "$SOURCE_DIR/skills/"*(N/); do
+  for skill_dir in "$SOURCE_DIR/shared/skills/"*(N/); do
     symlink "$skill_dir" "$skills_target/$(basename $skill_dir)"
   done
 }
@@ -128,7 +128,7 @@ function link_skills() {
 # ── decrypt WIP skills, symlink each into ~/.claude/skills/ ─────────────────
 function link_wip_skills() {
   local skills_target="$CLAUDE_DIR/skills"
-  local wip_dir="$SOURCE_DIR/skills-wip"
+  local wip_dir="$SOURCE_DIR/shared/skills-wip"
 
   if [[ ! -f "$SOURCE_DIR/.env" ]]; then
     warn ".env not found — skipping WIP skills decrypt"
@@ -205,13 +205,13 @@ function link_git_hook() {
 function link_global_memory() {
   local memory_dest="$CLAUDE_DIR/memory"
 
-  symlink "$SOURCE_DIR/memory" "$memory_dest"
+  symlink "$SOURCE_DIR/shared/memory" "$memory_dest"
   info "Global memory path: $memory_dest"
 }
 
 # ── symlink statusline handler ─────────────────────────────────────────────
 function link_statusline() {
-  local statusline_src="$SOURCE_DIR/scripts/statusline.sh"
+  local statusline_src="$SOURCE_DIR/claude/scripts/statusline.sh"
   local statusline_dest="$CLAUDE_DIR/statusline.sh"
 
   [[ -f "$statusline_src" ]] || { warn "statusline.sh not found — skipping"; return; }
@@ -220,7 +220,7 @@ function link_statusline() {
 
 # ── sync plugins: install missing, uninstall extras ─────────────────────────
 function install_plugins() {
-  local settings="$SOURCE_DIR/config/settings.json"
+  local settings="$SOURCE_DIR/claude/config/settings.json"
   [[ -f "$settings" ]] || { warn "settings.json not found, skipping plugins"; return; }
 
   local desired
@@ -312,6 +312,7 @@ function setup_shell_aliases() {
 
 # ── write metadata ──────────────────────────────────────────────────────────
 function write_metadata() {
+  mkdir -p "$CLAUDE_DIR"
   echo "$SOURCE_DIR" > "$CLAUDE_DIR/.claude-config-dir"
   success "Metadata written"
 }
