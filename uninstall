@@ -126,6 +126,15 @@ function remove_claude() {
   fi
 }
 
+# remove antigravity CLI
+function remove_antigravity() {
+  if [[ -f "$HOME/.local/bin/agy" ]]; then
+    rm -f "$HOME/.local/bin/agy"
+    rm -rf "$HOME/.local/share/antigravity"
+    info "Removed native agy binary"
+  fi
+}
+
 # nuke config dirs
 function remove_config() {
   rm -rf "$CLAUDE_DIR"
@@ -139,6 +148,7 @@ run_uninstallers
 remove_symlinks
 remove_shell_aliases
 remove_claude
+remove_antigravity
 remove_config
 
 success "Agent Forge fully uninstalled."

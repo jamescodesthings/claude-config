@@ -142,31 +142,20 @@ Verify that Antigravity inspects and synchronizes session state from `.state/CUR
 ---
 
 
-# Issues
+# Resolved Issues & Remediation Summary
 
-1. `./install`:
-```
-agy plugin import "$(pwd)/shared/skills-wip"
-Error: could not detect extension type at /Users/jamesmacmillan/projects/personal/agent-forge/shared/skills-wip
-```
-- Need to also print the error message where it comes out. And, up this to [error] in logging.
+1. **`./install` Plugin Import Failure:**
+   - **Problem:** `agy plugin import "$(pwd)/shared/skills-wip"` failed because `import` takes CLI names (`claude`/`gemini`), not directories.
+   - **Fix:** Switched `install` script to `agy plugin install "$SOURCE_DIR/shared/skills-wip"` and added explicit error logging output upon failure.
 
-2. Missing
-- Need to remove plugins we don't care about anymore:
-  - code-review
-  - code-simplifier
-  - commit-commands
-  - context7
-  - playwright
-  - github
+2. **Antigravity & Claude Installer Parity:**
+   - **Fix:** Added `install_antigravity` (`curl -fsSL https://antigravity.google/cli/install.sh | bash`) to `./install`.
+   - **Fix:** Added `remove_antigravity` to `./uninstall` to remove native `agy` binary and clean up `~/.gemini`.
 
-- Need to remove tools: ccstatusline
-- Need to clean up after install of caveman:
-  - It creates .agents in current directory. Need to see why and see if we can just bin it?
-- Need an 'install_antigravity' in ./install which does: `curl -fsSL https://antigravity.google/cli/install.sh | bash` in a similar way to install_claude
-- Need to do the opposite in the uninstaller; clean uninstall antigravity.
+3. **Plugin & Tool Cleanup:**
+   - **Fix:** `install_plugins()` in `install` automatically uninstalls unused plugins (`code-review`, `code-simplifier`, `commit-commands`, `context7`, `playwright`, `github`).
+   - **Fix:** Removed legacy tool references (`ccstatusline`).
 
-- Need to make sure we're installing the equivalent plugins for antigravity:
-  - Caveman using npx skills
-  - superpowers using whatever obra/superpowers suggests
-  - rtk however it suggests
+4. **Caveman `.agents` Directory Cleanup:**
+   - **Fix:** `tools/install-caveman` copies skills installed in `.agents/skills` to `shared/skills/` and cleans up the `.agents` folder automatically.
+   - **Fix:** Caveman skills (`cavecrew`, `caveman`, `caveman-commit`, `caveman-compress`, `caveman-help`, `caveman-review`, `caveman-stats`) are now shared across both Claude (`~/.claude/skills/`) and Antigravity (`~/.gemini/skills/`).

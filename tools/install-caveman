@@ -76,4 +76,13 @@ if [[ -n "$config_dir" && -d "$config_dir" && -f "$settings" && ! -L "$settings"
     || warn "settings.json symlink restore failed — check $config_dir/config/settings.json manually"
 fi
 
+# If caveman installed skills into local .agents directory, move them to shared/skills and remove .agents
+local repo_dir="${0:a:h:h}"
+if [[ -d "$repo_dir/.agents/skills" ]]; then
+  mkdir -p "$repo_dir/shared/skills"
+  cp -R "$repo_dir/.agents/skills/"* "$repo_dir/shared/skills/" 2>/dev/null
+  rm -rf "$repo_dir/.agents"
+  success "Moved caveman skills to shared/skills and cleaned up .agents"
+fi
+
 success "caveman installed"

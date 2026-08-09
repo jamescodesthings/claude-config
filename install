@@ -147,6 +147,17 @@ function link_wip_skills() {
   done
 }
 
+# ── install antigravity CLI if missing ─────────────────────────────────────
+function install_antigravity() {
+  if command -v agy &> /dev/null; then
+    success "antigravity CLI already installed"
+    return
+  fi
+  info "Installing Antigravity CLI..."
+  curl -fsSL https://antigravity.google/cli/install.sh | bash \
+    || error "Antigravity installer failed"
+}
+
 # ── symlink Antigravity config, hooks, skills, and WIP skills plugin ─────────
 function link_antigravity() {
   local gemini_dir="${GEMINI_CONFIG_DIR:-$HOME/.gemini}"
@@ -183,8 +194,17 @@ function link_antigravity() {
     cp "$SOURCE_DIR/antigravity/plugin.json" "$SOURCE_DIR/shared/skills-wip/plugin.json"
   fi
 
-  agy plugin import "$SOURCE_DIR/shared/skills-wip" 2>/dev/null \
-    || warn "agy plugin import failed or agy not installed"
+  if command -v agy &> /dev/null; then
+    local output
+    output=$(agy plugin install "$SOURCE_DIR/shared/skills-wip" 2>&1)
+    if [[ $? -ne 0 ]]; then
+      error "agy plugin install failed:\n$output"
+    else
+      success "Antigravity plugin installed"
+    fi
+  else
+    warn "agy CLI not found in PATH — skipping Antigravity plugin install"
+  fi
 }
 
 # ── symlink the pre-commit hook ─────────────────────────────────────────────
@@ -356,6 +376,7 @@ function clean_dangling() {
 # ── main ────────────────────────────────────────────────────────────────────
 check_deps
 install_claude
+install_antigravity
 run_legacy
 clean_dangling
 link_config
@@ -375,5 +396,5 @@ setup_shell_aliases
 write_metadata
 
 print ""
-success "Claude config installed."
+success "Agent Forge installed."
 info    "Start a new shell session (or: source ~/.zshrc) to pick up PATH changes."

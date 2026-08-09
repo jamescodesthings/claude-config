@@ -56,14 +56,14 @@ Choose models based on task complexity and reasoning requirements:
 
 ## Session State & Handoff System
 
-All agents operating within Agent Forge MUST adhere to the shared session state protocol defined in [`shared/system-prompt/workflow.md`](file:///Users/jamesmacmillan/projects/personal/claude-config/shared/system-prompt/workflow.md):
+All agents operating within Agent Forge MUST adhere to the shared session state protocol defined in [`shared/system-prompt/workflow.md`](file:///Users/jamesmacmillan/projects/personal/agent-forge/shared/system-prompt/workflow.md):
 
 1. **Session Startup (Mandatory):**
-   - Inspect [`.state/CURRENT_STATE.md`](file:///Users/jamesmacmillan/projects/personal/claude-config/.state/CURRENT_STATE.md) at startup before executing commands or beginning work.
+   - Inspect [`.state/CURRENT_STATE.md`](file:///Users/jamesmacmillan/projects/personal/agent-forge/.state/CURRENT_STATE.md) at startup before executing commands or beginning work.
    - Synchronize context on active tasks, completed steps, and open issues.
 
 2. **Session Maintenance & State Updates (Mandatory):**
-   - Update [`.state/CURRENT_STATE.md`](file:///Users/jamesmacmillan/projects/personal/claude-config/.state/CURRENT_STATE.md) whenever task status changes, at session end/handoff, or upon rate limit warnings/interruption.
+   - Update [`.state/CURRENT_STATE.md`](file:///Users/jamesmacmillan/projects/personal/agent-forge/.state/CURRENT_STATE.md) whenever task status changes, at session end/handoff, or upon rate limit warnings/interruption.
    - Save a timestamped snapshot copy to `.state/YYYY-MM-DD-HH-MM-<tool>.md` (e.g. `.state/2026-08-09-14-25-antigravity.md`) at major milestones or session end.
 
 3. **Task Tracking Format:**

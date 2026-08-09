@@ -16,14 +16,14 @@ Every non-trivial task follows this chain. Move through each step without pausin
 
 ## Session State & Handoff Management
 
-All agents operating in Antigravity MUST adhere to the shared session state rules defined in [`shared/system-prompt/workflow.md`](file:///Users/jamesmacmillan/projects/personal/claude-config/shared/system-prompt/workflow.md):
+All agents operating in Antigravity MUST adhere to the shared session state rules defined in [`shared/system-prompt/workflow.md`](file:///Users/jamesmacmillan/projects/personal/agent-forge/shared/system-prompt/workflow.md):
 
 1. **Session Startup (Mandatory):**
-   - Check and inspect [`.state/CURRENT_STATE.md`](file:///Users/jamesmacmillan/projects/personal/claude-config/.state/CURRENT_STATE.md) on startup before executing tasks or starting work.
+   - Check and inspect [`.state/CURRENT_STATE.md`](file:///Users/jamesmacmillan/projects/personal/agent-forge/.state/CURRENT_STATE.md) on startup before executing tasks or starting work.
    - Review active tasks, completed steps, and open context notes.
 
 2. **Session Maintenance & State Updates (Mandatory):**
-   - Update [`.state/CURRENT_STATE.md`](file:///Users/jamesmacmillan/projects/personal/claude-config/.state/CURRENT_STATE.md) upon task/subtask status changes, session end/handoff, rate limit warnings, or context exhaustion.
+   - Update [`.state/CURRENT_STATE.md`](file:///Users/jamesmacmillan/projects/personal/agent-forge/.state/CURRENT_STATE.md) upon task/subtask status changes, session end/handoff, rate limit warnings, or context exhaustion.
    - Whenever updating state at session end or major milestones, save a timestamped copy to `.state/YYYY-MM-DD-HH-MM-antigravity.md`.
 
 ## Model Selection
