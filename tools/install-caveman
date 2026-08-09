@@ -9,8 +9,8 @@ if command -v caveman &> /dev/null; then
 fi
 
 info "Installing caveman..."
-curl -fsSL https://raw.githubusercontent.com/JuliusBrussee/caveman/main/install.sh \
-  | bash -s -- --no-mcp-shrink &> /dev/null || error "Caveman install failed"
+claude plugin marketplace add JuliusBrussee/caveman &> /dev/null
+claude plugin install caveman@caveman &> /dev/null || error "Caveman install failed"
 
 # Normalize absolute hook paths written by caveman installer to portable ~/... form.
 # Handles two formats:

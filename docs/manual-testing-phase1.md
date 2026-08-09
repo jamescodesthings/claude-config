@@ -25,12 +25,12 @@ This checklist guides manual verification of the **Antigravity CLI (`agy`)** int
 Verify that shell aliases defined in `zsh/aliases.zsh` are properly loaded into Zsh and invoke `agy` with expected CLI flags.
 
 ### Execution Steps
-1. Reload Zsh profile (or open a new terminal tab):
+1. Reload Zsh profile (or open a new terminal tab): [pass]
    ```zsh
    source ~/.zshrc
    ```
 
-2. Check alias definitions in the terminal:
+2. Check alias definitions in the terminal:  [pass]
    ```zsh
    alias aggy
    alias aggyr
