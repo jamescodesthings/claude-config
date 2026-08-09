@@ -1,0 +1,92 @@
+SCRIPT_DIR="$(cd "$(dirname "${(%):-%x}")" 2>/dev/null && pwd || cd "$(dirname "$0")" && pwd)"
+source "$SCRIPT_DIR/lib"
+
+export NPM_CONFIG_ALLOW_GIT=all
+
+if command -v caveman &> /dev/null; then
+  success "caveman already installed"
+  exit 0
+fi
+
+info "Installing caveman..."
+claude plugin marketplace add JuliusBrussee/caveman &> /dev/null
+claude plugin install caveman@caveman &> /dev/null || error "Caveman install failed"
+
+# Normalize absolute hook paths written by caveman installer to portable ~/... form.
+# Handles two formats:
+#   "/full/path/to/node" "/abs/.claude/hooks/foo.js"  (asdf/nvm style node)
+#   node "/abs/.claude/hooks/foo.js"                   (node in PATH)
+local settings="$HOME/.claude/settings.json"
+if [[ -f "$settings" ]]; then
+  if command -v python3 &>/dev/null; then
+    python3 - << 'PYEOF'
+import json, re, os, sys
+
+path = os.path.expanduser('~/.claude/settings.json')
+try:
+    with open(path) as f:
+        data = json.load(f)
+except Exception as e:
+    print(f"[warn] caveman path normalization skipped: {e}", file=sys.stderr)
+    sys.exit(0)
+
+def normalize(cmd):
+    # Format: "/abs/path/node" "<any>.claude/hooks/foo.js" (hook path may already use ~)
+    m = re.match(r'"\/[^"]*\bnode\b[^"]*" "[^"]*\.claude/hooks/([^"]+)"', cmd)
+    if m: return f'node ~/.claude/hooks/{m.group(1)}'
+    # Format: node "/abs/.claude/hooks/foo.js"
+    m = re.match(r'node "\/[^"]*\.claude/hooks/([^"]+)"', cmd)
+    if m: return f'node ~/.claude/hooks/{m.group(1)}'
+    return cmd
+
+def walk(obj):
+    if isinstance(obj, dict):
+        if 'command' in obj:
+            obj['command'] = normalize(obj['command'])
+        for v in obj.values():
+            walk(v)
+    elif isinstance(obj, list):
+        for item in obj:
+            walk(item)
+
+walk(data)
+try:
+    with open(path, 'w') as f:
+        json.dump(data, f, indent=2)
+        f.write('\n')
+except Exception as e:
+    print(f"[warn] caveman path normalization write failed: {e}", file=sys.stderr)
+    sys.exit(1)
+PYEOF
+    [[ $? -eq 0 ]] && success "caveman hook paths normalized" || warn "caveman hook path normalization failed — run 'codebase-memory-mcp install' manually"
+  else
+    warn "python3 not found — caveman hook paths not normalized; run ./install again after installing python3"
+  fi
+fi
+
+# If caveman replaced ~/.claude/settings.json symlink with a regular file,
+# sync normalized content back to the repo source and restore the symlink.
+local config_dir
+config_dir=$(cat "$HOME/.claude/.claude-config-dir" &> /dev/null)
+if [[ -n "$config_dir" && -d "$config_dir" && -f "$settings" && ! -L "$settings" ]]; then
+  cp "$settings" "$config_dir/config/settings.json" \
+    && rm "$settings" \
+    && ln -s "$config_dir/config/settings.json" "$settings" \
+    && success "settings.json symlink restored" \
+    || warn "settings.json symlink restore failed — check $config_dir/config/settings.json manually"
+fi
+
+info "installing caveman into antigravity"
+npx skills add JuliusBrussee/caveman -a antigravity -g -s caveman -s caveman-help -s caveman-stats -y --copy &> /dev/null \
+  || error "caveman install into antigravity failed"
+
+# Copy installed core skills to ~/.gemini/antigravity-cli/skills if needed
+parent_dir="$HOME/.gemini/antigravity-cli/skills"
+mkdir -p "$parent_dir"
+for skill in caveman caveman-help caveman-stats; do
+  if [[ -d "$HOME/.gemini/config/skills/$skill" && ! -d "$parent_dir/$skill" ]]; then
+    cp -r "$HOME/.gemini/config/skills/$skill" "$parent_dir/$skill" &> /dev/null || true
+  fi
+done
+
+success "caveman installed"

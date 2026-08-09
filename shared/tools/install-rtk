@@ -1,0 +1,18 @@
+SCRIPT_DIR="$(cd "$(dirname "${(%):-%x}")" 2>/dev/null && pwd || cd "$(dirname "$0")" && pwd)"
+source "$SCRIPT_DIR/lib"
+
+if command -v rtk &> /dev/null; then
+  success "rtk already installed"
+  exit 0
+fi
+
+info "Installing rtk..."
+curl -fsSL https://raw.githubusercontent.com/rtk-ai/rtk/refs/heads/master/install.sh \
+  -o /tmp/rtk-install.sh || error "Failed to download rtk installer"
+
+chmod +x /tmp/rtk-install.sh
+/tmp/rtk-install.sh || error "rtk installer failed"
+rm -f /tmp/rtk-install.sh
+
+rtk init -g || error "rtk init -g failed"
+success "rtk installed"

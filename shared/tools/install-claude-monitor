@@ -1,0 +1,16 @@
+SCRIPT_DIR="$(cd "$(dirname "${(%):-%x}")" 2>/dev/null && pwd || cd "$(dirname "$0")" && pwd)"
+source "$SCRIPT_DIR/lib"
+
+if ! command -v uv &> /dev/null; then
+  warn "uv not found — claude-monitor skipped (install uv first: https://docs.astral.sh/uv/getting-started/installation/)"
+  exit 0
+fi
+
+if uv tool list 2>/dev/null | grep -q "^claude-monitor"; then
+  success "claude-monitor already installed"
+  exit 0
+fi
+
+info "Installing claude-monitor..."
+uv tool install claude-monitor || error "claude-monitor install failed"
+success "claude-monitor installed — run: claude-monitor"

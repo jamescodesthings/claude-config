@@ -1,0 +1,43 @@
+#!/usr/bin/env zsh
+# Moves a finished WIP skill to the plaintext, committed skills/ directory.
+# The only path a skill ever gets a real name — never automatic, requires
+# explicit confirmation naming both the fuzzed slug and the destination name.
+repo_root="${0:A:h}/.."
+source "$repo_root/tools/lib"
+
+fuzzed_slug="$1"
+real_name="$2"
+claude_skills_dir="${CLAUDE_CONFIG_DIR:-$HOME/.claude}/skills"
+
+[[ -n "$fuzzed_slug" && -n "$real_name" ]] \
+  || error "Usage: graduate-skill <fuzzed-slug> <real-name>"
+
+# Both names index into paths and $real_name into a sed replacement — reject
+# anything that could escape skills/ or break the sed delimiter.
+[[ "$fuzzed_slug" =~ '^[a-z0-9][a-z0-9-]*$' ]] \
+  || error "Invalid fuzzed slug — must match [a-z0-9-]"
+[[ "$real_name" =~ '^[a-z0-9][a-z0-9-]*$' ]] \
+  || error "Invalid real name — must match [a-z0-9-]"
+
+wip_dir="$repo_root/shared/skills-wip/$fuzzed_slug"
+[[ -d "$wip_dir" ]] || error "No WIP skill at shared/skills-wip/$fuzzed_slug"
+
+dest_dir="$repo_root/shared/skills/$real_name"
+[[ -d "$dest_dir" ]] && error "shared/skills/$real_name already exists"
+
+echo -n "Graduate shared/skills-wip/$fuzzed_slug to shared/skills/$real_name? [y/N] "
+read -r confirm
+[[ "$confirm" == "y" || "$confirm" == "Y" ]] || error "Aborted"
+
+cp -R "$wip_dir" "$dest_dir" || error "Failed to copy $wip_dir to $dest_dir"
+sed -i.bak "s/^name: .*/name: $real_name/" "$dest_dir/SKILL.md" || error "Failed to rewrite name in $dest_dir/SKILL.md"
+rm -f "$dest_dir/SKILL.md.bak"
+
+rm -rf "$wip_dir"
+rm -rf "$repo_root/shared/skills-encrypted/$fuzzed_slug"
+[[ -L "$claude_skills_dir/$fuzzed_slug" ]] && rm "$claude_skills_dir/$fuzzed_slug"
+
+mkdir -p "$claude_skills_dir" || error "Failed to create $claude_skills_dir"
+ln -s "$dest_dir" "$claude_skills_dir/$real_name" || error "Failed to symlink $real_name into $claude_skills_dir"
+
+success "Graduated shared/skills-wip/$fuzzed_slug to shared/skills/$real_name"

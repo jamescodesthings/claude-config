@@ -1,0 +1,78 @@
+#!/usr/bin/env zsh
+# shared/tools/lib — Shared library for Agent Forge installers and tools
+
+local self_file="${(%):-%x}"
+[[ -z "$self_file" || "$self_file" == "zsh" ]] && self_file="$0"
+LIB_DIR="$(cd "$(dirname "$self_file")" && pwd)"
+ROOT_DIR="$(cd "$LIB_DIR/../.." && pwd)"
+
+CLAUDE_DIR="${CLAUDE_CONFIG_DIR:-$HOME/.claude}"
+GEMINI_DIR="${GEMINI_CONFIG_DIR:-$HOME/.gemini}"
+ANTIGRAVITY_DIR="$GEMINI_DIR/antigravity-cli"
+
+info()    { print -P "%F{blue}[info]%f:  $1" }
+success() { print -P "%F{green}[ok]%f:    $1" }
+warn()    { print -P "%F{yellow}[warn]%f:  $1" }
+error()   { print -P "%F{red}[error]%f $1" && exit 1 }
+
+symlink() {
+  local src=$1 dest=$2
+  mkdir -p "$(dirname "$dest")"
+  if [[ -L "$dest" ]]; then
+    rm "$dest"
+  elif [[ -e "$dest" ]]; then
+    mv "$dest" "$dest.bak"
+    warn "Backed up $dest → $dest.bak"
+  fi
+  if ! ln -s "$src" "$dest"; then
+    error "Failed to link $dest"
+    return 1
+  fi
+  success "Linked $(basename "$dest")"
+}
+
+clean_dead_symlinks() {
+  local target_dir=$1
+  [[ -d "$target_dir" ]] || return 0
+  for f in "$target_dir"/*(N); do
+    if [[ -L "$f" && ! -e "$f" ]]; then
+      rm "$f"
+      info "Removed dangling symlink: $f"
+    elif [[ -d "$f" && ! -L "$f" ]]; then
+      clean_dead_symlinks "$f"
+    fi
+  done
+}
+
+apply_manifest() {
+  local manifest_file=$1
+  [[ -f "$manifest_file" ]] || error "Manifest file $manifest_file not found"
+  while IFS=':' read -r rel_src raw_dest || [[ -n "$rel_src" ]]; do
+    [[ -z "$rel_src" || "$rel_src" == "#"* ]] && continue
+    local abs_dest
+    abs_dest=$(eval echo "$raw_dest")
+    if [[ "$rel_src" == *"/*" ]]; then
+      local base_rel="${rel_src%\/\*}"
+      local base_abs="$ROOT_DIR/$base_rel"
+      if [[ -d "$base_abs" ]]; then
+        for f in "$base_abs"/*(N); do
+          symlink "$f" "$abs_dest/$(basename "$f")"
+        done
+      fi
+    else
+      local abs_src="$ROOT_DIR/$rel_src"
+      if [[ -e "$abs_src" ]]; then
+        symlink "$abs_src" "$abs_dest"
+      fi
+    fi
+  done < "$manifest_file"
+}
+
+load_env() {
+  local env_file="${1:-$ROOT_DIR/.env}"
+  [[ -f "$env_file" ]] || error "missing $env_file — run shared/tools/create-key first"
+  set -a
+  source "$env_file"
+  set +a
+  [[ -n "$SKILLS_ENCRYPTION_KEY" ]] && export SKILLS_ENCRYPTION_KEY
+}

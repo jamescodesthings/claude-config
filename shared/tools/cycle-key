@@ -1,0 +1,61 @@
+#!/usr/bin/env zsh
+# Rotates the encryption key atomically: decrypt with the current key,
+# generate a new key, re-encrypt into a temp dir, swap in only on full success.
+SCRIPT_DIR="$(cd "$(dirname "${(%):-%x}")" 2>/dev/null && pwd || cd "$(dirname "$0")" && pwd)"
+ROOT_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
+source "$SCRIPT_DIR/lib"
+
+encrypted_root="$ROOT_DIR/shared/skills-encrypted"
+wip_root="$ROOT_DIR/shared/skills-wip"
+
+# Refuse to run from a linked git worktree. Rotation replaces skills-encrypted/
+# wholesale with a re-encrypt of skills-wip/, and skills-wip/ is gitignored — a
+# worktree's copy only holds whatever plaintext was hand-copied into it, never
+# every WIP skill across all branches. Rotating here would drop every skill not
+# present locally. (shared/tools/encrypt skips its prune pass in a worktree for the
+# same reason, but that is not enough here: the rm -rf below is unconditional.)
+git_dir=$(git -C "$ROOT_DIR" rev-parse --absolute-git-dir 2>/dev/null)
+git_common_dir=$(cd "$ROOT_DIR" && cd "$(git rev-parse --git-common-dir 2>/dev/null)" 2>/dev/null && pwd)
+if [[ -n "$git_dir" && -n "$git_common_dir" && "$git_dir" != "$git_common_dir" ]]; then
+  error "Linked git worktree detected — refusing to rotate the key here. Rotation rebuilds skills-encrypted/ from skills-wip/, which is gitignored and therefore incomplete in a worktree; every skill not copied here would be lost. Run shared/tools/cycle-key from the main checkout."
+fi
+
+tmp_root=$(mktemp -d "$ROOT_DIR/shared/skills-encrypted.tmp.XXXXXX")
+
+cleanup() { rm -rf "$tmp_root" }
+trap cleanup EXIT
+
+load_env "$ROOT_DIR/.env"
+
+info "Decrypting with current key..."
+# Skip anything already decrypted — never clobber uncommitted plaintext edits.
+SKILLS_DECRYPT_SKIP_EXISTING=1 "$SCRIPT_DIR/decrypt" "$encrypted_root" "$wip_root" \
+  || error "Decrypt with current key failed, aborting rotation"
+
+old_key="$SKILLS_ENCRYPTION_KEY"
+
+info "Generating new key..."
+"$SCRIPT_DIR/create-key" \
+  || error "Key generation failed, aborting rotation"
+
+load_env "$ROOT_DIR/.env"
+
+[[ "$SKILLS_ENCRYPTION_KEY" != "$old_key" ]] \
+  || error "create-key did not produce a new key, aborting rotation"
+
+info "Re-encrypting with new key into temp dir..."
+"$SCRIPT_DIR/encrypt" "$tmp_root" \
+  || error "Re-encrypt with new key failed — skills-encrypted left untouched"
+
+rm -rf "$encrypted_root" || error "Failed to clear $encrypted_root — rotation aborted"
+
+if ! mv "$tmp_root" "$encrypted_root"; then
+  # Disarm the cleanup trap first: $tmp_root now holds the only copy of the
+  # freshly re-encrypted tree, so it is the recovery path — do not delete it.
+  trap - EXIT
+  error "Failed to move the re-encrypted tree into place. Your only copy is at ${tmp_root:t} — move it to shared/skills-encrypted/ manually before doing anything else."
+fi
+
+trap - EXIT
+
+success "Key rotation complete"
