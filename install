@@ -17,10 +17,10 @@ fi
 SOURCE_DIR=${0:a:h}
 CLAUDE_DIR="${CLAUDE_CONFIG_DIR:-$HOME/.claude}"
 GEMINI_DIR="${GEMINI_CONFIG_DIR:-$HOME/.gemini}"
-ANTIGRAVITY_DIR="${ANTIGRAVITY_CONFIG_DIR:-$HOME/.gemini/antigravity-cli}"
-ANTIGRAVITY_HOOKS_JSON="${ANTIGRAVITY_CONFIG_DIR:-$HOME/.gemini/config/hooks.json}"
-ANTIGRAVITY_HOOKS_DIR="${ANTIGRAVITY_CONFIG_DIR:-$HOME/.gemini/config/hooks}"
-ANTIGRAVITY_SKILLS_DIR="${ANTIGRAVITY_CONFIG_DIR:-$HOME/.gemini/antigravity-cli/skills/}"
+ANTIGRAVITY_DIR="$GEMINI_DIR/antigravity-cli"
+ANTIGRAVITY_HOOKS_JSON="$GEMINI_DIR/config/hooks.json"
+ANTIGRAVITY_HOOKS_DIR="$GEMINI_DIR/config/hooks"
+ANTIGRAVITY_SKILLS_DIR="$ANTIGRAVITY_DIR/skills"
 
 # Source the lib for helper functions (info, success, warn, error)
 source "$SOURCE_DIR/tools/lib"
@@ -192,28 +192,15 @@ function link_antigravity() {
     symlink "$skill_dir" "$ANTIGRAVITY_SKILLS_DIR/$(basename "$skill_dir")"
   done
 
+  for skill_dir in "$SOURCE_DIR/shared/skills-wip/"*(N/); do
+    symlink "$skill_dir" "$ANTIGRAVITY_SKILLS_DIR/$(basename "$skill_dir")"
+  done
+
   if [[ -f "$SOURCE_DIR/.env" ]]; then
     SKILLS_DECRYPT_SKIP_EXISTING=1 "$SOURCE_DIR/00-tools/decrypt" \
       || error "WIP skills decrypt failed"
   else
     error ".env not found — skipping WIP skills decrypt"
-  fi
-
-  if [[ -f "$SOURCE_DIR/antigravity/plugin.json" ]]; then
-    mkdir -p "$SOURCE_DIR/shared/skills-wip"
-    cp "$SOURCE_DIR/antigravity/plugin.json" "$SOURCE_DIR/shared/skills-wip/plugin.json"
-  fi
-
-  if command -v agy &> /dev/null; then
-    local output
-    output=$(agy plugin install "$SOURCE_DIR/shared/skills-wip" 2>&1)
-    if [[ $? -ne 0 ]]; then
-      error "agy plugin install failed:\n$output"
-    else
-      success "Antigravity plugin installed"
-    fi
-  else
-    error "agy CLI not found in PATH — skipping Antigravity plugin install"
   fi
 }
 
