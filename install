@@ -237,12 +237,18 @@ function link_global_memory() {
 
 # ── symlink statusline handler ─────────────────────────────────────────────
 function link_statusline() {
-  local statusline_src="$SOURCE_DIR/claude/scripts/statusline.sh"
-  local statusline_dest="$CLAUDE_DIR/statusline.sh"
+  local claude_src="$SOURCE_DIR/claude/scripts/statusline.sh"
+  local antigravity_src="$SOURCE_DIR/antigravity/scripts/statusline.sh"
 
-  [[ -f "$statusline_src" ]] || { error "statusline.sh not found — skipping"; return; }
-  symlink "$statusline_src" "$statusline_dest"
-  symlink "$statusline_src" "$GEMINI_DIR/statusline.sh"
+  if [[ -f "$claude_src" ]]; then
+    chmod +x "$claude_src"
+    symlink "$claude_src" "$CLAUDE_DIR/statusline.sh"
+  fi
+
+  if [[ -f "$antigravity_src" ]]; then
+    chmod +x "$antigravity_src"
+    symlink "$antigravity_src" "$GEMINI_DIR/statusline.sh"
+  fi
 }
 
 # ── sync plugins: install missing, uninstall extras ─────────────────────────
