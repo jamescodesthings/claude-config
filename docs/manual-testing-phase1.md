@@ -165,3 +165,8 @@ Error: could not detect extension type at /Users/jamesmacmillan/projects/persona
   - It creates .agents in current directory. Need to see why and see if we can just bin it?
 - Need an 'install_antigravity' in ./install which does: `curl -fsSL https://antigravity.google/cli/install.sh | bash` in a similar way to install_claude
 - Need to do the opposite in the uninstaller; clean uninstall antigravity.
+
+- Need to make sure we're installing the equivalent plugins for antigravity:
+  - Caveman using npx skills
+  - superpowers using whatever obra/superpowers suggests
+  - rtk however it suggests
