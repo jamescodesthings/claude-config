@@ -79,4 +79,6 @@ fi
 info "installing caveman into antigravity"
 npx skills add JuliusBrussee/caveman -a antigravity
 
+
+
 success "caveman installed"
