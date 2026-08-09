@@ -30,7 +30,7 @@ function symlink() {
     warn "Backed up $dest → $dest.bak"
   fi
   if ! ln -s "$src" "$dest"; then
-    warn "Failed to link $dest"
+    error "Failed to link $dest"
     return 1
   fi
   success "Linked $(basename $dest)"
@@ -100,7 +100,7 @@ function link_hooks() {
     symlink "$hook_file" "$hooks_dir/$name"
     chmod +x "$hook_file"
     if ! grep -q "hooks/$name" "$SOURCE_DIR/claude/config/settings.json" 2>/dev/null; then
-      warn "$name not registered in settings.json — hook won't fire until added"
+      error "$name not registered in settings.json — hook won't fire until added"
     fi
   done
 }
@@ -131,14 +131,14 @@ function link_wip_skills() {
   local wip_dir="$SOURCE_DIR/shared/skills-wip"
 
   if [[ ! -f "$SOURCE_DIR/.env" ]]; then
-    warn ".env not found — skipping WIP skills decrypt"
+    error ".env not found — skipping WIP skills decrypt"
     return
   fi
 
   # Skip anything already decrypted: skills-wip/ is gitignored, so overwriting
   # local plaintext edits here would be unrecoverable.
   SKILLS_DECRYPT_SKIP_EXISTING=1 "$SOURCE_DIR/00-tools/decrypt" \
-    || { warn "WIP skills decrypt failed"; return }
+    || { error "WIP skills decrypt failed"; return }
 
   mkdir -p "$skills_target"
 
@@ -186,9 +186,9 @@ function link_antigravity() {
 
   if [[ -f "$SOURCE_DIR/.env" ]]; then
     SKILLS_DECRYPT_SKIP_EXISTING=1 "$SOURCE_DIR/00-tools/decrypt" \
-      || warn "WIP skills decrypt failed"
+      || error "WIP skills decrypt failed"
   else
-    warn ".env not found — skipping WIP skills decrypt"
+    error ".env not found — skipping WIP skills decrypt"
   fi
 
   if [[ -f "$SOURCE_DIR/antigravity/plugin.json" ]]; then
@@ -205,7 +205,7 @@ function link_antigravity() {
       success "Antigravity plugin installed"
     fi
   else
-    warn "agy CLI not found in PATH — skipping Antigravity plugin install"
+    error "agy CLI not found in PATH — skipping Antigravity plugin install"
   fi
 }
 
@@ -222,7 +222,7 @@ function link_git_hook() {
     || { warn "Not a git repo — skipping pre-commit hook"; return }
   [[ "$hooks_dir" == /* ]] || hooks_dir="$SOURCE_DIR/$hooks_dir"
 
-  mkdir -p "$hooks_dir" || { warn "Could not create $hooks_dir — skipping pre-commit hook"; return }
+  mkdir -p "$hooks_dir" || { error "Could not create $hooks_dir — skipping pre-commit hook"; return }
   symlink "$hook_src" "$hooks_dir/pre-commit"
 }
 
@@ -239,14 +239,14 @@ function link_statusline() {
   local statusline_src="$SOURCE_DIR/claude/scripts/statusline.sh"
   local statusline_dest="$CLAUDE_DIR/statusline.sh"
 
-  [[ -f "$statusline_src" ]] || { warn "statusline.sh not found — skipping"; return; }
+  [[ -f "$statusline_src" ]] || { error "statusline.sh not found — skipping"; return; }
   symlink "$statusline_src" "$statusline_dest"
 }
 
 # ── sync plugins: install missing, uninstall extras ─────────────────────────
 function install_plugins() {
   local settings="$SOURCE_DIR/claude/config/settings.json"
-  [[ -f "$settings" ]] || { warn "settings.json not found, skipping plugins"; return; }
+  [[ -f "$settings" ]] || { error "settings.json not found, skipping plugins"; return; }
 
   local desired
   desired=($(node -e "
@@ -270,7 +270,7 @@ function install_plugins() {
     if [[ ! " ${desired[@]} " =~ " $plugin " ]]; then
       info "Removing unlisted plugin: $plugin"
       claude plugin uninstall "$plugin" 2>/dev/null \
-        || warn "$plugin: uninstall failed"
+        || error "$plugin: uninstall failed"
     fi
   done
 
@@ -282,7 +282,7 @@ function install_tools() {
   for script in "$SOURCE_DIR/tools/install-"*(N); do
     [[ -x "$script" ]] || continue
     info "Running $(basename $script)..."
-    "$script" || warn "$(basename $script) failed — check manually"
+    "$script" || error "$(basename $script) failed — check manually"
   done
 }
 

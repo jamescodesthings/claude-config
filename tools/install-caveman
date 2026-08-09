@@ -77,7 +77,7 @@ if [[ -n "$config_dir" && -d "$config_dir" && -f "$settings" && ! -L "$settings"
 fi
 
 info "installing caveman into antigravity"
-npx skills add JuliusBrussee/caveman -a antigravity -g -s 'caveman,caveman-help,caveman-stats' -y --copy 2>/dev/null \
+npx skills add JuliusBrussee/caveman -a antigravity -g -s caveman -s caveman-help -s caveman-stats -y --copy 2>/dev/null \
   || error "caveman install into antigravity failed"
 
 
