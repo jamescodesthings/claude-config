@@ -69,7 +69,7 @@ function remove_symlinks() {
   [[ -L "$legacy_memory_dest" ]] && rm "$legacy_memory_dest" && info "Removed legacy project memory symlink"
 
   # Antigravity config files
-  for f in GEMINI.md settings.json; do
+  for f in GEMINI.md settings.json hooks.json; do
     local dest="$gemini_dir/$f"
     [[ -L "$dest" ]] && rm "$dest" && info "Removed Antigravity $f"
   done

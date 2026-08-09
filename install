@@ -158,6 +158,9 @@ function link_antigravity() {
   [[ -f "$SOURCE_DIR/antigravity/settings.json" ]] && \
     symlink "$SOURCE_DIR/antigravity/settings.json" "$gemini_dir/settings.json"
 
+  [[ -f "$SOURCE_DIR/antigravity/hooks.json" ]] && \
+    symlink "$SOURCE_DIR/antigravity/hooks.json" "$gemini_dir/hooks.json"
+
   for hook_file in "$SOURCE_DIR/antigravity/hooks/"*(N); do
     [[ -f "$hook_file" ]] || continue
     symlink "$hook_file" "$gemini_dir/hooks/$(basename "$hook_file")"
