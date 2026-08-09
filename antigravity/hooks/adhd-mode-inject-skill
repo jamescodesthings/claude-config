@@ -2,32 +2,44 @@
 # PreInvocation hook: injects the monsoons-rhonchial ("ADHD mode") skill body
 # directly into the model's context, so the output rules are active from the
 # first turn without relying on the model remembering to invoke the skill.
-#
-# The instruction in ~/.gemini/GEMINI.md ("always invoke skill
-# monsoons-rhonchial at the start of a conversation") is advisory: nothing
-# enforces it, and a missed invocation is silent. This hook removes that
-# failure mode by making the skill content part of the session prompt.
 
-skill_file="$HOME/.gemini/skills/monsoons-rhonchial/SKILL.md"
-state_file="$HOME/.gemini/.adhd-mode-state.json"
-
-# Skill not installed (or symlink broken): stay silent rather than fail the
-# session. A missing skill is a config problem, not a reason to block startup.
+skill_file="$HOME/.gemini/config/skills/monsoons-rhonchial/SKILL.md"
+[[ -r "$skill_file" ]] || skill_file="$HOME/.gemini/antigravity-cli/skills/monsoons-rhonchial/SKILL.md"
 [[ -r "$skill_file" ]] || exit 0
 
 if ! command -v jq >/dev/null 2>&1; then
   exit 0
 fi
 
-# Drop the YAML frontmatter: name/description are routing metadata for the
-# skill loader, not instructions, and only add noise once the body is inlined.
 body=$(awk 'BEGIN{fm=0} NR==1 && $0=="---" {fm=1; next} fm==1 && $0=="---" {fm=0; next} fm==0 {print}' "$skill_file")
+
+now=$(TZ=Europe/London date +%s)
+hhmm=$(TZ=Europe/London date +%H%M)
+messages=()
+
+if { [[ "$hhmm" > "1200" ]] || [[ "$hhmm" == "1200" ]]; } && [[ "$hhmm" < "1300" ]]; then
+  messages+=("SELF-CARE: it's lunchtime. Go eat.")
+fi
+
+if { [[ "$hhmm" > "1700" ]] || [[ "$hhmm" == "1700" ]]; } && [[ "$hhmm" < "1800" ]]; then
+  messages+=("SELF-CARE: sort dinner and feed the dogs.")
+fi
+
+if { [[ "$hhmm" > "2300" ]] || [[ "$hhmm" == "2300" ]]; } || [[ "$hhmm" < "0500" ]]; then
+  messages+=("SELF-CARE: it's past 11pm. Go to bed.")
+fi
+
+self_care_text=""
+if ((${#messages[@]} > 0)); then
+  self_care_text=$(printf "\n\n%s" "${messages[@]}")
+fi
 
 context="ADHD mode (skill: monsoons-rhonchial) is ACTIVE for this session. Its rules are reproduced in full below and govern all conversation and any document written for James to read. Do not invoke the skill separately; it is already loaded. These rules persist for the whole session and are turned off only when James says \"stop adhd mode\" or \"normal mode\".
 
-$body"
+$body$self_care_text"
 
 jq -n --arg ctx "$context" \
-  '{hookSpecificOutput: {hookEventName: "PreInvocation", additionalContext: $ctx}}'
+  '{injectSteps: [{ephemeralMessage: $ctx}]}'
 
 exit 0
+
