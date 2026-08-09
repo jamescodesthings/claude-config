@@ -1,8 +1,8 @@
 # Phase 1 Verification & Manual Testing Checklist: Antigravity CLI Integration
 
-**Framework:** Agent Forge  
-**Component:** Phase 1 — Antigravity CLI Integration  
-**Date:** 2026-08-09  
+**Framework:** Agent Forge
+**Component:** Phase 1 — Antigravity CLI Integration
+**Date:** 2026-08-09
 
 ---
 
@@ -140,3 +140,21 @@ Verify that Antigravity inspects and synchronizes session state from `.state/CUR
 | 4 | State Handoff (`CURRENT_STATE.md`) | [ ] Pass / [ ] Fail | | Verified state file reading |
 
 ---
+
+
+# Issues
+
+1. `./install`:
+```
+agy plugin import "$(pwd)/shared/skills-wip"
+Error: could not detect extension type at /Users/jamesmacmillan/projects/personal/agent-forge/shared/skills-wip
+```
+- Need to also print the error message where it comes out. And, up this to [error] in logging.
+
+2. Missing
+- Need to remove plugins we don't care about anymore
+- Need to remove tools: ccstatusline
+- Need to clean up after install of caveman:
+  - It creates .agents in current directory. Need to see why and see if we can just bin it?
+- Need an 'install_antigravity' in ./install which does: `curl -fsSL https://antigravity.google/cli/install.sh | bash` in a similar way to install_claude
+- Need to do the opposite in the uninstaller; clean uninstall antigravity.
