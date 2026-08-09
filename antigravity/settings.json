@@ -1,6 +1,17 @@
 {
-  "permissions": {
-    "defaultMode": "auto"
+  "allowNonWorkspaceAccess": true,
+  "colorScheme": "solarized dark",
+  "enableTelemetry": false,
+  "model": "Gemini 3.6 Flash (Medium)",
+  "showFeedbackSurvey": false,
+  "statusLine": {
+    "type": "",
+    "command": "",
+    "enabled": true
   },
-  "model": "gemini-3.6-flash"
+  "toolPermission": "always-proceed",
+  "trustedWorkspaces": [
+    "/Users/jamesmacmillan/projects/personal/agent-forge"
+  ],
+  "verbosity": "low"
 }
