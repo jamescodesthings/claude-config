@@ -147,6 +147,43 @@ function link_wip_skills() {
   done
 }
 
+# ── symlink Antigravity config, hooks, skills, and WIP skills plugin ─────────
+function link_antigravity() {
+  local gemini_dir="${GEMINI_CONFIG_DIR:-$HOME/.gemini}"
+  mkdir -p "$gemini_dir/skills" "$gemini_dir/hooks" "$gemini_dir/config"
+
+  [[ -f "$SOURCE_DIR/antigravity/GEMINI.md" ]] && \
+    symlink "$SOURCE_DIR/antigravity/GEMINI.md" "$gemini_dir/GEMINI.md"
+
+  [[ -f "$SOURCE_DIR/antigravity/settings.json" ]] && \
+    symlink "$SOURCE_DIR/antigravity/settings.json" "$gemini_dir/settings.json"
+
+  for hook_file in "$SOURCE_DIR/antigravity/hooks/"*(N); do
+    [[ -f "$hook_file" ]] || continue
+    symlink "$hook_file" "$gemini_dir/hooks/$(basename "$hook_file")"
+    chmod +x "$hook_file"
+  done
+
+  for skill_dir in "$SOURCE_DIR/shared/skills/"*(N/); do
+    symlink "$skill_dir" "$gemini_dir/skills/$(basename "$skill_dir")"
+  done
+
+  if [[ -f "$SOURCE_DIR/.env" ]]; then
+    SKILLS_DECRYPT_SKIP_EXISTING=1 "$SOURCE_DIR/00-tools/decrypt" \
+      || warn "WIP skills decrypt failed"
+  else
+    warn ".env not found — skipping WIP skills decrypt"
+  fi
+
+  if [[ -f "$SOURCE_DIR/antigravity/plugin.json" ]]; then
+    mkdir -p "$SOURCE_DIR/shared/skills-wip"
+    cp "$SOURCE_DIR/antigravity/plugin.json" "$SOURCE_DIR/shared/skills-wip/plugin.json"
+  fi
+
+  agy plugin import "$SOURCE_DIR/shared/skills-wip" 2>/dev/null \
+    || warn "agy plugin import failed or agy not installed"
+}
+
 # ── symlink the pre-commit hook ─────────────────────────────────────────────
 function link_git_hook() {
   local hook_src="$SOURCE_DIR/00-tools/pre-commit-encrypt-wip"
@@ -322,6 +359,7 @@ link_hooks
 link_agents
 link_skills
 link_wip_skills
+link_antigravity
 link_git_hook
 link_global_memory
 link_statusline
