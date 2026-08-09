@@ -1,0 +1,40 @@
+#!/usr/bin/env zsh
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+source "$ROOT_DIR/shared/tools/lib"
+
+info "Uninstalling Antigravity CLI configuration..."
+clean_dead_symlinks "$GEMINI_DIR"
+
+for f in GEMINI.md statusline.sh; do
+  [[ -L "$GEMINI_DIR/$f" ]] && rm "$GEMINI_DIR/$f" && info "Removed Antigravity $f"
+done
+
+for f in settings.json; do
+  [[ -L "$ANTIGRAVITY_DIR/$f" ]] && rm "$ANTIGRAVITY_DIR/$f" && info "Removed Antigravity $f"
+done
+
+for f in hooks.json memory agents; do
+  [[ -L "$GEMINI_DIR/config/$f" ]] && rm "$GEMINI_DIR/config/$f" && info "Removed Antigravity config $f"
+done
+
+if [[ -d "$GEMINI_DIR/config/skills" && ! -L "$GEMINI_DIR/config/skills" ]]; then
+  for f in "$GEMINI_DIR/config/skills/"*(N); do
+    [[ -L "$f" ]] && rm "$f" && info "Removed Antigravity skill symlink $(basename "$f")"
+  done
+fi
+
+if [[ -d "$GEMINI_DIR/config/hooks" ]]; then
+  for f in "$GEMINI_DIR/config/hooks/"*(N); do
+    [[ -L "$f" ]] && rm "$f" && info "Removed Antigravity hook symlink $(basename "$f")"
+  done
+fi
+
+# Run shared and Antigravity-specific tool uninstallers
+for tool_script in "$ROOT_DIR/shared/tools/uninstall-"*(N) "$SCRIPT_DIR/tools/uninstall-"*(N); do
+  [[ -x "$tool_script" ]] || continue
+  info "Running $(basename "$tool_script")..."
+  "$tool_script" || warn "$(basename "$tool_script") failed"
+done
+
+success "Antigravity CLI configuration uninstalled."

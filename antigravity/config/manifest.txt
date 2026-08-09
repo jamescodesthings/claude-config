@@ -1,0 +1,9 @@
+antigravity/config/GEMINI.md:$GEMINI_DIR/GEMINI.md
+antigravity/config/settings.json:$GEMINI_DIR/antigravity-cli/settings.json
+antigravity/config/hooks.json:$GEMINI_DIR/config/hooks.json
+antigravity/scripts/statusline.sh:$GEMINI_DIR/statusline.sh
+antigravity/hooks/*:$GEMINI_DIR/config/hooks/
+shared/memory:$GEMINI_DIR/config/memory
+shared/agents:$GEMINI_DIR/config/agents
+shared/skills/*:$GEMINI_DIR/config/skills/
+shared/skills-wip/*:$GEMINI_DIR/config/skills/

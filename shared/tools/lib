@@ -1,9 +1,11 @@
 #!/usr/bin/env zsh
 # shared/tools/lib — Shared library for Agent Forge installers and tools
 
-local self_file="${(%):-%x}"
-[[ -z "$self_file" || "$self_file" == "zsh" ]] && self_file="$0"
-LIB_DIR="$(cd "$(dirname "$self_file")" && pwd)"
+if [[ -n "${(%):-%x}" && "${(%):-%x}" != "zsh" ]]; then
+  LIB_DIR="$(cd "$(dirname "${(%):-%x}")" >/dev/null 2>&1 && pwd)"
+else
+  LIB_DIR="$(cd "$(dirname "$0")" >/dev/null 2>&1 && pwd)"
+fi
 ROOT_DIR="$(cd "$LIB_DIR/../.." && pwd)"
 
 CLAUDE_DIR="${CLAUDE_CONFIG_DIR:-$HOME/.claude}"

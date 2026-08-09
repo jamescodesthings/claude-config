@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # Temporary hard-coded debug switch. Set to 1 to log each input payload.
-DEBUG=1
+DEBUG=0
 LOG_DIR_PARENT="${AGENT_FORGE_DIR:-~/Downloads}"
 DEBUG_LOG_DIR="$LOG_DIR_PARENT/logs"
 

@@ -1,0 +1,20 @@
+#!/usr/bin/env zsh
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+source "$ROOT_DIR/shared/tools/lib"
+
+info "Installing Claude CLI configuration..."
+mkdir -p "$CLAUDE_DIR/hooks" "$CLAUDE_DIR/skills"
+
+clean_dead_symlinks "$CLAUDE_DIR"
+
+apply_manifest "$SCRIPT_DIR/config/manifest.txt"
+
+# Run shared and Claude-specific tool installers
+for tool_script in "$ROOT_DIR/shared/tools/install-"*(N) "$SCRIPT_DIR/tools/install-"*(N); do
+  [[ -x "$tool_script" ]] || continue
+  info "Running $(basename "$tool_script")..."
+  "$tool_script" || warn "$(basename "$tool_script") failed"
+done
+
+success "Claude CLI configuration installed."

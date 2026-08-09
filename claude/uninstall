@@ -1,0 +1,32 @@
+#!/usr/bin/env zsh
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+source "$ROOT_DIR/shared/tools/lib"
+
+info "Uninstalling Claude CLI configuration..."
+clean_dead_symlinks "$CLAUDE_DIR"
+
+for f in CLAUDE.md RTK.md settings.json .mcp.json keybindings.json statusline.sh memory agents; do
+  [[ -L "$CLAUDE_DIR/$f" ]] && rm "$CLAUDE_DIR/$f" && info "Removed Claude $f"
+done
+
+if [[ -d "$CLAUDE_DIR/skills" && ! -L "$CLAUDE_DIR/skills" ]]; then
+  for f in "$CLAUDE_DIR/skills/"*(N); do
+    [[ -L "$f" ]] && rm "$f" && info "Removed Claude skill symlink $(basename "$f")"
+  done
+fi
+
+if [[ -d "$CLAUDE_DIR/hooks" ]]; then
+  for f in "$CLAUDE_DIR/hooks/"*(N); do
+    [[ -L "$f" ]] && rm "$f" && info "Removed Claude hook symlink $(basename "$f")"
+  done
+fi
+
+# Run shared and Claude-specific tool uninstallers
+for tool_script in "$ROOT_DIR/shared/tools/uninstall-"*(N) "$SCRIPT_DIR/tools/uninstall-"*(N); do
+  [[ -x "$tool_script" ]] || continue
+  info "Running $(basename "$tool_script")..."
+  "$tool_script" || warn "$(basename "$tool_script") failed"
+done
+
+success "Claude CLI configuration uninstalled."

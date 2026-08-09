@@ -1,0 +1,9 @@
+claude/config/CLAUDE.md:$CLAUDE_DIR/CLAUDE.md
+claude/config/RTK.md:$CLAUDE_DIR/RTK.md
+claude/config/settings.json:$CLAUDE_DIR/settings.json
+claude/scripts/statusline.sh:$CLAUDE_DIR/statusline.sh
+claude/hooks/*:$CLAUDE_DIR/hooks/
+shared/memory:$CLAUDE_DIR/memory
+shared/agents:$CLAUDE_DIR/agents
+shared/skills/*:$CLAUDE_DIR/skills/
+shared/skills-wip/*:$CLAUDE_DIR/skills/

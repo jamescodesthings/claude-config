@@ -1,4 +1,5 @@
-SCRIPT_DIR="$(cd "$(dirname "${(%):-%x}")" 2>/dev/null && pwd || cd "$(dirname "$0")" && pwd)"
+#!/usr/bin/env zsh
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 source "$SCRIPT_DIR/lib"
 
 if ! command -v uv &> /dev/null; then
