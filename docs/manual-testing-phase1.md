@@ -41,7 +41,7 @@ Verify that shell aliases defined in `zsh/aliases.zsh` are properly loaded into 
    aggyr='aggy --continue'
    ```
 
-3. Launch Antigravity CLI via alias:
+3. Launch Antigravity CLI via alias:  [pass]
    ```zsh
    aggy
    ```
