@@ -48,7 +48,7 @@ Verify that shell aliases defined in `zsh/aliases.zsh` are properly loaded into 
    - Confirm CLI starts immediately without prompting for execution permissions.
    - Exit the CLI session (`/exit` or `Ctrl+D`).
 
-4. Test session continuation alias:
+4. Test session continuation alias: [pass]
    ```zsh
    aggyr
    ```
@@ -56,10 +56,10 @@ Verify that shell aliases defined in `zsh/aliases.zsh` are properly loaded into 
    - Exit the CLI session.
 
 ### Pass Criteria
-- [ ] `alias aggy` returns `agy --dangerously-skip-permissions`.
-- [ ] `alias aggyr` returns `aggy --continue`.
-- [ ] `aggy` launches Antigravity CLI skipping permission prompts.
-- [ ] `aggyr` launches Antigravity CLI in session continuation mode.
+- [x] `alias aggy` returns `agy --dangerously-skip-permissions`.
+- [x] `alias aggyr` returns `aggy --continue`.
+- [x] `aggy` launches Antigravity CLI skipping permission prompts.
+- [x] `aggyr` launches Antigravity CLI in session continuation mode.
 
 ---
 
