@@ -4,7 +4,7 @@ ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 source "$ROOT_DIR/shared/tools/lib"
 
 info "Installing Antigravity CLI configuration..."
-mkdir -p "$GEMINI_DIR/config/hooks" "$GEMINI_DIR/config/skills" "$ANTIGRAVITY_DIR"
+mkdir -p "$GEMINI_DIR/config/hooks" "$GEMINI_DIR/config/skills" "$GEMINI_DIR/config/rules" "$ANTIGRAVITY_DIR"
 
 clean_dead_symlinks "$GEMINI_DIR"
 

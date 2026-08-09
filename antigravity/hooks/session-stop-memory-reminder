@@ -1,9 +1,34 @@
-#!/usr/bin/env bash
-# Stop hook: remind Antigravity agent to save memory before session ends.
+#!/usr/bin/env zsh
+# Stop hook: check for uncommitted changes and unpushed commits before session stop.
+
+repo_dir=$(git rev-parse --show-toplevel 2>/dev/null)
+if [[ -n "$repo_dir" ]]; then
+  uncommitted=$(git -C "$repo_dir" status --porcelain 2>/dev/null)
+  unpushed=$(git -C "$repo_dir" log @{u}..HEAD --oneline 2>/dev/null)
+
+  reasons=()
+  if [[ -n "$uncommitted" ]]; then
+    reasons+=("Uncommitted changes exist in working tree.")
+  fi
+  if [[ -n "$unpushed" ]]; then
+    reasons+=("Unpushed commits exist on branch '$(git -C "$repo_dir" rev-parse --abbrev-ref HEAD)'. Run 'git push'.")
+  fi
+
+  if (( ${#reasons[@]} > 0 )); then
+    reason_str="${(j: ; :)reasons}"
+    cat <<EOF
+{
+  "decision": "continue",
+  "reason": "Git Check: $reason_str Please commit and push changes before exiting."
+}
+EOF
+    exit 0
+  fi
+fi
+
 cat <<'EOF'
 {
   "decision": "allow"
 }
 EOF
 exit 0
-

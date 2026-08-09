@@ -207,3 +207,6 @@ claude/config/.mcp.json
 
 # Per-machine secrets — never commit
 claude/config/env.local
+
+# Local workspace agents folder
+.agents/

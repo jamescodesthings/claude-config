@@ -69,7 +69,7 @@
   <text x="142" y="55" font-family="'SF Mono', 'Courier New', monospace" font-size="11" fill="#8b949e" text-anchor="middle">zsh</text>
 
   <!-- Terminal content -->
-  <text x="50" y="88" font-family="'SF Mono', 'Courier New', monospace" font-size="12" fill="#8b949e">~  <tspan fill="#CC785C">claude-config</tspan></text>
+  <text x="50" y="88" font-family="'SF Mono', 'Courier New', monospace" font-size="12" fill="#8b949e">~  <tspan fill="#CC785C">agent-forge</tspan></text>
   <text x="50" y="106" font-family="'SF Mono', 'Courier New', monospace" font-size="12" fill="#ffffff">$ ./install</text>
   <text x="50" y="124" font-family="'SF Mono', 'Courier New', monospace" font-size="12" fill="#3fb950">✓ skills linked</text>
   <text x="50" y="140" font-family="'SF Mono', 'Courier New', monospace" font-size="12" fill="#3fb950">✓ agents linked</text>
@@ -83,13 +83,13 @@
 
   <!-- Main title -->
   <text x="335" y="100" font-family="'SF Pro Display', 'Segoe UI', Arial, sans-serif"
-        font-size="46" font-weight="800" fill="#ffffff" filter="url(#subtleGlow)">claude-config</text>
+        font-size="46" font-weight="800" fill="#ffffff" filter="url(#subtleGlow)">agent-forge</text>
 
   <!-- Accent underline -->
   <rect x="335" y="109" width="500" height="2" fill="url(#accentGrad)" opacity="0.6" rx="1"/>
 
   <!-- Subtitle -->
-  <text x="337" y="135" font-family="'SF Mono', 'Courier New', monospace" font-size="14" fill="#8b949e">cross-machine claude code configuration</text>
+  <text x="337" y="135" font-family="'SF Mono', 'Courier New', monospace" font-size="14" fill="#8b949e">cross-machine AI Coding Agent configuration</text>
 
   <!-- Tag chips -->
   <g font-family="'SF Mono', 'Courier New', monospace" font-size="11">
