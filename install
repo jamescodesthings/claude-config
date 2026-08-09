@@ -23,6 +23,7 @@ ANTIGRAVITY_HOOKS_DIR="$GEMINI_DIR/config/hooks"
 ANTIGRAVITY_SKILLS_DIR="$GEMINI_DIR/config/skills"
 
 # Source the lib for helper functions (info, success, warn, error)
+# shellcheck source=tools/lib
 source "$SOURCE_DIR/tools/lib"
 
 # ── symlink helper: idempotent, backs up real files ─────────────────────────
