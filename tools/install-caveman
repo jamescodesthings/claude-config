@@ -10,7 +10,7 @@ fi
 
 info "Installing caveman..."
 curl -fsSL https://raw.githubusercontent.com/JuliusBrussee/caveman/main/install.sh \
-  | bash -s -- --no-mcp-shrink || error "Caveman install failed"
+  | bash -s -- --no-mcp-shrink &> /dev/null || error "Caveman install failed"
 
 # Normalize absolute hook paths written by caveman installer to portable ~/... form.
 # Handles two formats:
@@ -67,7 +67,7 @@ fi
 # If caveman replaced ~/.claude/settings.json symlink with a regular file,
 # sync normalized content back to the repo source and restore the symlink.
 local config_dir
-config_dir=$(cat "$HOME/.claude/.claude-config-dir" 2>/dev/null)
+config_dir=$(cat "$HOME/.claude/.claude-config-dir" &> /dev/null)
 if [[ -n "$config_dir" && -d "$config_dir" && -f "$settings" && ! -L "$settings" ]]; then
   cp "$settings" "$config_dir/config/settings.json" \
     && rm "$settings" \
@@ -77,7 +77,7 @@ if [[ -n "$config_dir" && -d "$config_dir" && -f "$settings" && ! -L "$settings"
 fi
 
 info "installing caveman into antigravity"
-npx skills add JuliusBrussee/caveman -a antigravity -g -s caveman -s caveman-help -s caveman-stats -y --copy 2>/dev/null \
+npx skills add JuliusBrussee/caveman -a antigravity -g -s caveman -s caveman-help -s caveman-stats -y --copy &> /dev/null \
   || error "caveman install into antigravity failed"
 
 
