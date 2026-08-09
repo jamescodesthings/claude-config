@@ -257,6 +257,22 @@ function check_shell_rc() {
   _check_rc ".bashrc" "$BASHRC_SNAP" "$HOME/.bashrc"
 }
 
+# ── zsh aliases integration ────────────────────────────────────────────────
+function setup_shell_aliases() {
+  local zshrc="$HOME/.zshrc"
+  if ! grep -q "AI_CONFIG_DIR" "$zshrc" 2>/dev/null; then
+    info "Setting up shell aliases in ~/.zshrc..."
+    {
+      echo ""
+      echo 'export AI_CONFIG_DIR="$SOURCE_DIR"'
+      echo '[[ -f "$AI_CONFIG_DIR/zsh/aliases.zsh" ]] && source "$AI_CONFIG_DIR/zsh/aliases.zsh"'
+    } >> "$zshrc"
+    success "Added zsh/aliases.zsh sourcing to ~/.zshrc"
+  else
+    info "AI_CONFIG_DIR already present in ~/.zshrc"
+  fi
+}
+
 # ── write metadata ──────────────────────────────────────────────────────────
 function write_metadata() {
   echo "$SOURCE_DIR" > "$CLAUDE_DIR/.claude-config-dir"
@@ -313,6 +329,7 @@ install_plugins
 snapshot_zshrc
 install_tools
 check_shell_rc
+setup_shell_aliases
 write_metadata
 
 print ""
