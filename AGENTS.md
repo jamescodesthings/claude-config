@@ -1,6 +1,6 @@
 # AGENTS.md — Agent Forge Core Reference
 
-**Agent Forge** is a unified multi-agent CLI orchestration framework and shared configuration manager. It standardizes system prompts, skills, memory, agents, lifecycle hooks, and shell aliases across multiple AI agent CLIs.
+**Agent Forge** is a unified multi-agent CLI orchestration framework and shared configuration manager. It standardizes system prompts, skills, memory, agents, lifecycle hooks, and shell aliases across multiple AI agent CLIs (**Claude Code**, **Antigravity CLI**, **OpenAI Codex**, and **GitHub Copilot**).
 
 ---
 
@@ -9,7 +9,7 @@
 | Agent CLI | Launch Command | Shell Alias | Config Directory | Target Environment |
 |-----------|----------------|-------------|------------------|-------------------|
 | **Claude Code CLI** | `claude` | `cld` (`cldr` resume) | `claude/config/`, `claude/hooks/` | `~/.claude/` |
-| **Antigravity CLI** | `agy` | `aggy` (`aggyr` continue) | `antigravity/` | `~/.gemini/` |
+| **Antigravity CLI** | `agy` | `aggy` (`aggyr` continue) | `antigravity/config/`, `antigravity/hooks/` | `~/.gemini/` |
 | **OpenAI Codex CLI** | `codex` | `chat` (`chatr` resume) | `codex/` | `~/.codex/` |
 | **GitHub Copilot CLI** | `copilot` | `pilot` (`pilotr` continue) | `copilot/` | `~/.copilot/` |
 
@@ -18,12 +18,16 @@
 ## Installation & Management
 
 ```shell
-./install          # Bootstrap or sync configuration (idempotent, re-run after git pull)
-./uninstall        # Complete cleanup: removes symlinks, shell aliases, and config dirs
+make install            # Install all CLI configurations (idempotent, re-run after git pull)
+make claude             # Install Claude Code CLI configuration only
+make antigravity        # Install Antigravity CLI configuration only
+make uninstall          # Uninstall all CLI configurations
+make uninstall-claude   # Uninstall Claude Code CLI configuration
+make uninstall-antigravity # Uninstall Antigravity CLI configuration
 ```
 
 ### Shell Aliases (`zsh/aliases.zsh`)
-When installed, `./install` adds the following sourcing block to `~/.zshrc`:
+When installed, `make install` adds the following sourcing block to `~/.zshrc`:
 ```zsh
 export AI_CONFIG_DIR="$HOME/projects/personal/agent-forge"
 [[ -f "$AI_CONFIG_DIR/zsh/aliases.zsh" ]] && source "$AI_CONFIG_DIR/zsh/aliases.zsh"
@@ -76,15 +80,17 @@ All agents operating within Agent Forge MUST adhere to the shared session state 
 ```
 .
 ├── .state/              # Active session state & timestamped handoff snapshots
-├── 00-tools/            # Skill encryption, decryption, and pre-commit hooks
-├── antigravity/         # Antigravity CLI config (GEMINI.md, settings.json, hooks/, plugin.json)
-├── claude/              # Claude Code CLI config (CLAUDE.md, RTK.md, settings.json, hooks/, scripts/)
+├── antigravity/         # Antigravity CLI module (config/, hooks/, rules/, scripts/, install, uninstall)
+├── claude/              # Claude Code CLI module (config/, hooks/, scripts/, install, uninstall)
 ├── codex/               # OpenAI Codex CLI configuration
 ├── copilot/             # GitHub Copilot CLI configuration
-├── docs/                # Architecture design docs & specs
-├── shared/              # Cross-CLI shared assets (skills/, skills-wip/, agents/, memory/, system-prompt/)
+├── docs/                # Architecture design docs, specs, and test plans
+├── shared/              # Cross-CLI shared assets (agents/, memory/, scripts/, skills/, skills-wip/, system-prompt/, tools/)
+│   └── tools/           # Encryption, key rotation, sub-installers (install-*), and shared library (lib)
 ├── zsh/                 # Unified shell aliases (aliases.zsh)
+├── Makefile             # Unified Makefile targets (install, claude, antigravity, uninstall, etc.)
 ├── install              # Master installer script
 ├── uninstall            # Master uninstaller script
+├── CLAUDE.md -> AGENTS.md # Root instruction symlink
 └── AGENTS.md            # Root agent reference (this file)
 ```

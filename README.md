@@ -22,37 +22,36 @@
 | Agent CLI | Launch Command | Shell Alias | Config Location | System Prompt |
 |-----------|----------------|-------------|-----------------|---------------|
 | **Claude Code** | `claude` | `cld` (`cldr` resume) | `~/.claude/` | `claude/config/CLAUDE.md` |
-| **Antigravity** | `agy` | `aggy` (`aggyr` continue) | `~/.gemini/` | `antigravity/GEMINI.md` |
+| **Antigravity** | `agy` | `aggy` (`aggyr` continue) | `~/.gemini/` | `antigravity/config/GEMINI.md` |
 | **OpenAI Codex** | `codex` | `chat` (`chatr` resume) | `~/.codex/` | `codex/` |
 | **GitHub Copilot** | `copilot` | `pilot` (`pilotr` continue) | `~/.copilot/` | `copilot/` |
 
 ---
 
-## Quick Start
+## Quick Start & Makefile Commands
 
 ### Installation
 
 ```shell
 git clone git@github.com:jamescodesthings/claude-config.git agent-forge
 cd agent-forge
-./install
+make install            # Install all CLI configurations
 ```
 
-`./install` creates required target directories, symlinks configuration files, decrypts WIP skills, imports Antigravity plugins, and adds shell alias sourcing (`AI_CONFIG_DIR`) to `~/.zshrc`.
+Additional Makefile targets:
+- `make claude`: Install Claude Code CLI configuration only.
+- `make antigravity`: Install Antigravity CLI configuration only.
+- `make uninstall`: Uninstall all CLI configurations.
+- `make uninstall-claude`: Uninstall Claude Code CLI configuration.
+- `make uninstall-antigravity`: Uninstall Antigravity CLI configuration.
+
+`make install` creates required target directories, processes declarative `manifest.txt` files, decrypts WIP skills, installs tool plugins, configures RTK, and adds shell alias sourcing (`AI_CONFIG_DIR`) to `~/.zshrc`.
 
 ### Syncing Updates
 
 ```shell
-git pull && ./install
+git pull && make install
 ```
-
-### Uninstallation
-
-```shell
-./uninstall
-```
-
-`./uninstall` removes all deployed symlinks from `~/.claude/` and `~/.gemini/`, strips `AI_CONFIG_DIR` and shell alias blocks from `~/.zshrc`, and cleans configuration directories.
 
 ---
 
@@ -76,13 +75,13 @@ git pull && ./install
 
 ### Model Selection Guidelines
 
-- **Default Model (`gemini-3.6-flash`):** Used for standard coding, subagents, code review, and implementation tasks.
-- **Pro Model (`gemini-3.1-pro`):** Used for complex multi-step reasoning, architecture decisions, novel debugging, and large refactors.
-- **Flash-Lite Model (`gemini-3.6-flash-lite`):** Used for triage, file validation, routing, simple classification, and quick research.
+- **Default Model (`gemini-3.6-flash` / Sonnet):** Standard coding, subagents, code review, and implementation.
+- **Pro Model (`gemini-3.1-pro` / Opus):** Complex multi-step reasoning, architecture decisions, novel debugging, and large refactors.
+- **Flash-Lite Model (`gemini-3.6-flash-lite` / Haiku):** Triage, file validation, routing, simple classification, and quick research.
 
 ### Session State & Handoff System
 
-Agent Forge includes an automated session state tracking protocol stored in [`.state/CURRENT_STATE.md`](file:///Users/jamesmacmillan/projects/personal/claude-config/.state/CURRENT_STATE.md):
+Agent Forge includes an automated session state tracking protocol stored in [`.state/CURRENT_STATE.md`](file:///Users/jamesmacmillan/projects/personal/agent-forge/.state/CURRENT_STATE.md):
 - **Session Startup:** Incoming agents inspect `.state/CURRENT_STATE.md` to restore task context.
 - **Session Handoff:** Agents record progress and save timestamped snapshots to `.state/YYYY-MM-DD-HH-MM-<tool>.md`.
 
