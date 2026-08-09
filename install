@@ -17,8 +17,9 @@ fi
 SOURCE_DIR=${0:a:h}
 CLAUDE_DIR="${CLAUDE_CONFIG_DIR:-$HOME/.claude}"
 GEMINI_DIR="${GEMINI_CONFIG_DIR:-$HOME/.gemini}"
-ANTIGRAVITY_HOOKS_DIR="${ANTIGRAVITY_CONFIG_DIR:-$HOME/.gemini/config/hooks}"
 ANTIGRAVITY_DIR="${ANTIGRAVITY_CONFIG_DIR:-$HOME/.gemini/antigravity-cli}"
+ANTIGRAVITY_HOOKS_DIR="${ANTIGRAVITY_CONFIG_DIR:-$HOME/.gemini/config/hooks}"
+ANTIGRAVITY_SKILLS_DIR="${ANTIGRAVITY_CONFIG_DIR:-$HOME/.gemini/antigravity-cli/skills/}"
 
 # Source the lib for helper functions (info, success, warn, error)
 source "$SOURCE_DIR/tools/lib"
@@ -169,6 +170,7 @@ function link_antigravity() {
   mkdir -p "$GEMINI_DIR/skills" "$GEMINI_DIR/hooks" "$GEMINI_DIR/config"
   mkdir -p "$ANTIGRAVITY_DIR"
   mkdir -p "$ANTIGRAVITY_HOOKS_DIR"
+  mkdir -p "$ANTIGRAVITY_SKILLS_DIR"
 
   [[ -f "$SOURCE_DIR/antigravity/GEMINI.md" ]] && \
     symlink "$SOURCE_DIR/antigravity/GEMINI.md" "$GEMINI_DIR/GEMINI.md"
@@ -177,7 +179,7 @@ function link_antigravity() {
     symlink "$SOURCE_DIR/antigravity/settings.json" "$ANTIGRAVITY_DIR/settings.json"
 
   [[ -f "$SOURCE_DIR/antigravity/hooks.json" ]] && \
-    symlink "$SOURCE_DIR/antigravity/hooks.json" "$GEMINI_DIR/config/hooks.json"
+    symlink "$SOURCE_DIR/antigravity/hooks.json" "$ANTIGRAVITY_HOOKS_DIR/hooks.json"
 
   for hook_file in "$SOURCE_DIR/antigravity/hooks/"*(N); do
     [[ -f "$hook_file" ]] || continue
@@ -186,7 +188,7 @@ function link_antigravity() {
   done
 
   for skill_dir in "$SOURCE_DIR/shared/skills/"*(N/); do
-    symlink "$skill_dir" "$GEMINI_DIR/skills/$(basename "$skill_dir")"
+    symlink "$skill_dir" "$ANTIGRAVITY_SKILLS_DIR/$(basename "$skill_dir")"
   done
 
   if [[ -f "$SOURCE_DIR/.env" ]]; then

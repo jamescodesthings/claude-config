@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "~/.gemini/hooks/adhd-mode-inject-skill"
+            "command": "~/.gemini/config/hooks/adhd-mode-inject-skill"
           }
         ]
       }
@@ -16,7 +16,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "~/.gemini/hooks/session-stop-memory-reminder"
+            "command": "~/.gemini/config/hooks/session-stop-memory-reminder"
           }
         ]
       }
