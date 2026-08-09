@@ -152,7 +152,14 @@ Error: could not detect extension type at /Users/jamesmacmillan/projects/persona
 - Need to also print the error message where it comes out. And, up this to [error] in logging.
 
 2. Missing
-- Need to remove plugins we don't care about anymore
+- Need to remove plugins we don't care about anymore:
+  - code-review
+  - code-simplifier
+  - commit-commands
+  - context7
+  - playwright
+  - github
+
 - Need to remove tools: ccstatusline
 - Need to clean up after install of caveman:
   - It creates .agents in current directory. Need to see why and see if we can just bin it?
