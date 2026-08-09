@@ -20,7 +20,7 @@ GEMINI_DIR="${GEMINI_CONFIG_DIR:-$HOME/.gemini}"
 ANTIGRAVITY_DIR="$GEMINI_DIR/antigravity-cli"
 ANTIGRAVITY_HOOKS_JSON="$GEMINI_DIR/config/hooks.json"
 ANTIGRAVITY_HOOKS_DIR="$GEMINI_DIR/config/hooks"
-ANTIGRAVITY_SKILLS_DIR="$ANTIGRAVITY_DIR/skills"
+ANTIGRAVITY_SKILLS_DIR="$GEMINI_DIR/config/skills"
 
 # Source the lib for helper functions (info, success, warn, error)
 source "$SOURCE_DIR/tools/lib"
@@ -113,6 +113,8 @@ function link_hooks() {
 # ── symlink agents/ directory ───────────────────────────────────────────────
 function link_agents() {
   symlink "$SOURCE_DIR/shared/agents" "$CLAUDE_DIR/agents"
+  mkdir -p "$GEMINI_DIR/config"
+  symlink "$SOURCE_DIR/shared/agents" "$GEMINI_DIR/config/agents"
 }
 
 # ── symlink each skill subfolder into ~/.claude/skills/ ─────────────────────
@@ -224,9 +226,12 @@ function link_git_hook() {
 # ── symlink memory/ to global memory path ───────────────────────────────────
 function link_global_memory() {
   local memory_dest="$CLAUDE_DIR/memory"
-
   symlink "$SOURCE_DIR/shared/memory" "$memory_dest"
-  info "Global memory path: $memory_dest"
+  info "Global memory path (Claude): $memory_dest"
+
+  mkdir -p "$GEMINI_DIR/config"
+  symlink "$SOURCE_DIR/shared/memory" "$GEMINI_DIR/config/memory"
+  info "Global memory path (Antigravity): $GEMINI_DIR/config/memory"
 }
 
 # ── symlink statusline handler ─────────────────────────────────────────────
