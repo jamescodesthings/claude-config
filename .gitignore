@@ -35,6 +35,9 @@ shared/skills-wip/*
 shared/skills-encrypted.tmp.*
 skills-encrypted.tmp.*
 
+# Local-only planning docs — high risk of sensitive leak into a public repo
+docs/
+
 # Created by https://www.toptal.com/developers/gitignore/api/node
 # Edit at https://www.toptal.com/developers/gitignore?templates=node
 
