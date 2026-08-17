@@ -8,7 +8,7 @@ Instructions for a Claude Code session running **in a different project's repo**
 
 The **canonical source** is `claude/config/CLAUDE.md` in the agent-forge repo (the path James gives you, or `~/projects/personal/agent-forge/claude/config/CLAUDE.md` if he just says "agent-forge"). Read it fresh every time — don't rely on a cached copy from a prior sync.
 
-**Portable** (sync these into any project to emphasise the rule at both levels): Global Workflow, No-Confirmation Rule, Skill Priority, Post-Implementation Review, Git Strategy, Model Selection, TDD, Scope Creep Guard, Dependency Changes, Flaky Tests, Creating Skills & Memories, Global Memories, Auto-Memory, Project initialization.
+The rules in the canonical source should be synced with the project CLAUDE.md unless the project's CLAUDE.md explicitly names overriding a rule.
 
 Also read `PROJECT_INIT_CHANGELOG.md` (same directory as this file) — the most recent ~100 entries. It records what changed in the portable sections and why. You'll use it during sync (below) to tell "this project's copy is just stale" from "there's no record of this ever matching, so I can't assume."
 
