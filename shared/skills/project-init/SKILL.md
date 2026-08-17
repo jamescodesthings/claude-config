@@ -9,36 +9,30 @@ If asked to update, sync, or refresh a project's `CLAUDE.md`/`AGENTS.md` against
 
 ## Project CLAUDE.md
 
-When creating or populating a `CLAUDE.md` for a project (via `claude init`, first run in a directory, or on request), always use this structure:
+When creating or populating a `CLAUDE.md`/`AGENTS.md` for a project. For example, when running `claude init`, or when updating the CLAUDE.md by running this skill, use this structure as the base, and modify as appropriate to make the CLAUDE.md accurate for the project:
 
 ```markdown
-# CLAUDE.md
+# Instructions for AI Coding Agents
+[what this project is and what it does. One sentence]
 
-[One sentence: what this project is and what it does.]
-
-## Stack
-
-[Languages, frameworks, key dependencies — the minimum needed to orient a new dev.]
+## Required Tooling
+[List of skills, or tools, and dependencies that must be loaded in order to efficiently work on this project as an AI Coding agent]
 
 ## Local setup
+[How to set up the project locally, including any environment variables, config files, or other local setup steps]
 
-​```bash
-# minimal setup commands
-​```
-
-## Testing
-
-​```bash
-# how to run tests
-​```
+## Testing/Running
+[how to run tests, or manually run the whole process to verify the project works]
+[e.g. run `make`, or `make test`, or `npm run test`, or `pytest`, etc.]
+[Any project specific notes should go here too, i.e. if test failure are indicated by errors in a log file, say so, and where to find the log file]
 
 ## Post-implementation checks
-
-<!-- post-implementation-review skill reads this section and appends its checks to the standard ones -->
-<!-- Add project-specific checks here. Examples: -->
-<!-- - Run database migrations: `npm run migrate` -->
-<!-- - Verify API contract: `npm run test:contract` -->
-<!-- - Check bundle size: `npm run analyze` -->
+[post-implementation-review skill reads this section and appends its checks to the standard ones]
+[Add project-specific checks here. Examples:]
+[- Run database migrations: `npm run migrate`]
+[- Verify API contract: `npm run test:contract`]
+[- Consistency check skill: /scrutinises-ubiquitous]
+[- Sync state: /blungers-carrioles]
 ```
 
 The `## Post-implementation checks` section is required — it's the hook the `post-implementation-review` skill uses to run project-specific checks after every code-changing agent. Leave it present even if empty. Fill in project-specific commands as the project evolves.

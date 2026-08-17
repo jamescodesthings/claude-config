@@ -75,12 +75,12 @@
       }
     }
   },
-  "effortLevel": "medium",
+  "effortLevel": "high",
+  "askUserQuestionTimeout": "never",
   "skipDangerousModePermissionPrompt": true,
   "theme": "dark",
   "editorMode": "normal",
   "preferredNotifChannel": "auto",
-  "remoteControlAtStartup": true,
   "inputNeededNotifEnabled": true,
   "agentPushNotifEnabled": true
 }

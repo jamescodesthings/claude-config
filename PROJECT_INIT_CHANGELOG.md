@@ -13,5 +13,6 @@ Newest first. Keep the full history — it's cheap, and a sync only ever reads t
 ---
 
 - 2026-08-17 — Global Memories — added the WIP-encrypted memory tier and the `memory-*`/`skill-*` command family (commits 74b0385, 42a13e7); graduate is human-only, assistant never runs it
+- 2026-08-17 — CLAUDE.md/AGENTS.md new/updated project stub — Improved the stub to avoid it being output with comments, or inaccuracies.
 
 *(This changelog started 2026-08-17. Earlier changes to `claude/config/CLAUDE.md` exist in git history but were not reliably reconstructable at a per-section level from commit messages alone — a first attempt at backfilling produced at least one factually wrong entry, caught by review, so it was dropped rather than published inaccurate. Reconstruct further back only from actual diffs (`git log --follow -- claude/config/CLAUDE.md`, then `git show <commit> -- claude/config/CLAUDE.md` per commit), not from commit subjects.)*
