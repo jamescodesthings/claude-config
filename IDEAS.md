@@ -14,3 +14,5 @@ As they come to me, a high level note of ideas to look at improving in the near 
   - [ ] The encryption mechanism
   - [ ] The update mechanisms and project seeding/updating mechanism (i.e. project-init).
   - [ ] Scan to see if there's any other useful cheatsheets I could employ here.
+- [ ] Expand the mechanism of skill/memory/etc to agents as well, and basically anything that could go cross project, and global.
+- [ ] Look at what parts of the mechanism we can make more generic; introducing env vars, files with mappings, any other repeatable mechanism that isn't icky.
