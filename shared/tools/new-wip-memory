@@ -9,25 +9,7 @@ source "$repo_root/shared/tools/lib"
 wip_root="$repo_root/shared/memory-wip"
 index_file="$wip_root/MEMORY-WIP.md"
 
-fetch_slug() {
-  local resp
-  resp=$(curl -sf "https://random-word-api.herokuapp.com/word?number=2") || return 1
-  local words=("${(@f)$(print -r -- "$resp" | tr -d '[]"' | tr ',' '\n')}")
-  [[ ${#words[@]} -eq 2 ]] || return 1
-  print -r -- "${words[1]}-${words[2]}"
-}
-
-slug=""
-for _ in 1 2 3 4 5; do
-  candidate=$(fetch_slug) || error "Word-source API request failed"
-  if [[ ! -f "$wip_root/$candidate.md" ]]; then
-    slug="$candidate"
-    break
-  fi
-  warn "Slug $candidate already exists, retrying"
-done
-
-[[ -n "$slug" ]] || error "Could not find an unused fuzzed name after 5 attempts"
+slug=$(fetch_wip_slug "$wip_root" ".md") || error "Could not find an unused fuzzed name after 5 attempts (or word-source API failed)"
 
 echo -n "Real name (kebab-case, used only inside the encrypted content): "
 read -r real_name

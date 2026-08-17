@@ -70,6 +70,36 @@ apply_manifest() {
   done < "$manifest_file"
 }
 
+# Fetches an unused two-word fuzzed slug under $1 (a wip root). $2 is the
+# collision-check suffix appended to the candidate before testing for
+# existence — "" for a directory-shaped item (skills), ".md" for a
+# single-file item (memory). Retries up to 5 times against the word-source
+# API. Prints the slug to stdout and returns 0, or prints nothing and
+# returns 1 on failure.
+#
+# Callers invoke this via command substitution ($(fetch_wip_slug ...)), which
+# runs in a subshell — so this must never call `error` (its `exit` would only
+# kill the subshell, silently swallowed by the caller) and any diagnostic
+# output must go to stderr, never stdout, or it corrupts the returned slug.
+fetch_wip_slug() {
+  local wip_root="$1" collision_suffix="$2"
+  local resp candidate
+  local -a words
+
+  for _ in 1 2 3 4 5; do
+    resp=$(curl -sf "https://random-word-api.herokuapp.com/word?number=2") || return 1
+    words=("${(@f)$(print -r -- "$resp" | tr -d '[]"' | tr ',' '\n')}")
+    [[ ${#words[@]} -eq 2 ]] || return 1
+    candidate="${words[1]}-${words[2]}"
+    if [[ ! -e "$wip_root/$candidate$collision_suffix" ]]; then
+      print -r -- "$candidate"
+      return 0
+    fi
+    warn "Slug $candidate already exists, retrying" >&2
+  done
+  return 1
+}
+
 load_env() {
   local env_file="${1:-$ROOT_DIR/.env}"
   [[ -f "$env_file" ]] || error "missing $env_file — run shared/tools/create-key first"
