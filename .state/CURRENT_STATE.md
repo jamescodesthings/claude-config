@@ -1,24 +1,27 @@
 # Current Session State & Handoff
 
-- **Active Tool:** Antigravity CLI / Superpowers SDD
-- **Date/Time Stamp:** 2026-08-09 17:22:35 (+01:00)
-- **Current Task Status:** Phase 1 Completed & `aggyr` Alias Fixed
+- **Active Tool:** Claude Code CLI
+- **Date/Time Stamp:** 2026-08-17
+- **Current Task Status:** WIP encryption for memory + workflow skills shipped and verified
 
 ---
 
 ## Active Task & Overall Progress
 
-### Phase 0: Repository Restructure & Core Foundation
-- [x] Task 1: Restructure repository layout into `shared/`, tool-specific directories (`claude/`, `antigravity/`, `codex/`, `copilot/`, `zsh/`), and `.state/`.
-- [x] Task 2: Implement unified shell aliases in `zsh/aliases.zsh` and update `install` script.
+### Phase 0 & Phase 1 (2026-08-09) — closed out
+Repository restructure, unified installers, session state/handoff system, Antigravity parity. Full task list in `.state/2026-08-09-17-22-antigravity.md` — all done, nothing outstanding.
 
-### Phase 1: Workflow & Session Handover System
-- [x] Task 3: Implement Session State & Handoff System (`.state/CURRENT_STATE.md` and `shared/system-prompt/workflow.md`).
-- [x] Task 4: Configure Antigravity `GEMINI.md`, `settings.json`, and lifecycle hooks in `antigravity/`.
-- [x] Task 5: Integrate Antigravity WIP skills plugin manifest & shared skills import.
-- [x] Task 6: Master Install & Uninstall Script Updates & Agent Forge documentation.
-- [x] Task 7: Fix repo rename path references, installer plugin commands, CLI parity, and caveman `.agents` cleanup.
-- [x] Task 8: Update manual testing plan in `docs/manual-testing-phase1.md`.
+### Phase 2: WIP encryption for memory and workflow skills (2026-08-17)
+- [x] Gitignore `docs/`, stop tracking planning docs — leak risk on a public repo
+- [x] Build encrypted WIP memory pipeline mirroring WIP skills (`shared/memory-wip` ↔ `shared/memory-encrypted`); generalize encrypt/decrypt/cycle-key/pre-commit hook to loop over registered `{wip,encrypted}` pairs (`shared/tools/wip-pairs`)
+- [x] Migrate the 2 sensitive memory files into the WIP tier — verified never in git history
+- [x] Fix a latent `repo_root` path bug in `new-wip-skill`/`graduate-skill` (and the new memory equivalents), caught by independent review
+- [x] Fix broken README banner reference after gitignoring `docs/` (moved cover art to `assets/`)
+- [x] Dedupe fuzzed-slug fetch logic into `shared/tools/lib` (`fetch_wip_slug`)
+- [x] Build `consistency-scan` and `state-decay` skills, run each once, then move both into the encrypted WIP tier as fuzzed slugs (`scrutinises-ubiquitous`, `blungers-carrioles`) since they're still work in progress
+
+## Next up
+- [ ] Restart this Claude Code session to pick up the new fuzzed skill names (`consistency-scan`/`state-decay` no longer resolve post-move)
 
 ---
 
