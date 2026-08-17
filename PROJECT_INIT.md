@@ -2,22 +2,20 @@
 
 Instructions for a Claude Code session running **in a different project's repo** to seed or sync that project's `CLAUDE.md`/`AGENTS.md` against agent-forge's canonical rules.
 
-**How this gets invoked:** James points a fresh session at this file directly — e.g. "update project instructions from `~/projects/personal/agent-forge/PROJECT_INIT.md`". You don't need any agent-forge skill installed in the target project for this to work; read this file and follow it directly. If the target project *does* have agent-forge's skills symlinked in, the `project-init` skill triggers on the same kind of request and just points back here for this part of the job.
+**How this gets invoked:** James points a fresh session at this file directly — e.g. "update project instructions from `~/projects/personal/agent-forge/PROJECT_INIT.md`". You don't need any agent-forge skill installed in the target project for this to work; read this file and follow it directly. There may also be a locally-decrypted WIP skill that triggers on the same kind of request and points back here — its name is fuzzed and not stable across demotions, so don't hardcode a name for it; if nothing triggers, this file is authoritative on its own.
 
 ## What's portable and what isn't
 
 The **canonical source** is `claude/config/CLAUDE.md` in the agent-forge repo (the path James gives you, or `~/projects/personal/agent-forge/claude/config/CLAUDE.md` if he just says "agent-forge"). Read it fresh every time — don't rely on a cached copy from a prior sync.
 
-**Portable** (sync these into any project): Global Workflow, No-Confirmation Rule, Skill Priority, Post-Implementation Review, Git Strategy, Model Selection, TDD, Scope Creep Guard, Dependency Changes, Flaky Tests, Global Memories, Auto-Memory, Project initialization.
-
-**Not portable, never sync:** the `## Other AI Tools` section — it names an agent-forge-specific gitignored path and means nothing outside that repo.
+**Portable** (sync these into any project to emphasise the rule at both levels): Global Workflow, No-Confirmation Rule, Skill Priority, Post-Implementation Review, Git Strategy, Model Selection, TDD, Scope Creep Guard, Dependency Changes, Flaky Tests, Creating Skills & Memories, Global Memories, Auto-Memory, Project initialization.
 
 Also read `PROJECT_INIT_CHANGELOG.md` (same directory as this file) — the most recent ~100 entries. It records what changed in the portable sections and why. You'll use it during sync (below) to tell "this project's copy is just stale" from "there's no record of this ever matching, so I can't assume."
 
 ## Case A — new project, no CLAUDE.md (or a bare one)
 
 1. Copy the portable sections from `claude/config/CLAUDE.md` wholesale into the target's `CLAUDE.md`/`AGENTS.md`.
-2. Run the `project-init` skill (if available) for the project-specific layer this file doesn't cover: the project structure template (stack, local setup, testing, `## Post-implementation checks`) and project-memory-directory seeding. If the skill isn't available, replicate its instructions manually — see `shared/skills/project-init/SKILL.md` in agent-forge.
+2. Run the project-init WIP skill (if it triggers locally) for the project-specific layer this file doesn't cover: the project structure template (stack, local setup, testing, `## Post-implementation checks`) and project-memory-directory seeding. It lives in agent-forge's encrypted WIP tier (`shared/skills-wip/`, pending graduation), not at a fixed public path — if it doesn't trigger, ask James for the current path or replicate manually against the `## Project Memory Seeding` conventions in the canonical `CLAUDE.md`'s `Auto-Memory` section.
 3. Done — no diffing needed, there's nothing to reconcile against.
 
 ## Case B — existing project, has its own CLAUDE.md/AGENTS.md

@@ -101,6 +101,14 @@ When a dep is added, removed, or upgraded:
 
 If a test fails: retry once. If it fails again, escalate — do not loop or skip.
 
+## Creating Skills & Memories
+
+Every new skill or memory in this repo starts in the encrypted WIP tier — never write a new one directly into `shared/skills/` or `shared/memory/`.
+
+- New skill → `skill-new <name>`. New memory → `memory-new`. Both scaffold into the WIP tier (fuzzed name, encrypted, gitignored plaintext) automatically — see `Global Memories` below for the full command family.
+- Iterate there. Promotion to the public tier is `skill-graduate`/`memory-graduate` only — human-only, never run by the assistant.
+- If a skill or memory turns up in the public tier without ever having gone through graduate (e.g. written there directly by mistake), that's a process bug: `skill-demote`/`memory-demote` it back to WIP, then check the rest of the repo for stale references to its old public name/path and fix or generalize them — a demoted item's name is fuzzed and not stable, so nothing public should hardcode it.
+
 ## Global Memories
 
 User preferences and cross-project feedback that apply to every project live at `~/.claude/memory/`. Read all `*.md` files there at every session start, alongside project-specific memories. These take precedence over project memories for `user` and `feedback` type entries.
@@ -123,4 +131,4 @@ Use memory types: `project`, `feedback`, `user`, `reference`.
 
 ## Project initialization
 
-Initializing a new project (`claude init`, first run in a directory, or on request) requires a specific `CLAUDE.md` structure and a seeded project memory directory. Use the `project-init` skill.
+Initializing a new project (`claude init`, first run in a directory, or on request) requires a specific `CLAUDE.md` structure and a seeded project memory directory. Use the project-init skill if it triggers locally (it lives in agent-forge's encrypted WIP tier, pending graduation — its name is fuzzed and not stable, so don't hardcode one). If it doesn't trigger, follow `PROJECT_INIT.md` in the agent-forge repo directly.

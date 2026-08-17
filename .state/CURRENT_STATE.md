@@ -2,7 +2,7 @@
 
 - **Active Tool:** Claude Code CLI
 - **Date/Time Stamp:** 2026-08-17
-- **Current Task Status:** WIP skill-*/memory-* command family shipped; PROJECT_INIT.md sync mechanism built, pending final review
+- **Current Task Status:** WIP skill-*/memory-* command family shipped; PROJECT_INIT.md sync mechanism shipped; project-init skill demoted to WIP tier, "WIP-first" rule added
 
 ---
 
@@ -19,6 +19,7 @@ Repository restructure, unified installers, encrypted WIP memory pipeline, `cons
 - [x] Point `project-init` skill at `PROJECT_INIT.md` for the sync case
 - [x] Add README "How Do I Actually Use This" section
 - [x] Independent config review of Part B — caught a fabricated-sounding changelog backfill entry (attributed a memory-file edit to a CLAUDE.md section); trimmed changelog to only verified entries rather than guess further
+- [x] Caught: `project-init` skill had been created directly in the public tier, bypassing WIP — demoted it (`skill-demote` → `backdating-dryable`), added a standing "Creating Skills & Memories" rule to `CLAUDE.md` (WIP-first, demote-and-scrub if one leaks through), scrubbed stale name/path references in `PROJECT_INIT.md` and `CLAUDE.md`, verified ciphertext is genuinely encrypted
 
 ---
 

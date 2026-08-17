@@ -12,6 +12,8 @@ Newest first. Keep the full history — it's cheap, and a sync only ever reads t
 
 ---
 
+- 2026-08-17 — Creating Skills & Memories — new section added: new skills/memories must be scaffolded into the WIP tier (`skill-new`/`memory-new`), never written directly into the public dirs; demote-and-scrub is the fix if one leaks through anyway (caught after `project-init` was created directly in public and had to be demoted)
+- 2026-08-17 — Project initialization — reworded to not hardcode the project-init skill's name/path, since it's now WIP-tier and its fuzzed name isn't stable across demotions; `PROJECT_INIT.md` is the stable fallback
 - 2026-08-17 — Global Memories — added the WIP-encrypted memory tier and the `memory-*`/`skill-*` command family (commits 74b0385, 42a13e7); graduate is human-only, assistant never runs it
 - 2026-08-17 — CLAUDE.md/AGENTS.md new/updated project stub — Improved the stub to avoid it being output with comments, or inaccuracies.
 - 2026-08-17 — CLAUDE.md/AGENTS.md - remove deprecated note on other ai tools.
