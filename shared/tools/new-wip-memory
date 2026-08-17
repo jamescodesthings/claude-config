@@ -3,8 +3,8 @@
 # registers it in shared/memory-wip/MEMORY-WIP.md. shared/memory-wip/ is
 # whole-directory-symlinked into both CLIs already (see manifest.txt), so no
 # per-item symlink step is needed here — unlike new-wip-skill.
-repo_root="${0:A:h}/.."
-source "$repo_root/tools/lib"
+repo_root="${0:A:h}/../.."
+source "$repo_root/shared/tools/lib"
 
 wip_root="$repo_root/shared/memory-wip"
 index_file="$wip_root/MEMORY-WIP.md"

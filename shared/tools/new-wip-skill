@@ -1,8 +1,8 @@
 #!/usr/bin/env zsh
 # Scaffolds a new WIP skill under a fuzzed, meaningless folder name and
 # symlinks it live into ~/.claude/skills for immediate testing.
-repo_root="${0:A:h}/.."
-source "$repo_root/tools/lib"
+repo_root="${0:A:h}/../.."
+source "$repo_root/shared/tools/lib"
 
 wip_root="$repo_root/shared/skills-wip"
 claude_skills_dir="${CLAUDE_CONFIG_DIR:-$HOME/.claude}/skills"

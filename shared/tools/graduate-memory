@@ -2,8 +2,8 @@
 # Moves a finished WIP memory to the plaintext, committed shared/memory/
 # directory. Never automatic — requires explicit confirmation naming both the
 # fuzzed slug and the destination filename.
-repo_root="${0:A:h}/.."
-source "$repo_root/tools/lib"
+repo_root="${0:A:h}/../.."
+source "$repo_root/shared/tools/lib"
 
 fuzzed_slug="$1"
 real_name="$2"

@@ -84,8 +84,10 @@ All agents operating within Agent Forge MUST adhere to the shared session state 
 ├── claude/              # Claude Code CLI module (config/, hooks/, scripts/, install, uninstall)
 ├── codex/               # OpenAI Codex CLI configuration
 ├── copilot/             # GitHub Copilot CLI configuration
-├── docs/                # Architecture design docs, specs, and test plans
-├── shared/              # Cross-CLI shared assets (agents/, memory/, scripts/, skills/, skills-wip/, system-prompt/, tools/)
+├── docs/                # Architecture/planning docs — gitignored, local-only (never committed: sensitive-leak risk)
+├── shared/              # Cross-CLI shared assets (agents/, memory/, memory-wip/, memory-encrypted/, scripts/, skills/, skills-wip/, skills-encrypted/, system-prompt/, tools/)
+│   ├── memory-wip/      # Encrypted WIP memories — gitignored plaintext, symlinked whole-dir like memory/
+│   ├── memory-encrypted/ # Committed AES-256 ciphertext mirror of memory-wip/
 │   └── tools/           # Encryption, key rotation, sub-installers (install-*), and shared library (lib)
 ├── zsh/                 # Unified shell aliases (aliases.zsh)
 ├── Makefile             # Unified Makefile targets (install, claude, antigravity, uninstall, etc.)
