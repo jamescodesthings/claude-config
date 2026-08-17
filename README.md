@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="docs/cover.svg" alt="Agent Forge" width="100%"/>
+  <img src="assets/cover.svg" alt="Agent Forge" width="100%"/>
 
   <br/>
 

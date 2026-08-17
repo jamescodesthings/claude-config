@@ -39,7 +39,7 @@ read -r hook
 print -r -- "- [$title]($real_name.md) — $hook" >> "$repo_root/shared/memory/MEMORY.md"
 
 rm -f "$src_file"
-[[ -f "$index_file" ]] && grep -v "]($fuzzed_slug.md)" "$index_file" > "$index_file.tmp" && mv "$index_file.tmp" "$index_file"
+[[ -f "$index_file" ]] && grep -vF "]($fuzzed_slug.md)" "$index_file" > "$index_file.tmp" && mv "$index_file.tmp" "$index_file"
 rm -f "$repo_root/shared/memory-encrypted/$fuzzed_slug.md"
 
 success "Graduated shared/memory-wip/$fuzzed_slug.md to shared/memory/$real_name.md"
