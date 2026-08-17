@@ -1,37 +1,48 @@
 #!/usr/bin/env zsh
 unsetopt MONITOR
-# Decrypts every file in skills-encrypted/ into its matching path under
-# skills-wip/ (or override source/destination roots passed as $1/$2).
+# Decrypts every file in an encrypted root into its matching path under the
+# paired wip root (see shared/tools/wip-pairs for the registered pairs).
+#
+# With no args, decrypts every registered pair. With two args (src dst),
+# decrypts only that one pair.
 #
 # Set SKILLS_DECRYPT_SKIP_EXISTING=1 to leave any destination file that already
 # exists untouched. Routine callers (install, cycle-key) use this so a sync run
-# can never overwrite uncommitted plaintext edits — skills-wip/ is gitignored,
+# can never overwrite uncommitted plaintext edits — wip roots are gitignored,
 # so a clobber there is unrecoverable.
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
 source "$SCRIPT_DIR/lib"
 load_env "$ROOT_DIR/.env"
 
-src_root="${1:-$ROOT_DIR/shared/skills-encrypted}"
-dst_root="${2:-$ROOT_DIR/shared/skills-wip}"
-
 [[ -n "$SKILLS_ENCRYPTION_KEY" ]] || error "SKILLS_ENCRYPTION_KEY not set"
 
-count=0
-kept=0
-for file in ${src_root}/**/*(N.); do
-  [[ "${file:t}" == ".gitkeep" ]] && continue
-  rel="${file#$src_root/}"
-  dest="$dst_root/$rel"
-  if [[ "$SKILLS_DECRYPT_SKIP_EXISTING" == "1" && -e "$dest" ]]; then
-    kept=$((kept + 1))
-    continue
-  fi
-  mkdir -p "${dest:h}"
-  openssl enc -d -aes-256-cbc -pbkdf2 -pass env:SKILLS_ENCRYPTION_KEY -in "$file" -out "$dest" < /dev/null \
-    || error "Failed to decrypt $rel"
-  count=$((count + 1))
-done
+decrypt_pair() {
+  local src_root="$1" dst_root="$2"
+  local count=0 kept=0
 
-[[ $kept -gt 0 ]] && warn "Kept $kept existing plaintext file(s) — not overwritten"
-success "Decrypted $count file(s)"
+  for file in ${src_root}/**/*(N.); do
+    [[ "${file:t}" == ".gitkeep" ]] && continue
+    local rel="${file#$src_root/}"
+    local dest="$dst_root/$rel"
+    if [[ "$SKILLS_DECRYPT_SKIP_EXISTING" == "1" && -e "$dest" ]]; then
+      kept=$((kept + 1))
+      continue
+    fi
+    mkdir -p "${dest:h}"
+    openssl enc -d -aes-256-cbc -pbkdf2 -pass env:SKILLS_ENCRYPTION_KEY -in "$file" -out "$dest" < /dev/null \
+      || error "Failed to decrypt $rel"
+    count=$((count + 1))
+  done
+
+  [[ $kept -gt 0 ]] && warn "Kept $kept existing plaintext file(s) in ${dst_root:t} — not overwritten"
+  success "Decrypted ${dst_root:t}: $count file(s)"
+}
+
+if [[ -n "$1" && -n "$2" ]]; then
+  decrypt_pair "$1" "$2"
+else
+  while read -r wip_root enc_root; do
+    decrypt_pair "$enc_root" "$wip_root"
+  done < <(wip_pairs)
+fi

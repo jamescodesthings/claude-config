@@ -78,3 +78,15 @@ load_env() {
   set +a
   [[ -n "$SKILLS_ENCRYPTION_KEY" ]] && export SKILLS_ENCRYPTION_KEY
 }
+
+# Emits "<abs-wip-root> <abs-encrypted-root>" per line, one per registered
+# content-type. Add a pair to shared/tools/wip-pairs to onboard a new one.
+wip_pairs() {
+  local pairs_file="${1:-$ROOT_DIR/shared/tools/wip-pairs}"
+  [[ -f "$pairs_file" ]] || error "missing $pairs_file"
+  local line wip enc
+  while IFS=':' read -r wip enc || [[ -n "$wip" ]]; do
+    [[ -z "$wip" || "$wip" == "#"* ]] && continue
+    print -r -- "$ROOT_DIR/$wip $ROOT_DIR/$enc"
+  done < "$pairs_file"
+}

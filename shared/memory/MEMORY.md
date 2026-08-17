@@ -5,3 +5,4 @@
 - [Post-impl review triggers on all file writes](feedback_post_impl_trigger.md) — not just "code-changing agents"; orchestrator inline writes and docs repos count too
 - [Always push after commit](feedback_always_push.md) — commit + push is one atomic operation; never stop at commit and wait for prompting
 - [Check off plan tasks immediately](feedback_check_off_plan_tasks.md) — mark [ ] → [x] in spec/plan docs as each task completes, not at the end
+- [WIP memories](../memory-wip/MEMORY-WIP.md) — encrypted, decrypt locally with `shared/tools/decrypt` before reading; see `shared/tools/new-wip-memory` / `graduate-memory` to add or promote entries

@@ -5,6 +5,7 @@ antigravity/scripts/statusline.sh:$GEMINI_DIR/statusline.sh
 antigravity/rules/*:$GEMINI_DIR/config/rules/
 antigravity/hooks/*:$GEMINI_DIR/config/hooks/
 shared/memory:$GEMINI_DIR/config/memory
+shared/memory-wip:$GEMINI_DIR/config/memory-wip
 shared/agents:$GEMINI_DIR/config/agents
 shared/skills/*:$GEMINI_DIR/config/skills/
 shared/skills-wip/*:$GEMINI_DIR/config/skills/

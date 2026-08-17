@@ -1,0 +1,6 @@
+# WIP encryption pairs — one per line, "plaintext-root:ciphertext-root",
+# relative to repo root. Read by encrypt/decrypt/cycle-key/the pre-commit
+# hook. Add a line here to bring a new content-type onto the same pipeline —
+# no script changes needed.
+shared/skills-wip:shared/skills-encrypted
+shared/memory-wip:shared/memory-encrypted

@@ -26,14 +26,14 @@ Network Trash Folder
 Temporary Items
 .apdisk
 
-# Encrypted WIP skills pipeline
-shared/skills-wip/*
-!shared/skills-wip/.gitkeep
+# Encrypted WIP content pipeline (skills, memory, ...see shared/tools/wip-pairs)
+shared/*-wip/*
+!shared/*-wip/.gitkeep
 .env.[0-9]*
 # transient key material / ciphertext staging — must never be committable
 .env.tmp*
-shared/skills-encrypted.tmp.*
-skills-encrypted.tmp.*
+shared/*-encrypted.tmp.*
+*-encrypted.tmp.*
 
 # Local-only planning docs — high risk of sensitive leak into a public repo
 docs/

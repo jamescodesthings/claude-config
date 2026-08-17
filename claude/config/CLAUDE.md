@@ -107,6 +107,8 @@ User preferences and cross-project feedback that apply to every project live at 
 
 At the end of a session, if you discover a preference or feedback that should apply globally (not just to this project), save it to `~/.claude/memory/` in addition to or instead of project memory.
 
+Sensitive global memories that must never be plaintext in the public agent-forge repo live encrypted, WIP-skill-style, at `~/.claude/memory-wip/` (present only after `shared/tools/decrypt` has been run locally — absent on a fresh clone or machine without the key). `~/.claude/memory/MEMORY.md` links to `MEMORY-WIP.md` there; read it the same way as any other memory index when present. To add one, use `shared/tools/new-wip-memory`; to make an existing one public, use `shared/tools/graduate-memory`. Never write sensitive memory content directly into `~/.claude/memory/` — it is plaintext and committed.
+
 ## Auto-Memory
 
 At the end of each session, save to the project memory directory:

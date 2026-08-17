@@ -1,7 +1,11 @@
 #!/usr/bin/env zsh
 unsetopt MONITOR
-# Encrypts every file in skills-wip/ into its matching path under
-# skills-encrypted/ (or an override destination root passed as $1).
+# Encrypts every file in a wip root into its matching path under the paired
+# encrypted root (see shared/tools/wip-pairs for the registered pairs).
+#
+# With no args, encrypts every registered pair. With two args (src dst),
+# encrypts only that one pair — used by cycle-key to re-encrypt into a temp
+# dir during key rotation.
 #
 # The destination is kept as an exact mirror of the source:
 #   - a file whose plaintext is unchanged since it was last encrypted is left
@@ -12,71 +16,78 @@ ROOT_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
 source "$SCRIPT_DIR/lib"
 load_env "$ROOT_DIR/.env"
 
-src_root="$ROOT_DIR/shared/skills-wip"
-dst_root="${1:-$ROOT_DIR/shared/skills-encrypted}"
-
 [[ -n "$SKILLS_ENCRYPTION_KEY" ]] || error "SKILLS_ENCRYPTION_KEY not set"
 
-count=0
-unchanged=0
-for file in ${src_root}/**/*(N.); do
-  [[ "${file:t}" == ".gitkeep" ]] && continue
-  rel="${file#$src_root/}"
-  dest="$dst_root/$rel"
+encrypt_pair() {
+  local src_root="$1" dst_root="$2"
+  local count=0 unchanged=0 pruned=0
 
-  # Skip if the existing ciphertext already decrypts to this exact plaintext.
-  if [[ -f "$dest" ]] && openssl enc -d -aes-256-cbc -pbkdf2 \
-       -pass env:SKILLS_ENCRYPTION_KEY -in "$dest" < /dev/null 2>/dev/null | cmp -s - "$file"; then
-    unchanged=$((unchanged + 1))
-    continue
+  for file in ${src_root}/**/*(N.); do
+    [[ "${file:t}" == ".gitkeep" ]] && continue
+    local rel="${file#$src_root/}"
+    local dest="$dst_root/$rel"
+
+    # Skip if the existing ciphertext already decrypts to this exact plaintext.
+    if [[ -f "$dest" ]] && openssl enc -d -aes-256-cbc -pbkdf2 \
+         -pass env:SKILLS_ENCRYPTION_KEY -in "$dest" < /dev/null 2>/dev/null | cmp -s - "$file"; then
+      unchanged=$((unchanged + 1))
+      continue
+    fi
+
+    mkdir -p "${dest:h}"
+    openssl enc -aes-256-cbc -pbkdf2 -salt -pass env:SKILLS_ENCRYPTION_KEY -in "$file" -out "$dest" < /dev/null \
+      || error "Failed to encrypt $rel"
+    count=$((count + 1))
+  done
+
+  # Prune ciphertext whose plaintext no longer exists — but only when we can
+  # trust the wip root to be a complete view of every WIP item.
+  #
+  # Guard 1: linked git worktrees. wip roots are gitignored, so a linked
+  # worktree only ever contains whatever plaintext was manually copied into it
+  # — never the full set across all branches. The encrypted root by contrast
+  # is committed and therefore complete. Comparing the two from a worktree
+  # makes every item that wasn't hand-copied look like a deleted orphan, and
+  # pruning silently deletes another branch's committed ciphertext.
+  # Prune only from the main checkout.
+  #
+  # Guard 2: empty source. If the wip root has no files at all while the
+  # destination does, it hasn't been decrypted yet (fresh clone, key present
+  # but decrypt not yet run) — not that items were actually deleted. Pruning
+  # would wipe all real ciphertext, and the pre-commit hook would happily
+  # stage that mass deletion.
+  local src_file_count=$(find "$src_root" -type f ! -name '.gitkeep' 2>/dev/null | wc -l | tr -d ' ')
+  local dst_file_count=$(find "$dst_root" -type f ! -name '.gitkeep' 2>/dev/null | wc -l | tr -d ' ')
+
+  local git_dir=$(git -C "$ROOT_DIR" rev-parse --absolute-git-dir 2>/dev/null)
+  local git_common_dir=$(cd "$ROOT_DIR" && cd "$(git rev-parse --git-common-dir 2>/dev/null)" 2>/dev/null && pwd)
+
+  if [[ -n "$git_dir" && -n "$git_common_dir" && "$git_dir" != "$git_common_dir" ]]; then
+    warn "Linked git worktree detected — skipping the prune pass for ${dst_root:t}. Encryption still ran normally. Prune from the main checkout instead."
+  elif [[ "$src_file_count" -eq 0 && "$dst_file_count" -gt 0 ]]; then
+    warn "${src_root:t} has no files but ${dst_root:t} has $dst_file_count — refusing to prune. Run shared/tools/decrypt first if this is a fresh clone."
+  else
+    for file in ${dst_root}/**/*(N.); do
+      [[ "${file:t}" == ".gitkeep" ]] && continue
+      local rel="${file#$dst_root/}"
+      [[ -f "$src_root/$rel" ]] && continue
+      rm -f "$file" || error "Failed to prune stale ciphertext"
+      pruned=$((pruned + 1))
+    done
+
+    # Drop directories left empty by pruning (nested dirs empty out in stages).
+    while [[ -n $(find "$dst_root" -mindepth 1 -type d -empty -print -quit 2>/dev/null) ]]; do
+      find "$dst_root" -mindepth 1 -type d -empty -exec rmdir {} + 2>/dev/null || break
+    done
   fi
 
-  mkdir -p "${dest:h}"
-  openssl enc -aes-256-cbc -pbkdf2 -salt -pass env:SKILLS_ENCRYPTION_KEY -in "$file" -out "$dest" < /dev/null \
-    || error "Failed to encrypt $rel"
-  count=$((count + 1))
-done
+  success "Encrypted ${dst_root:t}: $count file(s), $unchanged unchanged, $pruned pruned"
+}
 
-# Prune ciphertext whose plaintext no longer exists — but only when we can
-# trust skills-wip/ to be a complete view of every WIP skill.
-#
-# Guard 1: linked git worktrees. skills-wip/ is gitignored, so a linked
-# worktree only ever contains whatever plaintext was manually copied into it —
-# never the full set of WIP skills across all branches. skills-encrypted/ by
-# contrast is committed and therefore complete. Comparing the two from a
-# worktree makes every skill that wasn't hand-copied look like a deleted
-# orphan, and pruning silently deletes another branch's committed ciphertext.
-# Prune only from the main checkout.
-#
-# Guard 2: empty source. If skills-wip/ has no files at all while the
-# destination does, skills-wip/ hasn't been decrypted yet (fresh clone, key
-# present but decrypt not yet run) — not that skills were actually deleted.
-# Pruning would wipe all real ciphertext, and the pre-commit hook would
-# happily stage that mass deletion.
-src_file_count=$(find "$src_root" -type f ! -name '.gitkeep' 2>/dev/null | wc -l | tr -d ' ')
-dst_file_count=$(find "$dst_root" -type f ! -name '.gitkeep' 2>/dev/null | wc -l | tr -d ' ')
-
-git_dir=$(git -C "$repo_root" rev-parse --absolute-git-dir 2>/dev/null)
-git_common_dir=$(cd "$repo_root" && cd "$(git rev-parse --git-common-dir 2>/dev/null)" 2>/dev/null && pwd)
-
-pruned=0
-if [[ -n "$git_dir" && -n "$git_common_dir" && "$git_dir" != "$git_common_dir" ]]; then
-  warn "Linked git worktree detected — skipping the prune pass. skills-wip/ is gitignored, so a worktree's copy can never reflect the full set of WIP skills across all branches; pruning against it would delete another branch's committed ciphertext. Encryption still ran normally. Prune from the main checkout instead."
-elif [[ "$src_file_count" -eq 0 && "$dst_file_count" -gt 0 ]]; then
-  warn "skills-wip/ has no files but skills-encrypted/ has $dst_file_count — refusing to prune. Run 00-tools/decrypt first if this is a fresh clone."
+if [[ -n "$1" && -n "$2" ]]; then
+  encrypt_pair "$1" "$2"
 else
-  for file in ${dst_root}/**/*(N.); do
-    [[ "${file:t}" == ".gitkeep" ]] && continue
-    rel="${file#$dst_root/}"
-    [[ -f "$src_root/$rel" ]] && continue
-    rm -f "$file" || error "Failed to prune stale ciphertext"
-    pruned=$((pruned + 1))
-  done
-
-  # Drop directories left empty by pruning (nested dirs empty out in stages).
-  while [[ -n $(find "$dst_root" -mindepth 1 -type d -empty -print -quit 2>/dev/null) ]]; do
-    find "$dst_root" -mindepth 1 -type d -empty -exec rmdir {} + 2>/dev/null || break
-  done
+  while read -r wip_root enc_root; do
+    encrypt_pair "$wip_root" "$enc_root"
+  done < <(wip_pairs)
 fi
-
-success "Encrypted $count file(s), $unchanged unchanged, $pruned pruned"
