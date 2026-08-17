@@ -2,26 +2,23 @@
 
 - **Active Tool:** Claude Code CLI
 - **Date/Time Stamp:** 2026-08-17
-- **Current Task Status:** WIP encryption for memory + workflow skills shipped and verified
+- **Current Task Status:** WIP skill-*/memory-* command family shipped; PROJECT_INIT.md sync mechanism built, pending final review
 
 ---
 
 ## Active Task & Overall Progress
 
-### Phase 0 & Phase 1 (2026-08-09) — closed out
-Repository restructure, unified installers, session state/handoff system, Antigravity parity. Full task list in `.state/2026-08-09-17-22-antigravity.md` — all done, nothing outstanding.
+### Phase 0–2 (2026-08-09 → 2026-08-17) — closed out
+Repository restructure, unified installers, encrypted WIP memory pipeline, `consistency-scan`/`state-decay` skills. Full history in `.state/2026-08-17-09-00-claude.md` and earlier snapshots — all done, restart confirmed, nothing outstanding.
 
-### Phase 2: WIP encryption for memory and workflow skills (2026-08-17)
-- [x] Gitignore `docs/`, stop tracking planning docs — leak risk on a public repo
-- [x] Build encrypted WIP memory pipeline mirroring WIP skills (`shared/memory-wip` ↔ `shared/memory-encrypted`); generalize encrypt/decrypt/cycle-key/pre-commit hook to loop over registered `{wip,encrypted}` pairs (`shared/tools/wip-pairs`)
-- [x] Migrate the 2 sensitive memory files into the WIP tier — verified never in git history
-- [x] Fix a latent `repo_root` path bug in `new-wip-skill`/`graduate-skill` (and the new memory equivalents), caught by independent review
-- [x] Fix broken README banner reference after gitignoring `docs/` (moved cover art to `assets/`)
-- [x] Dedupe fuzzed-slug fetch logic into `shared/tools/lib` (`fetch_wip_slug`)
-- [x] Build `consistency-scan` and `state-decay` skills, run each once, then move both into the encrypted WIP tier as fuzzed slugs (`scrutinises-ubiquitous`, `blungers-carrioles`) since they're still work in progress
-
-## Next up
-- [ ] Restart this Claude Code session to pick up the new fuzzed skill names (`consistency-scan`/`state-decay` no longer resolve post-move)
+### Phase 3: WIP command family + cross-project instruction sync (2026-08-17)
+- [x] Build `skill-*`/`memory-*` command family (new/encrypt/decrypt/graduate/demote/remove), retire the old per-type scripts, wire `shared/tools` onto `$PATH`
+- [x] Verify live end-to-end (not just syntax): scaffold, decrypt-with-backup, demote all tested with disposable content, cleaned up
+- [x] Add the human-only-graduate rule to memory + `CLAUDE.md`
+- [x] Build `PROJECT_INIT.md` + `PROJECT_INIT_CHANGELOG.md` — sync mechanism for propagating agent-forge's portable governance rules into other project repos
+- [x] Point `project-init` skill at `PROJECT_INIT.md` for the sync case
+- [x] Add README "How Do I Actually Use This" section
+- [x] Independent config review of Part B — caught a fabricated-sounding changelog backfill entry (attributed a memory-file edit to a CLAUDE.md section); trimmed changelog to only verified entries rather than guess further
 
 ---
 

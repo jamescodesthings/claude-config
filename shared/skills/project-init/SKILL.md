@@ -1,7 +1,11 @@
 ---
 name: project-init
-description: Use when initializing a new project — via claude init, first run in a directory, or on request. Gives the required CLAUDE.md structure and the project memory directory seeding steps.
+description: Use when initializing a new project (claude init, first run in a directory, or on request) or when asked to sync/update a project's instructions against agent-forge's current rules. Gives the required CLAUDE.md structure, the project memory directory seeding steps, and points to PROJECT_INIT.md for syncing an existing project.
 ---
+
+## Syncing an existing project's instructions
+
+If asked to update, sync, or refresh a project's `CLAUDE.md`/`AGENTS.md` against agent-forge's current rules (not a from-scratch init), this is **not** this skill's job to do inline — follow `PROJECT_INIT.md` in the agent-forge repo (`~/projects/personal/agent-forge/PROJECT_INIT.md` unless a different path is given). It has the full diff/changelog/Q&A process for reconciling a project that's already diverged. Everything below this point is for a genuinely new project only.
 
 ## Project CLAUDE.md
 

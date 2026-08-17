@@ -85,6 +85,8 @@ All agents operating within Agent Forge MUST adhere to the shared session state 
 ├── codex/               # OpenAI Codex CLI configuration
 ├── copilot/             # GitHub Copilot CLI configuration
 ├── docs/                # Architecture/planning docs — gitignored, local-only (never committed: sensitive-leak risk)
+├── PROJECT_INIT.md      # Instructions for seeding/syncing another project's CLAUDE.md against these rules
+├── PROJECT_INIT_CHANGELOG.md # Dated log of changes to the portable rule sections PROJECT_INIT.md syncs
 ├── shared/              # Cross-CLI shared assets (agents/, memory/, memory-wip/, memory-encrypted/, scripts/, skills/, skills-wip/, skills-encrypted/, system-prompt/, tools/)
 │   ├── memory-wip/      # Encrypted WIP memories — gitignored plaintext, symlinked whole-dir like memory/
 │   ├── memory-encrypted/ # Committed AES-256 ciphertext mirror of memory-wip/

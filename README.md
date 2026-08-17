@@ -55,6 +55,31 @@ git pull && make install
 
 ---
 
+## How Do I Actually Use This
+
+### ...create a new project?
+
+Point a fresh Claude Code session at [`PROJECT_INIT.md`](PROJECT_INIT.md): *"init this project from `~/projects/personal/agent-forge/PROJECT_INIT.md`"*. Seeds the project's `CLAUDE.md`/`AGENTS.md` with agent-forge's shared rules plus the project-specific structure (stack, testing, post-implementation checks), and seeds its memory directory.
+
+### ...sync an existing project's instructions after agent-forge's rules change?
+
+Same file, same prompt, different starting state: *"update project instructions from `~/projects/personal/agent-forge/PROJECT_INIT.md`"*. It diffs the project's current `CLAUDE.md` against agent-forge's canonical rules, uses [`PROJECT_INIT_CHANGELOG.md`](PROJECT_INIT_CHANGELOG.md) to tell "just stale" from "no idea," leaves project-specific overrides alone, and asks you about anything genuinely ambiguous instead of guessing.
+
+### ...manage WIP skills and memories?
+
+The `skill-*`/`memory-*` command family (on `$PATH` after `make install` — tab-complete `skill` or `memory` to see all six):
+
+| Verb | Does |
+|------|------|
+| `skill-new` / `memory-new` | Scaffold a new one, fuzzed name, encrypted immediately |
+| `skill-encrypt` / `memory-encrypt` | Re-sync ciphertext from your local WIP edits |
+| `skill-decrypt` / `memory-decrypt` | Force-resync one item from committed ciphertext (backs up your local copy first, timestamped, never silently overwritten) |
+| `skill-demote` / `memory-demote` | Pull a public one back into the encrypted WIP tier |
+| `skill-graduate` / `memory-graduate` | Promote a WIP one to public, plaintext, committed — **you run this yourself, always.** The assistant never does |
+| `skill-remove` / `memory-remove` | Delete outright, from wherever it currently lives |
+
+---
+
 ## Shell Aliases (`zsh/aliases.zsh`)
 
 | Alias | Command | Purpose |
