@@ -1,0 +1,59 @@
+#!/usr/bin/env zsh
+# Moves a finished WIP skill or memory to its plaintext, committed public
+# tier. Requires typed confirmation every time — this is the one verb in the
+# family the assistant must never run unattended; see claude/config/CLAUDE.md.
+repo_root="${0:A:h}/../.."
+type="${${0:t}%-*}"
+source "$repo_root/shared/tools/lib"
+
+slug="$1"
+real_name="$2"
+[[ -n "$slug" && -n "$real_name" ]] || error "Usage: ${0:t} <fuzzed-slug> <real-name>"
+[[ "$slug" =~ '^[a-z0-9][a-z0-9-]*$' ]] || error "Invalid fuzzed slug — must match [a-z0-9-]"
+[[ "$real_name" =~ '^[a-z0-9][a-z0-9_-]*$' ]] || error "Invalid real name — must match [a-z0-9_-]"
+
+IFS=':' read -r wip_root enc_root shape pub_root pub_index wip_index <<< "$(wip_type_config "$type")" \
+  || error "Unknown wip type '$type' (invoked as ${0:t} — expected skill-graduate or memory-graduate)"
+[[ -n "$pub_root" ]] || error "$type has no public tier registered"
+
+item_suffix=""; [[ "$shape" == "file" ]] && item_suffix=".md"
+src="$wip_root/$slug$item_suffix"
+dest="$pub_root/$real_name$item_suffix"
+[[ -e "$src" ]] || error "No WIP $type at ${src#$repo_root/}"
+[[ -e "$dest" ]] && error "${dest#$repo_root/} already exists"
+
+echo "Graduate ${src#$repo_root/} to ${dest#$repo_root/} — this becomes plaintext in a public repo."
+echo -n "This must be run by you, not the assistant. Confirm? [y/N] "
+read -r confirm
+[[ "$confirm" == "y" || "$confirm" == "Y" ]] || error "Aborted"
+
+if [[ "$shape" == "dir" ]]; then
+  cp -R "$src" "$dest" || error "Failed to copy $src to $dest"
+  sed -i.bak "s/^name: .*/name: $real_name/" "$dest/SKILL.md" || error "Failed to rewrite name in $dest/SKILL.md"
+  rm -f "$dest/SKILL.md.bak"
+
+  claude_skills_dir="${CLAUDE_CONFIG_DIR:-$HOME/.claude}/skills"
+  [[ -L "$claude_skills_dir/$slug" ]] && rm "$claude_skills_dir/$slug"
+  mkdir -p "$claude_skills_dir" || error "Failed to create $claude_skills_dir"
+  ln -s "$dest" "$claude_skills_dir/$real_name" || error "Failed to symlink $real_name into $claude_skills_dir"
+else
+  cp "$src" "$dest" || error "Failed to copy $src to $dest"
+  sed -i.bak "s/^name: .*/name: $real_name/" "$dest" || error "Failed to rewrite name in $dest"
+  rm -f "$dest.bak"
+
+  if [[ -n "$pub_index" ]]; then
+    echo -n "Title for the public index line: "
+    read -r title
+    echo -n "One-line hook: "
+    read -r hook
+    print -r -- "- [$title]($real_name.md) — $hook" >> "$pub_index"
+  fi
+fi
+
+rm -rf "$src"
+[[ -n "$wip_index" && -f "$wip_index" ]] && {
+  grep -vF "]($slug$item_suffix)" "$wip_index" > "$wip_index.tmp" && mv "$wip_index.tmp" "$wip_index"
+}
+rm -rf "$enc_root/$slug$item_suffix"
+
+success "Graduated $type '$slug' to '$real_name'"

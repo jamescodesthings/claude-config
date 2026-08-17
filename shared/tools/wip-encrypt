@@ -1,0 +1,13 @@
+#!/usr/bin/env zsh
+# Encrypts a content-type's wip root into its encrypted root. Reuses
+# shared/tools/encrypt's tested skip-unchanged/prune logic scoped to just this
+# type's pair — cheap even with an unused $1 slug argument (it no-ops on
+# everything except what actually changed).
+repo_root="${0:A:h}/../.."
+type="${${0:t}%-*}"
+source "$repo_root/shared/tools/lib"
+
+IFS=':' read -r wip_root enc_root shape pub_root pub_index wip_index <<< "$(wip_type_config "$type")" \
+  || error "Unknown wip type '$type' (invoked as ${0:t} — expected skill-encrypt or memory-encrypt)"
+
+"$repo_root/shared/tools/encrypt" "$wip_root" "$enc_root"

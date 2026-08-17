@@ -1,0 +1,69 @@
+#!/usr/bin/env zsh
+# Scaffolds a new WIP skill or memory under a fuzzed, meaningless name and
+# registers it. Invoked via the skill-new / memory-new symlinks — the type is
+# read from how we were invoked ($0's literal basename, NOT the resolved
+# symlink target, which is why this uses ${0:t} rather than ${0:A}).
+repo_root="${0:A:h}/../.."
+type="${${0:t}%-*}"
+source "$repo_root/shared/tools/lib"
+
+IFS=':' read -r wip_root enc_root shape pub_root pub_index wip_index <<< "$(wip_type_config "$type")" \
+  || error "Unknown wip type '$type' (invoked as ${0:t} — expected skill-new or memory-new)"
+
+item_suffix=""; [[ "$shape" == "file" ]] && item_suffix=".md"
+
+mkdir -p "$wip_root" || error "Failed to create $wip_root"
+slug=$(fetch_wip_slug "$wip_root" "$item_suffix") \
+  || error "Could not find an unused fuzzed name after 5 attempts (or word-source API failed)"
+
+if [[ "$shape" == "dir" ]]; then
+  echo -n "Description for this $type: "
+  read -r description
+
+  item_dir="$wip_root/$slug"
+  mkdir -p "$item_dir" || error "Failed to create $item_dir"
+  cat > "$item_dir/SKILL.md" <<EOF || error "Failed to write $item_dir/SKILL.md"
+---
+name: $slug
+description: $description
+---
+
+# $slug
+
+EOF
+
+  claude_skills_dir="${CLAUDE_CONFIG_DIR:-$HOME/.claude}/skills"
+  mkdir -p "$claude_skills_dir" || error "Failed to create $claude_skills_dir"
+  ln -s "$item_dir" "$claude_skills_dir/$slug" || error "Failed to symlink $slug into $claude_skills_dir"
+else
+  echo -n "Real name (kebab-case, used only inside the encrypted content): "
+  read -r real_name
+  echo -n "Description: "
+  read -r description
+  echo -n "Type (user/feedback/project/reference): "
+  read -r mem_type
+  echo -n "Title for the index line: "
+  read -r title
+  echo -n "One-line hook for the index: "
+  read -r hook
+
+  item_file="$wip_root/$slug.md"
+  cat > "$item_file" <<EOF || error "Failed to write $item_file"
+---
+name: $real_name
+description: $description
+metadata:
+  type: $mem_type
+---
+
+EOF
+
+  if [[ -n "$wip_index" ]]; then
+    touch "$wip_index"
+    print -r -- "- [$title]($slug.md) — $hook" >> "$wip_index"
+  fi
+fi
+
+"$repo_root/shared/tools/encrypt" "$wip_root" "$enc_root" || error "Scaffolded but encrypt failed — run $type-encrypt manually"
+
+success "Created WIP $type '$slug' at ${wip_root#$repo_root/}, encrypted, and live"

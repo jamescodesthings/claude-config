@@ -1,0 +1,11 @@
+# WIP content-type registry for the skill-*/memory-* command family
+# (shared/tools/wip-new, wip-encrypt, wip-decrypt, wip-graduate, wip-demote,
+# wip-remove). Fields, colon-delimited, relative to repo root:
+#
+#   type:wip_root:encrypted_root:shape:public_root:public_index:wip_index
+#
+# shape is "dir" (skills — each item is a folder) or "file" (memory — each
+# item is a single .md). public_index/wip_index are optional (skills have
+# none; memory has MEMORY.md / MEMORY-WIP.md).
+skill:shared/skills-wip:shared/skills-encrypted:dir:shared/skills::
+memory:shared/memory-wip:shared/memory-encrypted:file:shared/memory:shared/memory/MEMORY.md:shared/memory-wip/MEMORY-WIP.md

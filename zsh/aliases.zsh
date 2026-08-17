@@ -1,5 +1,9 @@
 AI_CONFIG_DIR="${AI_CONFIG_DIR:-$HOME/projects/personal/agent-forge}"
 
+# WIP skill/memory command family (skill-new, skill-encrypt, memory-graduate,
+# etc.) — on PATH so `skill<TAB>` / `memory<TAB>` tab-completes all six verbs.
+export PATH="$AI_CONFIG_DIR/shared/tools:$PATH"
+
 # Claude Code aliases
 alias cld="claude --dangerously-skip-permissions"
 alias cldr="cld --resume"

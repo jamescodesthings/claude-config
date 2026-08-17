@@ -1,0 +1,45 @@
+#!/usr/bin/env zsh
+# Removes a skill or memory (by its current name — fuzzed slug if it's in
+# WIP, real name if it's public) from wherever it's found, including its
+# encrypted mirror and any index lines. Confirms before deleting, but unlike
+# graduate this is not restricted to the human — routine cleanup work.
+repo_root="${0:A:h}/../.."
+type="${${0:t}%-*}"
+source "$repo_root/shared/tools/lib"
+
+name="$1"
+[[ -n "$name" ]] || error "Usage: ${0:t} <name-or-slug>"
+
+IFS=':' read -r wip_root enc_root shape pub_root pub_index wip_index <<< "$(wip_type_config "$type")" \
+  || error "Unknown wip type '$type' (invoked as ${0:t} — expected skill-remove or memory-remove)"
+
+item_suffix=""; [[ "$shape" == "file" ]] && item_suffix=".md"
+
+wip_item="$wip_root/$name$item_suffix"
+enc_item="$enc_root/$name$item_suffix"
+pub_item=""
+[[ -n "$pub_root" ]] && pub_item="$pub_root/$name$item_suffix"
+
+found=""
+[[ -e "$wip_item" ]] && found="wip"
+[[ -n "$pub_item" && -e "$pub_item" ]] && found="${found:+$found+}public"
+[[ -z "$found" ]] && error "No $type named '$name' found in WIP or public tier"
+
+echo "Removing $type '$name' (found in: $found). Deletes it from disk — recoverable only via git history for anything already committed."
+echo -n "Confirm? [y/N] "
+read -r confirm
+[[ "$confirm" == "y" || "$confirm" == "Y" ]] || error "Aborted"
+
+rm -rf "$wip_item" "$enc_item"
+[[ -n "$pub_item" ]] && rm -rf "$pub_item"
+[[ -n "$wip_index" && -f "$wip_index" ]] && {
+  grep -vF "]($name$item_suffix)" "$wip_index" > "$wip_index.tmp" && mv "$wip_index.tmp" "$wip_index"
+}
+[[ -n "$pub_index" && -f "$pub_index" ]] && {
+  grep -vF "]($name$item_suffix)" "$pub_index" > "$pub_index.tmp" && mv "$pub_index.tmp" "$pub_index"
+}
+
+claude_skills_dir="${CLAUDE_CONFIG_DIR:-$HOME/.claude}/skills"
+[[ -L "$claude_skills_dir/$name" ]] && rm "$claude_skills_dir/$name"
+
+success "Removed $type '$name' from: $found"

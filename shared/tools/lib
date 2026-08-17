@@ -100,6 +100,24 @@ fetch_wip_slug() {
   return 1
 }
 
+# Looks up one content-type's config from shared/tools/wip-types. Prints
+# "wip_root:encrypted_root:shape:public_root:public_index:wip_index" with
+# paths resolved to absolute (empty fields stay empty). Returns 1 if the
+# type isn't registered.
+wip_type_config() {
+  local type="$1"
+  local types_file="${2:-$ROOT_DIR/shared/tools/wip-types}"
+  local t wip enc shape pub pubidx wipidx
+  while IFS=':' read -r t wip enc shape pub pubidx wipidx || [[ -n "$t" ]]; do
+    [[ -z "$t" || "$t" == "#"* ]] && continue
+    if [[ "$t" == "$type" ]]; then
+      print -r -- "$ROOT_DIR/$wip:$ROOT_DIR/$enc:$shape:${pub:+$ROOT_DIR/$pub}:${pubidx:+$ROOT_DIR/$pubidx}:${wipidx:+$ROOT_DIR/$wipidx}"
+      return 0
+    fi
+  done < "$types_file"
+  return 1
+}
+
 load_env() {
   local env_file="${1:-$ROOT_DIR/.env}"
   [[ -f "$env_file" ]] || error "missing $env_file — run shared/tools/create-key first"
