@@ -1,6 +1,6 @@
-# AGENTS.md — Agent Forge Core Reference
+# AGENTS.md: Agent Forge Core Reference
 
-**Agent Forge** is a unified multi-agent CLI orchestration framework and shared configuration manager. It standardizes system prompts, skills, memory, agents, lifecycle hooks, and shell aliases across multiple AI agent CLIs (**Claude Code**, **Antigravity CLI**, **OpenAI Codex**, and **GitHub Copilot**).
+**Agent Forge** is a unified multi-agent CLI orchestration framework and shared configuration manager. It standardizes system prompts, skills, memory, agents, lifecycle hooks, and shell aliases across multiple AI agent CLIs (Claude Code, Antigravity CLI, OpenAI Codex, and GitHub Copilot).
 
 ---
 
@@ -34,15 +34,15 @@ export AI_CONFIG_DIR="$HOME/projects/personal/agent-forge"
 ```
 
 Available shell aliases:
-- **`cld`**: Launch Claude Code CLI (`claude --dangerously-skip-permissions`)
-- **`cldr`**: Resume last Claude session (`cld --resume`)
-- **`aggy`**: Launch Antigravity CLI (`agy --dangerously-skip-permissions`)
-- **`aggyr`**: Continue last Antigravity session (`aggy --continue`)
-- **`chat`**: Launch Codex CLI (`codex --dangerously-bypass-approvals-and-sandbox`)
-- **`chatr`**: Resume Codex session (`codex resume --last ...`)
-- **`pilot`**: Launch GitHub Copilot CLI (`copilot --allow-all`)
-- **`pilotr`**: Continue GitHub Copilot session (`copilot --continue --allow-all`)
-- **`cldm`**: Launch token/cost monitor (`claude-monitor`)
+- `cld`: launch Claude Code CLI (`claude --dangerously-skip-permissions`)
+- `cldr`: resume last Claude session (`cld --resume`)
+- `aggy`: launch Antigravity CLI (`agy --dangerously-skip-permissions`)
+- `aggyr`: continue last Antigravity session (`aggy --continue`)
+- `chat`: launch Codex CLI (`codex --dangerously-bypass-approvals-and-sandbox`)
+- `chatr`: resume Codex session (`codex resume --last ...`)
+- `pilot`: launch GitHub Copilot CLI (`copilot --allow-all`)
+- `pilotr`: continue GitHub Copilot session (`copilot --continue --allow-all`)
+- `cldm`: launch token/cost monitor (`claude-monitor`)
 
 ---
 
@@ -62,16 +62,16 @@ Choose models based on task complexity and reasoning requirements:
 
 All agents operating within Agent Forge MUST adhere to the shared session state protocol defined in [`shared/system-prompt/workflow.md`](file:///Users/jamesmacmillan/projects/personal/agent-forge/shared/system-prompt/workflow.md):
 
-1. **Session Startup (Mandatory):**
+1. Session startup, mandatory:
    - Inspect [`.state/CURRENT_STATE.md`](file:///Users/jamesmacmillan/projects/personal/agent-forge/.state/CURRENT_STATE.md) at startup before executing commands or beginning work.
    - Synchronize context on active tasks, completed steps, and open issues.
 
-2. **Session Maintenance & State Updates (Mandatory):**
+2. Session maintenance and state updates, mandatory:
    - Update [`.state/CURRENT_STATE.md`](file:///Users/jamesmacmillan/projects/personal/agent-forge/.state/CURRENT_STATE.md) whenever task status changes, at session end/handoff, or upon rate limit warnings/interruption.
    - Save a timestamped snapshot copy to `.state/YYYY-MM-DD-HH-MM-<tool>.md` (e.g. `.state/2026-08-09-14-25-antigravity.md`) at major milestones or session end.
 
-3. **Task Tracking Format:**
-   - Use standard markdown checkboxes: `- [ ]` Pending, `- [/]` In progress, `- [x]` Completed.
+3. Task tracking format:
+   - Use standard markdown checkboxes: `- [ ]` pending, `- [/]` in progress, `- [x]` completed.
 
 ---
 
@@ -84,11 +84,11 @@ All agents operating within Agent Forge MUST adhere to the shared session state 
 ├── claude/              # Claude Code CLI module (config/, hooks/, scripts/, install, uninstall)
 ├── codex/               # OpenAI Codex CLI configuration
 ├── copilot/             # GitHub Copilot CLI configuration
-├── docs/                # Architecture/planning docs — gitignored, local-only (never committed: sensitive-leak risk)
+├── docs/                # Architecture/planning docs, gitignored and local-only (never committed: sensitive-leak risk)
 ├── PROJECT_INIT.md      # Instructions for seeding/syncing another project's CLAUDE.md against these rules
 ├── PROJECT_INIT_CHANGELOG.md # Dated log of changes to the portable rule sections PROJECT_INIT.md syncs
 ├── shared/              # Cross-CLI shared assets (agents/, memory/, memory-wip/, memory-encrypted/, scripts/, skills/, skills-wip/, skills-encrypted/, system-prompt/, tools/)
-│   ├── memory-wip/      # Encrypted WIP memories — gitignored plaintext, symlinked whole-dir like memory/
+│   ├── memory-wip/      # Encrypted WIP memories, gitignored plaintext, symlinked whole-dir like memory/
 │   ├── memory-encrypted/ # Committed AES-256 ciphertext mirror of memory-wip/
 │   └── tools/           # Encryption, key rotation, sub-installers (install-*), and shared library (lib)
 ├── zsh/                 # Unified shell aliases (aliases.zsh)
