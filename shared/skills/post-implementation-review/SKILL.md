@@ -1,13 +1,13 @@
 ---
 name: post-implementation-review
-description: Post-code checks — run after any file writes, then commits
+description: Post-code checks: run after any file writes, then commits
 ---
 
 # Post-Implementation Review
 
 Replaces the post-agent checklist. Run after any code-changing work.
 
-## STEP 1 — ASSESS
+## Step 1: Assess
 
 Using your knowledge of what you just changed (not file pattern matching), classify changes into buckets. A single change can fall into multiple buckets.
 
@@ -22,43 +22,43 @@ Using your knowledge of what you just changed (not file pattern matching), class
 
 Also read the project's CLAUDE.md for a `## Post-implementation checks` section and append any project-specific checks to your list.
 
-## STEP 2 — DECIDE AND DISPATCH
+## Step 2: Decide and dispatch
 
 Build your check list from the buckets. Run independent checks in parallel using the `dispatching-parallel-agents` skill where possible.
 
-**Always (every change):**
+Always (every change):
 - Dispatch `code-simplifier` agent on changed files
-- Check pattern consistency — new code must match conventions in files it was added to
+- Check pattern consistency: new code must match conventions in files it was added to
 - Update docs/README if observable behaviour changed
 - Update project CLAUDE.md/AGENTS.md if project structure or conventions changed
 
-**If `frontend`:**
+If `frontend`:
 - Launch dev server and run Playwright smoke tests: test golden path + at least two edge cases
 - Invoke `a11y` skill on changed components
 
-**If `config`:**
+If `config`:
 - Dispatch `claude-config-reviewer` agent (read-only)
 
-**If `code`:**
+If `code`:
 - Invoke `requesting-code-review` skill
 
-**If `code` or `frontend` touching auth, API endpoints, or data handling:**
+If `code` or `frontend` touching auth, API endpoints, or data handling:
 - Invoke `security-code-review` skill
 
-**If `deps`:**
+If `deps`:
 - Invoke `security-code-review` skill (run dep audit)
 - Invoke `legal-review` skill (licence check)
 
-**If `user-facing` (cross-cutting — applies regardless of other buckets):**
+If `user-facing` (cross-cutting, applies regardless of other buckets):
 - Invoke `writing-quality` skill on all changed user-visible prose
 
-**If `code` or `frontend` collecting/processing user data, calling external APIs, or adding new integrations:**
+If `code` or `frontend` collecting/processing user data, calling external APIs, or adding new integrations:
 - Invoke `legal-review` skill
 
-**If `post-merge`:**
+If `post-merge`:
 - Run `commit-commands:clean_gone`
 
-## STEP 3 — FIX LOOP
+## Step 3: Fix loop
 
 For each check that reports issues:
 
@@ -67,9 +67,9 @@ For each check that reports issues:
 3. Re-run that specific check only
 4. If still failing after 2 attempts → surface to user with full details, do not loop further
 
-## STEP 4 — COMMIT
+## Step 4: Commit
 
-Invoke `verification-before-completion` skill — evidence before claims.
+Invoke `verification-before-completion` skill: evidence before claims.
 
 Then:
 ```bash

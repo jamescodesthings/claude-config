@@ -173,7 +173,7 @@ tier_color() {
 # Renders a 10-segment bar for a 0-100 percentage. Filled segments use the
 # given color (so the whole pill can share one color); unfilled segments use
 # a muted grey (Solarized base01) so the empty part stays visible on dark bg.
-# No trailing reset — caller owns exactly one ${RST} at the end of the pill.
+# No trailing reset: caller owns exactly one ${RST} at the end of the pill.
 render_bar() {
   local pct color
   pct=$(clamp_pct "${1:-0}")

@@ -13,12 +13,12 @@ Every non-trivial task follows this chain. Move through each step without pausin
 3. `superpowers:using-git-worktrees` if async isolation is needed
 4. `superpowers:subagent-driven-development` skill
    - Use `superpowers:dispatching-parallel-agents` when 2+ tasks are independent with no shared state
-5. `post-implementation-review` skill after **any work that creates or modifies files** — subagent or orchestrator, code or docs/markdown
-6. Done — no PRs, no `finishing-a-development-branch`, no human review gate
+5. `post-implementation-review` skill after **any work that creates or modifies files**: subagent or orchestrator, code or docs/markdown
+6. Done: no PRs, no `finishing-a-development-branch`, no human review gate
 
 ## No-Confirmation Rule
 
-**Never pause between workflow steps.** This overrides any skill's explicit review gate — brainstorming's "user reviews spec", writing-plans' "user approves plan", writing-plans' "which execution approach", or any other checkpoint. Keep moving.
+**Never pause between workflow steps.** This overrides any skill's explicit review gate: brainstorming's "user reviews spec", writing-plans' "user approves plan", writing-plans' "which execution approach", or any other checkpoint. Keep moving.
 
 Specific overrides:
 - `writing-plans` execution handoff → always invoke `superpowers:subagent-driven-development` directly. Never present the "subagent-driven vs inline" choice.
@@ -35,7 +35,7 @@ Check for applicable skills before **every** action. 1% chance it applies = invo
 
 Key triggers:
 - Any bug or test failure → `superpowers:systematic-debugging` before proposing a fix
-- Review feedback received → `superpowers:receiving-code-review` — verify correctness first, do not blindly implement
+- Review feedback received → `superpowers:receiving-code-review`: verify correctness first, do not blindly implement
 - Picking up a written plan in a new session → `superpowers:executing-plans`
 - 2+ independent tasks with no shared state → `superpowers:dispatching-parallel-agents`
 - Any feature or bugfix in prod/existing-test code → `superpowers:test-driven-development`
@@ -45,7 +45,7 @@ Key triggers:
 
 ## Post-Implementation Review
 
-After any work that creates or modifies files — subagent or orchestrator, code or docs/markdown — invoke **`post-implementation-review`** skill.
+After any work that creates or modifies files, subagent or orchestrator, code or docs/markdown, invoke **`post-implementation-review`** skill.
 
 ## Git Strategy
 
@@ -54,7 +54,7 @@ Trunk-based development. Single chain in `main`. Use branches only when async is
 **When branching:**
 1. Create short-lived branch from `main`
 2. Do work with task-level commits
-3. `git rebase main` before merging — never use a merge commit
+3. `git rebase main` before merging; never use a merge commit
 4. Merge back to `main`
 5. Delete branch, then run `commit-commands:clean_gone`
 
@@ -73,7 +73,7 @@ Default to Sonnet. Deviate when task complexity or cost warrants it.
 | Task | Model |
 |---|---|
 | Architecture decisions, novel debugging, complex multi-step planning | Opus |
-| Default — implementation, review, most coding work | Sonnet |
+| Default: implementation, review, most coding work | Sonnet |
 | Routing, triage, file validation, simple extraction/classification | Haiku |
 
 Subagents: specify `model:` in agent frontmatter. Read-only validators and triage agents → Haiku. Implementation agents → Sonnet. Only escalate to Opus explicitly when a task demands it.
@@ -82,14 +82,14 @@ Subagents: specify `model:` in agent frontmatter. Read-only validators and triag
 
 | Context | TDD required? |
 |---|---|
-| Prod feature / user-facing code | Yes — `superpowers:test-driven-development` before writing implementation |
+| Prod feature / user-facing code | Yes: `superpowers:test-driven-development` before writing implementation |
 | Project with existing tests | Yes |
 | Config, scripts, throwaway / one-off | No |
-| Unclear scope or scale | Ask during `superpowers:brainstorming` — before writing a plan |
+| Unclear scope or scale | Ask during `superpowers:brainstorming`, before writing a plan |
 
 ## Scope Creep Guard
 
-Agents must not touch files outside their assigned task scope. If a fix requires out-of-scope changes, surface it to the orchestrator — do not silently expand scope.
+Agents must not touch files outside their assigned task scope. If a fix requires out-of-scope changes, surface it to the orchestrator; do not silently expand scope.
 
 ## Dependency Changes
 
@@ -99,15 +99,15 @@ When a dep is added, removed, or upgraded:
 
 ## Flaky Tests
 
-If a test fails: retry once. If it fails again, escalate — do not loop or skip.
+If a test fails: retry once. If it fails again, escalate; do not loop or skip.
 
 ## Creating Skills & Memories
 
-Every new skill or memory in this repo starts in the encrypted WIP tier — never write a new one directly into `shared/skills/` or `shared/memory/`.
+Every new skill or memory in this repo starts in the encrypted WIP tier: never write a new one directly into `shared/skills/` or `shared/memory/`.
 
-- New skill → `skill-new <name>`. New memory → `memory-new`. Both scaffold into the WIP tier (fuzzed name, encrypted, gitignored plaintext) automatically — see `Global Memories` below for the full command family.
-- Iterate there. Promotion to the public tier is `skill-graduate`/`memory-graduate` only — human-only, never run by the assistant.
-- If a skill or memory turns up in the public tier without ever having gone through graduate (e.g. written there directly by mistake), that's a process bug: `skill-demote`/`memory-demote` it back to WIP, then check the rest of the repo for stale references to its old public name/path and fix or generalize them — a demoted item's name is fuzzed and not stable, so nothing public should hardcode it.
+- New skill → `skill-new <name>`. New memory → `memory-new`. Both scaffold into the WIP tier (fuzzed name, encrypted, gitignored plaintext) automatically; see `Global Memories` below for the full command family.
+- Iterate there. Promotion to the public tier is `skill-graduate`/`memory-graduate` only, human-only, never run by the assistant.
+- If a skill or memory turns up in the public tier without ever having gone through graduate (e.g. written there directly by mistake), that's a process bug: `skill-demote`/`memory-demote` it back to WIP, then check the rest of the repo for stale references to its old public name/path and fix or generalize them; a demoted item's name is fuzzed and not stable, so nothing public should hardcode it.
 
 ## Global Memories
 
@@ -115,9 +115,9 @@ User preferences and cross-project feedback that apply to every project live at 
 
 At the end of a session, if you discover a preference or feedback that should apply globally (not just to this project), save it to `~/.claude/memory/` in addition to or instead of project memory.
 
-Sensitive global memories that must never be plaintext in the public agent-forge repo live encrypted, WIP-skill-style, at `~/.claude/memory-wip/` (present only after `shared/tools/decrypt` has been run locally — absent on a fresh clone or machine without the key). `~/.claude/memory/MEMORY.md` links to `MEMORY-WIP.md` there; read it the same way as any other memory index when present. Never write sensitive memory content directly into `~/.claude/memory/` — it is plaintext and committed.
+Sensitive global memories that must never be plaintext in the public agent-forge repo live encrypted, WIP-skill-style, at `~/.claude/memory-wip/` (present only after `shared/tools/decrypt` has been run locally; absent on a fresh clone or machine without the key). `~/.claude/memory/MEMORY.md` links to `MEMORY-WIP.md` there; read it the same way as any other memory index when present. Never write sensitive memory content directly into `~/.claude/memory/`; it is plaintext and committed.
 
-Manage WIP memories (and WIP skills, same mechanism) with the `memory-*`/`skill-*` command family in `shared/tools/` (on PATH): `memory-new` to scaffold, `memory-encrypt`/`memory-decrypt` to sync, `memory-demote` to pull a public one back into WIP, `memory-remove` to delete outright. **Never run `memory-graduate`/`skill-graduate` yourself** — promoting WIP content to plaintext-and-public is James's call alone, every time. Tell him it's ready and hand him the exact command instead of running it.
+Manage WIP memories (and WIP skills, same mechanism) with the `memory-*`/`skill-*` command family in `shared/tools/` (on PATH): `memory-new` to scaffold, `memory-encrypt`/`memory-decrypt` to sync, `memory-demote` to pull a public one back into WIP, `memory-remove` to delete outright. **Never run `memory-graduate`/`skill-graduate` yourself**: promoting WIP content to plaintext-and-public is James's call alone, every time. Tell him it's ready and hand him the exact command instead of running it.
 
 ## Auto-Memory
 
@@ -131,4 +131,4 @@ Use memory types: `project`, `feedback`, `user`, `reference`.
 
 ## Project initialization
 
-Initializing a new project (`claude init`, first run in a directory, or on request) requires a specific `CLAUDE.md` structure and a seeded project memory directory. Use the project-init skill if it triggers locally (it lives in agent-forge's encrypted WIP tier, pending graduation — its name is fuzzed and not stable, so don't hardcode one). If it doesn't trigger, follow `PROJECT_INIT.md` in the agent-forge repo directly.
+Initializing a new project (`claude init`, first run in a directory, or on request) requires a specific `CLAUDE.md` structure and a seeded project memory directory. Use the project-init skill if it triggers locally (it lives in agent-forge's encrypted WIP tier, pending graduation; its name is fuzzed and not stable, so don't hardcode one). If it doesn't trigger, follow `PROJECT_INIT.md` in the agent-forge repo directly.

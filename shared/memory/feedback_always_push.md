@@ -1,6 +1,6 @@
 ---
 name: feedback-always-push
-description: "After committing, always push immediately — do not stop at commit"
+description: "After committing, always push immediately: do not stop at commit"
 metadata: 
   type: feedback
   originSessionId: b367eacd-e1d3-4e21-90e1-1727f1685a3e
@@ -13,5 +13,5 @@ After any commit, push to remote immediately. Do not stop at the commit step and
 **How to apply:**
 - `commit-commands:commit-push-pr` skill: use it, and include push in the invocation
 - After post-implementation-review triggers a commit, follow immediately with `git push`
-- No pause between commit and push — they are one atomic operation from the user's perspective
+- No pause between commit and push: they are one atomic operation from the user's perspective
 - Exception: only if on a local-only branch with no remote configured, surface this explicitly rather than failing silently

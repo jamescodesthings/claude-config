@@ -67,7 +67,7 @@ Same file, same prompt, different starting state: *"update project instructions 
 
 ### ...manage WIP skills and memories?
 
-The `skill-*`/`memory-*` command family (on `$PATH` after `make install` — tab-complete `skill` or `memory` to see all six):
+The `skill-*`/`memory-*` command family (on `$PATH` after `make install`; tab-complete `skill` or `memory` to see all six):
 
 | Verb | Does |
 |------|------|
@@ -75,7 +75,7 @@ The `skill-*`/`memory-*` command family (on `$PATH` after `make install` — tab
 | `skill-encrypt` / `memory-encrypt` | Re-sync ciphertext from your local WIP edits |
 | `skill-decrypt` / `memory-decrypt` | Force-resync one item from committed ciphertext (backs up your local copy first, timestamped, never silently overwritten) |
 | `skill-demote` / `memory-demote` | Pull a public one back into the encrypted WIP tier |
-| `skill-graduate` / `memory-graduate` | Promote a WIP one to public, plaintext, committed — **you run this yourself, always.** The assistant never does |
+| `skill-graduate` / `memory-graduate` | Promote a WIP one to public, plaintext, committed; **you run this yourself, always.** The assistant never does |
 | `skill-remove` / `memory-remove` | Delete outright, from wherever it currently lives |
 
 ---
@@ -100,14 +100,14 @@ The `skill-*`/`memory-*` command family (on `$PATH` after `make install` — tab
 
 ### Model Selection Guidelines
 
-- **Default Model (`gemini-3.6-flash` / Sonnet):** Standard coding, subagents, code review, and implementation.
-- **Pro Model (`gemini-3.1-pro` / Opus):** Complex multi-step reasoning, architecture decisions, novel debugging, and large refactors.
-- **Flash-Lite Model (`gemini-3.6-flash-lite` / Haiku):** Triage, file validation, routing, simple classification, and quick research.
+- Default Model (`gemini-3.6-flash` / Sonnet): Standard coding, subagents, code review, and implementation.
+- Pro Model (`gemini-3.1-pro` / Opus): Complex multi-step reasoning, architecture decisions, novel debugging, and large refactors.
+- Flash-Lite Model (`gemini-3.6-flash-lite` / Haiku): Triage, file validation, routing, simple classification, and quick research.
 
 ### Session State & Handoff System
 
 Agent Forge includes an automated session state tracking protocol stored in [`.state/CURRENT_STATE.md`](file:///Users/jamesmacmillan/projects/personal/agent-forge/.state/CURRENT_STATE.md):
-- **Session Startup:** Incoming agents inspect `.state/CURRENT_STATE.md` to restore task context.
-- **Session Handoff:** Agents record progress and save timestamped snapshots to `.state/YYYY-MM-DD-HH-MM-<tool>.md`.
+- Session Startup: Incoming agents inspect `.state/CURRENT_STATE.md` to restore task context.
+- Session Handoff: Agents record progress and save timestamped snapshots to `.state/YYYY-MM-DD-HH-MM-<tool>.md`.
 
 See [AGENTS.md](AGENTS.md) and [shared/system-prompt/workflow.md](shared/system-prompt/workflow.md) for full details.

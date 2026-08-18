@@ -6,7 +6,7 @@ metadata:
   originSessionId: afcb11e4-3758-478f-a6fd-d7e162393210
 ---
 
-Always invoke `post-implementation-review` after any work that creates or modifies files — regardless of whether a subagent or orchestrator did the work, and regardless of whether the files are code or docs/markdown.
+Always invoke `post-implementation-review` after any work that creates or modifies files, regardless of whether a subagent or orchestrator did the work, and regardless of whether the files are code or docs/markdown.
 
 **Why:** "code-changing agent" wording excluded orchestrator inline writes and non-code repos (planning/docs), causing commits to be silently skipped. Discovered via financial-plan repo where plans and tasks were completed but never committed.
 
