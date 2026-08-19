@@ -6,7 +6,7 @@
   "permissions": {
     "defaultMode": "auto"
   },
-  "model": "sonnet",
+  "model": "opus",
   "skillOverrides": {
     "a11y": "off",
     "legal-review": "off"
@@ -53,6 +53,10 @@
         "hooks": [
           {
             "type": "command",
+            "command": "~/.claude/hooks/inject-datetime"
+          },
+          {
+            "type": "command",
             "command": "~/.claude/hooks/adhd-mode-self-care"
           }
         ]
@@ -65,13 +69,28 @@
     "command": "~/.claude/statusline.sh"
   },
   "enabledPlugins": {
-    "caveman@caveman": true
+    "caveman@caveman": true,
+    "superpowers@superpowers-dev": true,
+    "commit-commands@claude-plugins-official": true,
+    "context7@claude-plugins-official": true
   },
   "extraKnownMarketplaces": {
     "caveman": {
       "source": {
         "source": "github",
         "repo": "JuliusBrussee/caveman"
+      }
+    },
+    "superpowers-dev": {
+      "source": {
+        "source": "github",
+        "repo": "obra/superpowers"
+      }
+    },
+    "claude-plugins-official": {
+      "source": {
+        "source": "github",
+        "repo": "anthropics/claude-plugins-official"
       }
     }
   },

@@ -1,0 +1,61 @@
+#!/usr/bin/env zsh
+# Installs caveman's skills into Antigravity via the `skills` npx package.
+#
+# This is the step that used to hang `make install` at
+# "installing caveman into antigravity". Two causes, both fixed here:
+#
+#   1. `npx skills add ...` prompts "Need to install the following packages
+#      ... Ok to proceed?" on first run. The old call redirected all output to
+#      /dev/null, so the prompt was invisible while npx sat waiting on stdin
+#      forever. `--yes` plus `</dev/null` removes both halves of that trap.
+#   2. It ran from shared/tools/, which claude/install also globs, so the whole
+#      thing executed twice per `make install`.
+#
+# A wall-clock guard is still applied when a timeout binary exists, so a
+# network stall degrades to a warning instead of a wedged installer. macOS has
+# no `timeout` in base, hence the gtimeout fallback.
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+ROOT_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
+source "$ROOT_DIR/shared/tools/lib"
+
+command -v npx &> /dev/null || { warn "npx not found, caveman-for-antigravity skipped"; exit 0 }
+
+export NPM_CONFIG_ALLOW_GIT=all
+
+caveman_skills=(caveman caveman-help caveman-stats)
+
+# Already present in the Antigravity skills tree: nothing to do.
+missing=0
+for skill in $caveman_skills; do
+  [[ -d "$GEMINI_DIR/config/skills/$skill" ]] || missing=1
+done
+if (( ! missing )); then
+  success "caveman skills already present in Antigravity"
+  exit 0
+fi
+
+timeout_cmd=()
+if command -v timeout &> /dev/null; then
+  timeout_cmd=(timeout 300)
+elif command -v gtimeout &> /dev/null; then
+  timeout_cmd=(gtimeout 300)
+fi
+
+info "Installing caveman skills into Antigravity..."
+if ! $timeout_cmd npx --yes skills add JuliusBrussee/caveman \
+      -a antigravity -g -s caveman -s caveman-help -s caveman-stats -y --copy \
+      < /dev/null &> /dev/null; then
+  warn "caveman install into Antigravity failed or timed out, skipping"
+  exit 0
+fi
+
+# Mirror into the antigravity-cli skills path when the CLI looks there instead.
+parent_dir="$ANTIGRAVITY_DIR/skills"
+mkdir -p "$parent_dir"
+for skill in $caveman_skills; do
+  if [[ -d "$GEMINI_DIR/config/skills/$skill" && ! -e "$parent_dir/$skill" ]]; then
+    cp -r "$GEMINI_DIR/config/skills/$skill" "$parent_dir/$skill" &> /dev/null || true
+  fi
+done
+
+success "caveman skills installed into Antigravity"

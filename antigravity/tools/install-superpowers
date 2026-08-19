@@ -1,0 +1,25 @@
+#!/usr/bin/env zsh
+# Installs the Superpowers plugin into Antigravity.
+#
+# Claude Code needs Superpowers too (CLAUDE.md routes most work through
+# `superpowers:*` skills), but it installs by a completely different mechanism.
+# That half lives in claude/tools/install-plugins. This script used to sit in
+# shared/tools/, which claude/install also globs, so `agy plugin install` ran
+# during the Claude install while Claude itself got nothing: the whole reason
+# /doctor reported Superpowers missing.
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+ROOT_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
+source "$ROOT_DIR/shared/tools/lib"
+
+command -v agy &> /dev/null || { warn "agy not found, Superpowers-for-Antigravity skipped"; exit 0 }
+
+if agy plugin list 2>/dev/null | grep -q '"superpowers"'; then
+  success "Superpowers already installed in Antigravity"
+  exit 0
+fi
+
+info "Installing Superpowers plugin in Antigravity..."
+agy plugin install https://github.com/obra/superpowers &> /dev/null \
+  || { warn "Superpowers install into Antigravity failed"; exit 0 }
+
+success "Superpowers plugin installed in Antigravity"

@@ -1,7 +1,7 @@
 #!/usr/bin/env zsh
 # Reverse of graduate: moves a public skill or memory back into the encrypted
 # WIP tier, stripping it from the public dir/index and giving it a fresh
-# fuzzed name (skills) — a demoted item is hidden again, so it gets the same
+# fuzzed name (skills): a demoted item is hidden again, so it gets the same
 # name-fuzzing treatment as anything newly scaffolded into WIP.
 repo_root="${0:A:h}/../.."
 type="${${0:t}%-*}"
@@ -11,7 +11,7 @@ name="$1"
 [[ -n "$name" ]] || error "Usage: ${0:t} <name>"
 
 IFS=':' read -r wip_root enc_root shape pub_root pub_index wip_index <<< "$(wip_type_config "$type")" \
-  || error "Unknown wip type '$type' (invoked as ${0:t} — expected skill-demote or memory-demote)"
+  || error "Unknown wip type '$type' (invoked as ${0:t}: expected skill-demote or memory-demote)"
 [[ -n "$pub_root" ]] || error "$type has no public tier registered"
 
 item_suffix=""; [[ "$shape" == "file" ]] && item_suffix=".md"
@@ -34,14 +34,14 @@ if [[ "$shape" == "dir" ]]; then
   ln -s "$dest" "$claude_skills_dir/$slug" || error "Failed to symlink $slug into $claude_skills_dir"
 else
   cp "$src" "$dest" || error "Failed to copy $src to $dest"
-  # memory keeps its real name in frontmatter — only the filename is fuzzed
+  # memory keeps its real name in frontmatter: only the filename is fuzzed
   if [[ -n "$wip_index" ]]; then
     echo -n "Title for the WIP index line: "
     read -r title
     echo -n "One-line hook: "
     read -r hook
     touch "$wip_index"
-    print -r -- "- [$title]($slug.md) — $hook" >> "$wip_index"
+    print -r -- "- [$title]($slug.md): $hook" >> "$wip_index"
   fi
 fi
 
@@ -50,6 +50,6 @@ rm -rf "$src"
   grep -vF "]($name$item_suffix)" "$pub_index" > "$pub_index.tmp" && mv "$pub_index.tmp" "$pub_index"
 }
 
-"$repo_root/shared/tools/encrypt" "$wip_root" "$enc_root" || error "Demoted but encrypt failed — run $type-encrypt manually"
+"$repo_root/shared/tools/encrypt" "$wip_root" "$enc_root" || error "Demoted but encrypt failed: run $type-encrypt manually"
 
 success "Demoted $type '$name' to WIP as '$slug'"

@@ -1,0 +1,20 @@
+#!/usr/bin/env zsh
+# Removes caveman's copied skill directories from Antigravity.
+# `skills add --copy` writes plain directories, so removal is a plain delete.
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+ROOT_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
+source "$ROOT_DIR/shared/tools/lib"
+
+removed=0
+for skill in caveman caveman-help caveman-stats; do
+  for dir in "$GEMINI_DIR/config/skills/$skill" "$ANTIGRAVITY_DIR/skills/$skill"; do
+    # Only ever delete a real directory here. A symlink at this path belongs to
+    # the manifest, not to caveman.
+    if [[ -d "$dir" && ! -L "$dir" ]]; then
+      rm -rf "$dir" && info "Removed $dir" && removed=1
+    fi
+  done
+done
+
+(( removed )) && success "caveman skills removed from Antigravity" \
+  || success "no caveman skills present in Antigravity"

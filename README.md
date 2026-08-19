@@ -41,6 +41,7 @@ make install            # Install all CLI configurations
 Additional Makefile targets:
 - `make claude`: Install Claude Code CLI configuration only.
 - `make antigravity`: Install Antigravity CLI configuration only.
+- `make update`: Move already-installed plugins and tools to their latest versions.
 - `make uninstall`: Uninstall all CLI configurations.
 - `make uninstall-claude`: Uninstall Claude Code CLI configuration.
 - `make uninstall-antigravity`: Uninstall Antigravity CLI configuration.
@@ -52,6 +53,14 @@ Additional Makefile targets:
 ```shell
 git pull && make install
 ```
+
+`make install` is deliberately a no-op for anything already present, so it will not move a plugin or tool to a newer version. Use `make update` for that:
+
+```shell
+make update
+```
+
+Claude Code's own binary is left alone by both; it self-updates, and the result of its last attempt is in `~/.claude/.last-update-result.json`.
 
 ---
 

@@ -19,12 +19,22 @@
 
 ```shell
 make install            # Install all CLI configurations (idempotent, re-run after git pull)
+make update             # Move already-installed plugins/tools to their latest versions
 make claude             # Install Claude Code CLI configuration only
 make antigravity        # Install Antigravity CLI configuration only
 make uninstall          # Uninstall all CLI configurations
 make uninstall-claude   # Uninstall Claude Code CLI configuration
 make uninstall-antigravity # Uninstall Antigravity CLI configuration
 ```
+
+### Where a sub-installer belongs
+
+`claude/install` and `antigravity/install` each run every `install-*` script in **two** directories: `shared/tools/` and their own `<cli>/tools/`. So the placement rule is:
+
+- `shared/tools/install-*`: only for things installed the same way for every CLI, and safe to run more than once per `make install` (e.g. `install-rtk`, `install-claude-monitor`, both guarded by `command -v`).
+- `<cli>/tools/install-*`: anything CLI-specific. Superpowers and caveman both live here, because each installs by a different mechanism per CLI (`claude plugin install` vs `agy plugin install` vs `npx skills add`).
+
+Putting a CLI-specific installer in `shared/tools/` is what previously left Claude Code without Superpowers: the script only ever called `agy plugin install`, but ran during both installs, so the Claude pass looked like it had done something and hadn't. Guard every sub-installer on the state it actually manages, never on a proxy (`command -v caveman` never passes: caveman is a plugin, not a binary).
 
 ### Shell Aliases (`zsh/aliases.zsh`)
 When installed, `make install` adds the following sourcing block to `~/.zshrc`:
@@ -80,8 +90,8 @@ All agents operating within Agent Forge MUST adhere to the shared session state 
 ```
 .
 ├── .state/              # Active session state & timestamped handoff snapshots
-├── antigravity/         # Antigravity CLI module (config/, hooks/, rules/, scripts/, install, uninstall)
-├── claude/              # Claude Code CLI module (config/, hooks/, scripts/, install, uninstall)
+├── antigravity/         # Antigravity CLI module (config/, hooks/, rules/, scripts/, tools/, install, uninstall)
+├── claude/              # Claude Code CLI module (config/, hooks/, scripts/, tools/, install, uninstall)
 ├── codex/               # OpenAI Codex CLI configuration
 ├── copilot/             # GitHub Copilot CLI configuration
 ├── docs/                # Architecture/planning docs, gitignored and local-only (never committed: sensitive-leak risk)
@@ -90,7 +100,7 @@ All agents operating within Agent Forge MUST adhere to the shared session state 
 ├── shared/              # Cross-CLI shared assets (agents/, memory/, memory-wip/, memory-encrypted/, scripts/, skills/, skills-wip/, skills-encrypted/, system-prompt/, tools/)
 │   ├── memory-wip/      # Encrypted WIP memories, gitignored plaintext, symlinked whole-dir like memory/
 │   ├── memory-encrypted/ # Committed AES-256 ciphertext mirror of memory-wip/
-│   └── tools/           # Encryption, key rotation, sub-installers (install-*), and shared library (lib)
+│   └── tools/           # Encryption, key rotation, cross-CLI sub-installers (install-*), and shared library (lib)
 ├── zsh/                 # Unified shell aliases (aliases.zsh)
 ├── Makefile             # Unified Makefile targets (install, claude, antigravity, uninstall, etc.)
 ├── install              # Master installer script

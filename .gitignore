@@ -30,12 +30,12 @@ Temporary Items
 shared/*-wip/*
 !shared/*-wip/.gitkeep
 .env.[0-9]*
-# transient key material / ciphertext staging — must never be committable
+# transient key material / ciphertext staging: must never be committable
 .env.tmp*
 shared/*-encrypted.tmp.*
 *-encrypted.tmp.*
 
-# Local-only planning docs — high risk of sensitive leak into a public repo
+# Local-only planning docs: high risk of sensitive leak into a public repo
 docs/
 
 # Created by https://www.toptal.com/developers/gitignore/api/node
@@ -205,10 +205,10 @@ dist
 # Claude config runtime state (machine-specific, not tracked)
 .claude-config-dir
 
-# Machine-specific — managed by codebase-memory-mcp install
+# Machine-specific: managed by codebase-memory-mcp install
 claude/config/.mcp.json
 
-# Per-machine secrets — never commit
+# Per-machine secrets: never commit
 claude/config/env.local
 
 # Local workspace agents folder

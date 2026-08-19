@@ -1,0 +1,98 @@
+#!/usr/bin/env zsh
+# Installs the caveman plugin into Claude Code.
+#
+# Previously this script also pushed caveman into Antigravity via npx, and
+# lived in shared/tools/ where both CLI installers glob it, so the Antigravity
+# half ran twice per `make install`. The Antigravity half now lives in
+# antigravity/tools/install-caveman.
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+ROOT_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
+source "$ROOT_DIR/shared/tools/lib"
+
+command -v claude &> /dev/null || { warn "claude CLI not found, caveman skipped"; exit 0 }
+
+# The old guard here was `command -v caveman`. caveman is a Claude Code plugin,
+# not a binary on PATH, so that test never passed and every install re-ran the
+# whole flow from scratch. Ask the plugin registry instead.
+if claude plugin list 2>/dev/null | grep -q "caveman@caveman"; then
+  success "caveman already installed"
+else
+  info "Installing caveman..."
+  claude plugin marketplace add JuliusBrussee/caveman &> /dev/null
+  claude plugin install caveman@caveman &> /dev/null || warn "caveman install failed"
+fi
+
+# Normalize absolute hook paths written by caveman installer to portable ~/... form.
+# Handles two formats:
+#   "/full/path/to/node" "/abs/.claude/hooks/foo.js"  (asdf/nvm style node)
+#   node "/abs/.claude/hooks/foo.js"                   (node in PATH)
+settings="$CLAUDE_DIR/settings.json"
+if [[ -f "$settings" ]]; then
+  if command -v python3 &>/dev/null; then
+    python3 - "$settings" << 'PYEOF'
+import json, re, sys
+
+path = sys.argv[1]
+try:
+    with open(path) as f:
+        data = json.load(f)
+except Exception as e:
+    print(f"[warn] caveman path normalization skipped: {e}", file=sys.stderr)
+    sys.exit(0)
+
+def normalize(cmd):
+    # Format: "/abs/path/node" "<any>.claude/hooks/foo.js" (hook path may already use ~)
+    m = re.match(r'"\/[^"]*\bnode\b[^"]*" "[^"]*\.claude/hooks/([^"]+)"', cmd)
+    if m: return f'node ~/.claude/hooks/{m.group(1)}'
+    # Format: node "/abs/.claude/hooks/foo.js"
+    m = re.match(r'node "\/[^"]*\.claude/hooks/([^"]+)"', cmd)
+    if m: return f'node ~/.claude/hooks/{m.group(1)}'
+    return cmd
+
+def walk(obj):
+    if isinstance(obj, dict):
+        if isinstance(obj.get('command'), str):
+            obj['command'] = normalize(obj['command'])
+        for v in obj.values():
+            walk(v)
+    elif isinstance(obj, list):
+        for item in obj:
+            walk(item)
+
+walk(data)
+try:
+    with open(path, 'w') as f:
+        json.dump(data, f, indent=2)
+        f.write('\n')
+except Exception as e:
+    print(f"[warn] caveman path normalization write failed: {e}", file=sys.stderr)
+    sys.exit(1)
+PYEOF
+    [[ $? -eq 0 ]] && success "caveman hook paths normalized" || warn "caveman hook path normalization failed"
+  else
+    warn "python3 not found, caveman hook paths not normalized; re-run ./install after installing python3"
+  fi
+fi
+
+# If caveman replaced $CLAUDE_DIR/settings.json symlink with a regular file,
+# sync normalized content back to the repo source and restore the symlink.
+# The old version read the config dir via `cat ... &> /dev/null`, which sends
+# stdout to /dev/null too, so config_dir was always empty and this block never
+# ran.
+config_dir=$(cat "$CLAUDE_DIR/.claude-config-dir" 2>/dev/null)
+if [[ -n "$config_dir" && -d "$config_dir" && -f "$settings" && ! -L "$settings" ]]; then
+  cp "$settings" "$config_dir/claude/config/settings.json" \
+    && rm "$settings" \
+    && ln -s "$config_dir/claude/config/settings.json" "$settings" \
+    && success "settings.json symlink restored" \
+    || warn "settings.json symlink restore failed, check $config_dir/claude/config/settings.json manually"
+fi
+
+# caveman ships an `agents` array in its plugin manifest that current Claude
+# Code rejects ("agents: Invalid input"), so the plugin installs but fails to
+# load. Surface that rather than reporting a clean install.
+if claude plugin list 2>/dev/null | grep -A4 "caveman@caveman" | grep -q "failed to load"; then
+  warn "caveman is installed but Claude Code refuses to load it (upstream manifest bug). Run 'claude plugin list' for detail."
+else
+  success "caveman installed"
+fi

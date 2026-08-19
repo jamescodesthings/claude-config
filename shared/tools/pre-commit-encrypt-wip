@@ -5,7 +5,7 @@
 repo_root="$(git rev-parse --show-toplevel)"
 source "$repo_root/shared/tools/lib"
 
-# The plaintext block runs unconditionally — it is the guarantee this hook
+# The plaintext block runs unconditionally: it is the guarantee this hook
 # exists for, and must hold even before a key has been set up on this machine.
 staged_wip=$(git diff --cached --name-only --diff-filter=ACM | grep -E '^shared/[^/]+-wip/' | grep -v '\.gitkeep$')
 if [[ -n "$staged_wip" ]]; then
@@ -13,10 +13,10 @@ if [[ -n "$staged_wip" ]]; then
   error "Refusing commit: plaintext WIP file(s) staged directly"
 fi
 
-# The encrypt step needs a key. On a fresh clone there isn't one yet — warn and
+# The encrypt step needs a key. On a fresh clone there isn't one yet: warn and
 # skip rather than failing every commit until the user runs create-key.
 if [[ ! -f "$repo_root/.env" ]] || ! grep -q '^SKILLS_ENCRYPTION_KEY=.' "$repo_root/.env"; then
-  warn "No encryption key yet — skipping WIP encrypt. Run shared/tools/create-key to enable it."
+  warn "No encryption key yet: skipping WIP encrypt. Run shared/tools/create-key to enable it."
   exit 0
 fi
 

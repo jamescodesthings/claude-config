@@ -1,6 +1,6 @@
 #!/usr/bin/env zsh
 # Force-resyncs ONE wip item from its committed ciphertext, backing up
-# whatever was locally in wip first (timestamped, under wip_root/.backup/ —
+# whatever was locally in wip first (timestamped, under wip_root/.backup/ :
 # already gitignored since it's nested inside a *-wip/ root). Deliberately
 # different from shared/tools/decrypt's bulk skip-existing behaviour: this is
 # a human explicitly asking to overwrite one item, not a background resync
@@ -13,7 +13,7 @@ slug="$1"
 [[ -n "$slug" ]] || error "Usage: ${0:t} <slug>"
 
 IFS=':' read -r wip_root enc_root shape pub_root pub_index wip_index <<< "$(wip_type_config "$type")" \
-  || error "Unknown wip type '$type' (invoked as ${0:t} — expected skill-decrypt or memory-decrypt)"
+  || error "Unknown wip type '$type' (invoked as ${0:t}: expected skill-decrypt or memory-decrypt)"
 
 load_env "$repo_root/.env"
 [[ -n "$SKILLS_ENCRYPTION_KEY" ]] || error "SKILLS_ENCRYPTION_KEY not set"
@@ -22,7 +22,7 @@ item_suffix=""; [[ "$shape" == "file" ]] && item_suffix=".md"
 item_wip="$wip_root/$slug$item_suffix"
 item_enc="$enc_root/$slug$item_suffix"
 
-[[ -e "$item_enc" ]] || error "No encrypted $type at ${item_enc#$repo_root/} — nothing to decrypt"
+[[ -e "$item_enc" ]] || error "No encrypted $type at ${item_enc#$repo_root/}: nothing to decrypt"
 
 if [[ -e "$item_wip" ]]; then
   backup_dir="$wip_root/.backup"

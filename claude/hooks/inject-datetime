@@ -1,0 +1,21 @@
+#!/usr/bin/env zsh
+# UserPromptSubmit hook: stamps the current local date and time into context on
+# every prompt.
+#
+# Claude Code injects a date natively, but only a date, and only once at
+# session start. In a session that runs for hours (or crosses midnight) the
+# model's sense of "now" is whatever that first stamp said, which makes
+# relative reasoning quietly wrong: "yesterday", "this morning", timestamps
+# written into memory files and .state snapshots, deadline arithmetic.
+#
+# Runs on every prompt by design. It costs about fifteen tokens and it is the
+# regular re-anchoring that makes it work: a stamp injected once decays exactly
+# like the native one it replaces.
+#
+# Europe/London is pinned rather than using the system zone so that the stamp
+# agrees with the self-care hook's clock, which is also London-pinned.
+
+stamp=$(TZ=Europe/London date '+%A %d %B %Y, %H:%M %Z')
+print -r -- "Current date and time: $stamp. Treat this as authoritative for any relative-time reasoning; it is re-stamped on every prompt."
+
+exit 0

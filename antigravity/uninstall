@@ -14,7 +14,7 @@ for f in settings.json; do
   [[ -L "$ANTIGRAVITY_DIR/$f" ]] && rm "$ANTIGRAVITY_DIR/$f" && info "Removed Antigravity $f"
 done
 
-for f in hooks.json memory agents; do
+for f in hooks.json memory memory-wip agents; do
   [[ -L "$GEMINI_DIR/config/$f" ]] && rm "$GEMINI_DIR/config/$f" && info "Removed Antigravity config $f"
 done
 

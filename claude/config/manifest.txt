@@ -6,5 +6,5 @@ claude/hooks/*:$CLAUDE_DIR/hooks/
 shared/memory:$CLAUDE_DIR/memory
 shared/memory-wip:$CLAUDE_DIR/memory-wip
 shared/agents:$CLAUDE_DIR/agents
-shared/skills/*:$CLAUDE_DIR/skills/
-shared/skills-wip/*:$CLAUDE_DIR/skills/
+shared/skills/*/:$CLAUDE_DIR/skills/
+shared/skills-wip/*/:$CLAUDE_DIR/skills/

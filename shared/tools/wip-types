@@ -4,7 +4,7 @@
 #
 #   type:wip_root:encrypted_root:shape:public_root:public_index:wip_index
 #
-# shape is "dir" (skills — each item is a folder) or "file" (memory — each
+# shape is "dir" (skills: each item is a folder) or "file" (memory: each
 # item is a single .md). public_index/wip_index are optional (skills have
 # none; memory has MEMORY.md / MEMORY-WIP.md).
 skill:shared/skills-wip:shared/skills-encrypted:dir:shared/skills::

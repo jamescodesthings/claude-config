@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# Remove rtk — only if it lives under $HOME. A package-manager-owned binary
+# Remove rtk: only if it lives under $HOME. A package-manager-owned binary
 # (e.g. Homebrew's /opt/homebrew/bin/rtk) is left alone; uninstall it with
 # the package manager instead.
 
@@ -11,7 +11,7 @@ fi
 RTK_BIN=$(command -v rtk)
 
 if [[ "$RTK_BIN" != "$HOME"/* ]]; then
-  echo "[warn] rtk found outside \$HOME ($RTK_BIN) — not removing. Uninstall it with your package manager (e.g. brew uninstall rtk) if needed."
+  echo "[warn] rtk found outside \$HOME ($RTK_BIN): not removing. Uninstall it with your package manager (e.g. brew uninstall rtk) if needed."
   exit 0
 fi
 

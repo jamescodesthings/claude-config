@@ -1,8 +1,0 @@
-#!/usr/bin/env zsh
-
-info "Uninstalling Superpowers plugin in antigravity"
-agy plugin uninstall https://github.com/obra/superpowers ||
-  error "Failed to uninstall Superpowers plugin."
-
-success "Superpowers plugin uninstalled"
-

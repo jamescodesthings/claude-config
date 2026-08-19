@@ -6,7 +6,7 @@ source "$ROOT_DIR/shared/tools/lib"
 info "Uninstalling Claude CLI configuration..."
 clean_dead_symlinks "$CLAUDE_DIR"
 
-for f in CLAUDE.md RTK.md settings.json .mcp.json keybindings.json statusline.sh memory agents; do
+for f in CLAUDE.md RTK.md settings.json .mcp.json keybindings.json statusline.sh memory memory-wip agents; do
   [[ -L "$CLAUDE_DIR/$f" ]] && rm "$CLAUDE_DIR/$f" && info "Removed Claude $f"
 done
 

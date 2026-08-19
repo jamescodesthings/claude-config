@@ -8,7 +8,7 @@ unsetopt MONITOR
 #
 # Set SKILLS_DECRYPT_SKIP_EXISTING=1 to leave any destination file that already
 # exists untouched. Routine callers (install, cycle-key) use this so a sync run
-# can never overwrite uncommitted plaintext edits — wip roots are gitignored,
+# can never overwrite uncommitted plaintext edits: wip roots are gitignored,
 # so a clobber there is unrecoverable.
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
@@ -35,7 +35,7 @@ decrypt_pair() {
     count=$((count + 1))
   done
 
-  [[ $kept -gt 0 ]] && warn "Kept $kept existing plaintext file(s) in ${dst_root:t} — not overwritten"
+  [[ $kept -gt 0 ]] && warn "Kept $kept existing plaintext file(s) in ${dst_root:t}: not overwritten"
   success "Decrypted ${dst_root:t}: $count file(s)"
 }
 

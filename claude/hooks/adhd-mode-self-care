@@ -45,7 +45,7 @@ if { [[ "$hhmm" > "1700" ]] || [[ "$hhmm" == "1700" ]]; } && [[ "$hhmm" < "1800"
 fi
 
 # Bed window runs 23:00 through 04:59. Cooldown-based, so no calendar-day
-# bookkeeping is needed for the midnight rollover — it just keeps retrying
+# bookkeeping is needed for the midnight rollover: it just keeps retrying
 # every COOLDOWN seconds for as long as the window is open.
 if { { [[ "$hhmm" > "2300" ]] || [[ "$hhmm" == "2300" ]]; } || [[ "$hhmm" < "0500" ]]; } && (( now - last_bed >= COOLDOWN )); then
   messages+=("SELF-CARE: it's past 11pm. Go to bed.")

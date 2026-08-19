@@ -1,6 +1,6 @@
 #!/usr/bin/env zsh
 # Moves a finished WIP skill or memory to its plaintext, committed public
-# tier. Requires typed confirmation every time — this is the one verb in the
+# tier. Requires typed confirmation every time: this is the one verb in the
 # family the assistant must never run unattended; see claude/config/CLAUDE.md.
 repo_root="${0:A:h}/../.."
 type="${${0:t}%-*}"
@@ -9,11 +9,11 @@ source "$repo_root/shared/tools/lib"
 slug="$1"
 real_name="$2"
 [[ -n "$slug" && -n "$real_name" ]] || error "Usage: ${0:t} <fuzzed-slug> <real-name>"
-[[ "$slug" =~ '^[a-z0-9][a-z0-9-]*$' ]] || error "Invalid fuzzed slug — must match [a-z0-9-]"
-[[ "$real_name" =~ '^[a-z0-9][a-z0-9_-]*$' ]] || error "Invalid real name — must match [a-z0-9_-]"
+[[ "$slug" =~ '^[a-z0-9][a-z0-9-]*$' ]] || error "Invalid fuzzed slug: must match [a-z0-9-]"
+[[ "$real_name" =~ '^[a-z0-9][a-z0-9_-]*$' ]] || error "Invalid real name: must match [a-z0-9_-]"
 
 IFS=':' read -r wip_root enc_root shape pub_root pub_index wip_index <<< "$(wip_type_config "$type")" \
-  || error "Unknown wip type '$type' (invoked as ${0:t} — expected skill-graduate or memory-graduate)"
+  || error "Unknown wip type '$type' (invoked as ${0:t}: expected skill-graduate or memory-graduate)"
 [[ -n "$pub_root" ]] || error "$type has no public tier registered"
 
 item_suffix=""; [[ "$shape" == "file" ]] && item_suffix=".md"
@@ -22,7 +22,7 @@ dest="$pub_root/$real_name$item_suffix"
 [[ -e "$src" ]] || error "No WIP $type at ${src#$repo_root/}"
 [[ -e "$dest" ]] && error "${dest#$repo_root/} already exists"
 
-echo "Graduate ${src#$repo_root/} to ${dest#$repo_root/} — this becomes plaintext in a public repo."
+echo "Graduate ${src#$repo_root/} to ${dest#$repo_root/}: this becomes plaintext in a public repo."
 echo -n "This must be run by you, not the assistant. Confirm? [y/N] "
 read -r confirm
 [[ "$confirm" == "y" || "$confirm" == "Y" ]] || error "Aborted"
@@ -46,7 +46,7 @@ else
     read -r title
     echo -n "One-line hook: "
     read -r hook
-    print -r -- "- [$title]($real_name.md) — $hook" >> "$pub_index"
+    print -r -- "- [$title]($real_name.md): $hook" >> "$pub_index"
   fi
 fi
 

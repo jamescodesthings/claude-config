@@ -1,0 +1,17 @@
+#!/usr/bin/env zsh
+# Removes the Superpowers plugin from Antigravity. The Claude Code half is in
+# claude/tools/uninstall-plugins.
+#
+# This script previously called info/success/error without sourcing the
+# library that defines them, so it failed on its first line.
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+ROOT_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
+source "$ROOT_DIR/shared/tools/lib"
+
+command -v agy &> /dev/null || { warn "agy not found, nothing to uninstall"; exit 0 }
+
+info "Uninstalling Superpowers plugin from Antigravity..."
+agy plugin uninstall https://github.com/obra/superpowers \
+  || { warn "Superpowers uninstall from Antigravity failed"; exit 0 }
+
+success "Superpowers plugin uninstalled from Antigravity"

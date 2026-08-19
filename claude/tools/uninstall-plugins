@@ -1,0 +1,27 @@
+#!/usr/bin/env zsh
+# Removes the Claude Code plugins that claude/tools/install-plugins adds.
+# Marketplaces are left registered: they cost nothing and other plugins may
+# still be drawing from them.
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+ROOT_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
+source "$ROOT_DIR/shared/tools/lib"
+
+command -v claude &> /dev/null || { warn "claude CLI not found, nothing to uninstall"; exit 0 }
+
+plugins=(
+  "superpowers@superpowers-dev"
+  "commit-commands@claude-plugins-official"
+  "context7@claude-plugins-official"
+)
+
+installed=$(claude plugin list 2>/dev/null)
+
+for ref in $plugins; do
+  if ! print -r -- "$installed" | grep -q "$ref"; then
+    continue
+  fi
+  info "Uninstalling $ref..."
+  claude plugin uninstall "$ref" &> /dev/null || warn "$ref uninstall failed"
+done
+
+success "Claude plugins removed"

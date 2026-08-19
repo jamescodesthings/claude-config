@@ -4,7 +4,7 @@ unsetopt MONITOR
 # encrypted root (see shared/tools/wip-pairs for the registered pairs).
 #
 # With no args, encrypts every registered pair. With two args (src dst),
-# encrypts only that one pair — used by cycle-key to re-encrypt into a temp
+# encrypts only that one pair: used by cycle-key to re-encrypt into a temp
 # dir during key rotation.
 #
 # The destination is kept as an exact mirror of the source:
@@ -40,12 +40,12 @@ encrypt_pair() {
     count=$((count + 1))
   done
 
-  # Prune ciphertext whose plaintext no longer exists — but only when we can
+  # Prune ciphertext whose plaintext no longer exists: but only when we can
   # trust the wip root to be a complete view of every WIP item.
   #
   # Guard 1: linked git worktrees. wip roots are gitignored, so a linked
   # worktree only ever contains whatever plaintext was manually copied into it
-  # — never the full set across all branches. The encrypted root by contrast
+  #: never the full set across all branches. The encrypted root by contrast
   # is committed and therefore complete. Comparing the two from a worktree
   # makes every item that wasn't hand-copied look like a deleted orphan, and
   # pruning silently deletes another branch's committed ciphertext.
@@ -53,7 +53,7 @@ encrypt_pair() {
   #
   # Guard 2: empty source. If the wip root has no files at all while the
   # destination does, it hasn't been decrypted yet (fresh clone, key present
-  # but decrypt not yet run) — not that items were actually deleted. Pruning
+  # but decrypt not yet run): not that items were actually deleted. Pruning
   # would wipe all real ciphertext, and the pre-commit hook would happily
   # stage that mass deletion.
   local src_file_count=$(find "$src_root" -type f ! -name '.gitkeep' 2>/dev/null | wc -l | tr -d ' ')
@@ -63,9 +63,9 @@ encrypt_pair() {
   local git_common_dir=$(cd "$ROOT_DIR" && cd "$(git rev-parse --git-common-dir 2>/dev/null)" 2>/dev/null && pwd)
 
   if [[ -n "$git_dir" && -n "$git_common_dir" && "$git_dir" != "$git_common_dir" ]]; then
-    warn "Linked git worktree detected — skipping the prune pass for ${dst_root:t}. Encryption still ran normally. Prune from the main checkout instead."
+    warn "Linked git worktree detected: skipping the prune pass for ${dst_root:t}. Encryption still ran normally. Prune from the main checkout instead."
   elif [[ "$src_file_count" -eq 0 && "$dst_file_count" -gt 0 ]]; then
-    warn "${src_root:t} has no files but ${dst_root:t} has $dst_file_count — refusing to prune. Run shared/tools/decrypt first if this is a fresh clone."
+    warn "${src_root:t} has no files but ${dst_root:t} has $dst_file_count: refusing to prune. Run shared/tools/decrypt first if this is a fresh clone."
   else
     for file in ${dst_root}/**/*(N.); do
       [[ "${file:t}" == ".gitkeep" ]] && continue

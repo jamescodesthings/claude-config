@@ -1,8 +1,8 @@
 #!/usr/bin/env zsh
-# Removes a skill or memory (by its current name — fuzzed slug if it's in
+# Removes a skill or memory (by its current name: fuzzed slug if it's in
 # WIP, real name if it's public) from wherever it's found, including its
 # encrypted mirror and any index lines. Confirms before deleting, but unlike
-# graduate this is not restricted to the human — routine cleanup work.
+# graduate this is not restricted to the human: routine cleanup work.
 repo_root="${0:A:h}/../.."
 type="${${0:t}%-*}"
 source "$repo_root/shared/tools/lib"
@@ -11,7 +11,7 @@ name="$1"
 [[ -n "$name" ]] || error "Usage: ${0:t} <name-or-slug>"
 
 IFS=':' read -r wip_root enc_root shape pub_root pub_index wip_index <<< "$(wip_type_config "$type")" \
-  || error "Unknown wip type '$type' (invoked as ${0:t} — expected skill-remove or memory-remove)"
+  || error "Unknown wip type '$type' (invoked as ${0:t}: expected skill-remove or memory-remove)"
 
 item_suffix=""; [[ "$shape" == "file" ]] && item_suffix=".md"
 
@@ -25,7 +25,7 @@ found=""
 [[ -n "$pub_item" && -e "$pub_item" ]] && found="${found:+$found+}public"
 [[ -z "$found" ]] && error "No $type named '$name' found in WIP or public tier"
 
-echo "Removing $type '$name' (found in: $found). Deletes it from disk — recoverable only via git history for anything already committed."
+echo "Removing $type '$name' (found in: $found). Deletes it from disk: recoverable only via git history for anything already committed."
 echo -n "Confirm? [y/N] "
 read -r confirm
 [[ "$confirm" == "y" || "$confirm" == "Y" ]] || error "Aborted"

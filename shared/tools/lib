@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# shared/tools/lib — Shared library for Agent Forge installers and tools
+# shared/tools/lib: Shared library for Agent Forge installers and tools
 
 if [[ -n "${(%):-%x}" && "${(%):-%x}" != "zsh" ]]; then
   LIB_DIR="$(cd "$(dirname "${(%):-%x}")" >/dev/null 2>&1 && pwd)"
@@ -48,21 +48,36 @@ clean_dead_symlinks() {
 
 apply_manifest() {
   local manifest_file=$1
+  # Declared once, up here, rather than inside the loop. A bare `local name`
+  # for a name that is already declared in scope behaves like `typeset name`
+  # and echoes "name=value", which is where the stray `abs_dest=/Users/...`
+  # lines in the installer output came from.
+  local abs_dest abs_src base_rel base_abs dirs_only
   [[ -f "$manifest_file" ]] || error "Manifest file $manifest_file not found"
   while IFS=':' read -r rel_src raw_dest || [[ -n "$rel_src" ]]; do
     [[ -z "$rel_src" || "$rel_src" == "#"* ]] && continue
-    local abs_dest
     abs_dest=$(eval echo "$raw_dest")
-    if [[ "$rel_src" == *"/*" ]]; then
-      local base_rel="${rel_src%\/\*}"
-      local base_abs="$ROOT_DIR/$base_rel"
+    # Two glob forms are supported:
+    #   dir/*   link every entry (files and directories)
+    #   dir/*/  link only subdirectories
+    # The dirs-only form exists because shared/skills-wip/ holds a plugin.json
+    # alongside the skill directories. Antigravity needs that file in its
+    # skills dir to treat the tree as a plugin; Claude Code does not, and
+    # linking it there produces a bogus non-skill entry.
+    if [[ "$rel_src" == *"/*/" || "$rel_src" == *"/*" ]]; then
+      dirs_only=0
+      [[ "$rel_src" == *"/*/" ]] && dirs_only=1
+      base_rel="${rel_src%/\*/}"
+      base_rel="${base_rel%/\*}"
+      base_abs="$ROOT_DIR/$base_rel"
       if [[ -d "$base_abs" ]]; then
         for f in "$base_abs"/*(N); do
+          (( dirs_only )) && [[ ! -d "$f" ]] && continue
           symlink "$f" "$abs_dest/$(basename "$f")"
         done
       fi
     else
-      local abs_src="$ROOT_DIR/$rel_src"
+      abs_src="$ROOT_DIR/$rel_src"
       if [[ -e "$abs_src" ]]; then
         symlink "$abs_src" "$abs_dest"
       fi
@@ -72,13 +87,13 @@ apply_manifest() {
 
 # Fetches an unused two-word fuzzed slug under $1 (a wip root). $2 is the
 # collision-check suffix appended to the candidate before testing for
-# existence — "" for a directory-shaped item (skills), ".md" for a
+# existence: "" for a directory-shaped item (skills), ".md" for a
 # single-file item (memory). Retries up to 5 times against the word-source
 # API. Prints the slug to stdout and returns 0, or prints nothing and
 # returns 1 on failure.
 #
 # Callers invoke this via command substitution ($(fetch_wip_slug ...)), which
-# runs in a subshell — so this must never call `error` (its `exit` would only
+# runs in a subshell: so this must never call `error` (its `exit` would only
 # kill the subshell, silently swallowed by the caller) and any diagnostic
 # output must go to stderr, never stdout, or it corrupts the returned slug.
 fetch_wip_slug() {
@@ -120,7 +135,7 @@ wip_type_config() {
 
 load_env() {
   local env_file="${1:-$ROOT_DIR/.env}"
-  [[ -f "$env_file" ]] || error "missing $env_file — run shared/tools/create-key first"
+  [[ -f "$env_file" ]] || error "missing $env_file: run shared/tools/create-key first"
   set -a
   source "$env_file"
   set +a

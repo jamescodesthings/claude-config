@@ -1,6 +1,6 @@
 #!/usr/bin/env zsh
 # Scaffolds a new WIP skill or memory under a fuzzed, meaningless name and
-# registers it. Invoked via the skill-new / memory-new symlinks — the type is
+# registers it. Invoked via the skill-new / memory-new symlinks: the type is
 # read from how we were invoked ($0's literal basename, NOT the resolved
 # symlink target, which is why this uses ${0:t} rather than ${0:A}).
 repo_root="${0:A:h}/../.."
@@ -8,7 +8,7 @@ type="${${0:t}%-*}"
 source "$repo_root/shared/tools/lib"
 
 IFS=':' read -r wip_root enc_root shape pub_root pub_index wip_index <<< "$(wip_type_config "$type")" \
-  || error "Unknown wip type '$type' (invoked as ${0:t} — expected skill-new or memory-new)"
+  || error "Unknown wip type '$type' (invoked as ${0:t}: expected skill-new or memory-new)"
 
 item_suffix=""; [[ "$shape" == "file" ]] && item_suffix=".md"
 
@@ -60,10 +60,10 @@ EOF
 
   if [[ -n "$wip_index" ]]; then
     touch "$wip_index"
-    print -r -- "- [$title]($slug.md) — $hook" >> "$wip_index"
+    print -r -- "- [$title]($slug.md): $hook" >> "$wip_index"
   fi
 fi
 
-"$repo_root/shared/tools/encrypt" "$wip_root" "$enc_root" || error "Scaffolded but encrypt failed — run $type-encrypt manually"
+"$repo_root/shared/tools/encrypt" "$wip_root" "$enc_root" || error "Scaffolded but encrypt failed: run $type-encrypt manually"
 
 success "Created WIP $type '$slug' at ${wip_root#$repo_root/}, encrypted, and live"
