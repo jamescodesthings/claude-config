@@ -9,6 +9,8 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
 source "$ROOT_DIR/shared/tools/lib"
 
+LOG_LABEL="claude-caveman"
+
 command -v claude &> /dev/null || { warn "claude CLI not found, caveman skipped"; exit 0 }
 
 # The old guard here was `command -v caveman`. caveman is a Claude Code plugin,
@@ -17,11 +19,13 @@ command -v claude &> /dev/null || { warn "claude CLI not found, caveman skipped"
 # as update rather than skip.
 if claude plugin list 2>/dev/null | grep -q "caveman@caveman"; then
   info "Updating caveman..."
-  claude plugin update caveman@caveman &> /dev/null || warn "caveman update failed"
+  # -y: see claude/tools/install-plugins. Required whenever stdin or stdout is
+  # not a TTY, which is always, now that output is captured.
+  run_logged "$LOG_LABEL" claude plugin update -y caveman@caveman || warn "caveman update failed"
 else
   info "Installing caveman..."
-  claude plugin marketplace add JuliusBrussee/caveman &> /dev/null
-  claude plugin install caveman@caveman &> /dev/null || warn "caveman install failed"
+  run_logged "$LOG_LABEL" claude plugin marketplace add JuliusBrussee/caveman
+  run_logged "$LOG_LABEL" claude plugin install -y caveman@caveman || warn "caveman install failed"
 fi
 
 # Must run after every install or update: each one writes a fresh cache

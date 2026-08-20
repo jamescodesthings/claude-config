@@ -9,20 +9,36 @@
 # Present means `claude update` (the CLI self-updates and knows its own channel).
 # Absent means the vendor bootstrapper, fetched to .cache/installers/ first so
 # the bytes that ran stay on disk.
+#
+# Both paths run through run_logged: the vendor installer's own banners and
+# progress bars go to .cache/logs/<run>/claude-cli.log instead of the console,
+# and a tail of that log is printed inline if the step fails.
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
 source "$ROOT_DIR/shared/tools/lib"
 
 INSTALLER_URL="https://claude.ai/install.sh"
+LOG_LABEL="claude-cli"
+
+# After a fresh install the binary exists but this shell's PATH predates it, so
+# `command -v` still misses. Fall back to the known install location rather
+# than reporting "version unknown" on a install that actually worked.
+claude_version() {
+  if command -v claude &> /dev/null; then
+    cli_version claude
+  elif [[ -x "$HOME/.local/bin/claude" ]]; then
+    cli_version "$HOME/.local/bin/claude"
+  else
+    print -r -- "version unknown"
+  fi
+}
 
 if command -v claude &> /dev/null; then
-  info "Updating Claude Code CLI..."
-  # stdin closed: the updater can drop into a TUI, and a prompt nobody can see
-  # blocks the whole install run.
-  if run_guarded 300 claude update < /dev/null; then
-    success "Claude Code CLI up to date ($(claude --version 2>/dev/null || print -r -- 'version unknown'))"
+  info "Updating Claude Code CLI (currently $(claude_version))..."
+  if run_logged "$LOG_LABEL" run_guarded 300 claude update; then
+    success "Claude Code CLI up to date: $(claude_version)"
   else
-    warn "claude update failed, keeping the installed version"
+    warn "claude update failed, keeping the installed version: $(claude_version)"
   fi
   exit 0
 fi
@@ -31,7 +47,7 @@ info "Installing Claude Code CLI from $INSTALLER_URL..."
 installer=$(fetch_installer "$INSTALLER_URL" claude) \
   || error "Could not fetch the Claude Code installer"
 
-run_guarded 600 "$installer" < /dev/null \
-  || error "Claude Code installer failed (script kept at $installer)"
+run_logged "$LOG_LABEL" run_guarded 600 "$installer" \
+  || error "Claude Code installer failed (output: $LAST_RUN_LOG, script kept at $installer)"
 
-success "Claude Code CLI installed"
+success "Claude Code CLI installed: $(claude_version)"

@@ -20,7 +20,7 @@ for ref in $plugins; do
     continue
   fi
   info "Uninstalling $ref..."
-  claude plugin uninstall "$ref" &> /dev/null || warn "$ref uninstall failed"
+  run_logged claude-plugins claude plugin uninstall "$ref" || warn "$ref uninstall failed"
 done
 
 success "Claude plugins removed"

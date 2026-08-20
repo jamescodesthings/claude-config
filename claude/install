@@ -3,6 +3,15 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 source "$ROOT_DIR/shared/tools/lib"
 
+# --debug streams every captured third-party command to the console as well as
+# to the run log; --trace adds zsh xtrace on top. Both are exported, so they
+# reach the sub-installers, which are separate processes.
+for arg in "$@"; do
+  parse_debug_arg "$arg" && continue
+  error "Unknown argument: $arg (accepted: --debug, --trace)"
+done
+trace_enabled && setopt xtrace
+
 # The CLI binary comes before anything that configures it. Install-or-update:
 # absent installs from the vendor bootstrapper, present runs `claude update`.
 "$SCRIPT_DIR/tools/bootstrap-cli" || warn "Claude Code CLI bootstrap failed"
@@ -22,3 +31,5 @@ for tool_script in "$ROOT_DIR/shared/tools/install-"*(N) "$SCRIPT_DIR/tools/inst
 done
 
 success "Claude CLI configuration installed."
+report_log_location
+prune_run_logs

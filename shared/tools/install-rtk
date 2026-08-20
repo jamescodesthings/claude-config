@@ -5,16 +5,21 @@
 # there: a Homebrew-owned binary must go through brew or the two installs fight
 # over the same name. This mirrors uninstall-rtk, which already refuses to
 # delete a binary it does not own.
+#
+# The upstream installer is fetched to .cache/installers/ and run from there,
+# same as the two CLI bootstrappers: the bytes that ran stay on disk, and a
+# download that is not a shell script is refused rather than executed. Its
+# output goes to the run log, not the console.
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 source "$SCRIPT_DIR/lib"
 
+INSTALLER_URL="https://raw.githubusercontent.com/rtk-ai/rtk/refs/heads/master/install.sh"
+LOG_LABEL="rtk"
+
 install_from_upstream() {
-  local tmp_script="${TMPDIR:-/tmp}/rtk-install.$$.sh"
-  curl -fsSL https://raw.githubusercontent.com/rtk-ai/rtk/refs/heads/master/install.sh \
-    -o "$tmp_script" || { warn "Failed to download rtk installer"; return 1 }
-  chmod +x "$tmp_script"
-  "$tmp_script" || { rm -f "$tmp_script"; warn "rtk installer failed"; return 1 }
-  rm -f "$tmp_script"
+  local installer
+  installer=$(fetch_installer "$INSTALLER_URL" rtk) || return 1
+  run_logged "$LOG_LABEL" run_guarded 600 "$installer"
 }
 
 if command -v rtk &> /dev/null; then
@@ -22,19 +27,21 @@ if command -v rtk &> /dev/null; then
   if [[ "$rtk_bin" == *"/homebrew/"* || "$rtk_bin" == "/usr/local/bin/"* ]] \
      && command -v brew &> /dev/null && brew list rtk &> /dev/null; then
     info "Updating rtk via Homebrew..."
-    brew upgrade rtk &> /dev/null || info "rtk already at the latest Homebrew version"
+    # brew exits non-zero when there is nothing to upgrade, which is not a
+    # failure, so this deliberately does not warn on it.
+    run_logged "$LOG_LABEL" brew upgrade rtk || info "rtk already at the latest Homebrew version"
   else
     info "Updating rtk from upstream installer..."
     install_from_upstream || warn "rtk update failed, keeping the existing binary"
   fi
-  success "rtk up to date ($(rtk --version 2>/dev/null || print -r -- 'version unknown'))"
+  success "rtk up to date: $(cli_version rtk)"
   exit 0
 fi
 
 info "Installing rtk..."
-install_from_upstream || error "rtk install failed"
+install_from_upstream || error "rtk install failed (output: $LAST_RUN_LOG)"
 
 # Global config init is a first-install step only; re-running it on an existing
 # install would overwrite local configuration.
-rtk init -g || error "rtk init -g failed"
-success "rtk installed"
+run_logged "$LOG_LABEL" rtk init -g || error "rtk init -g failed (output: $LAST_RUN_LOG)"
+success "rtk installed: $(cli_version rtk)"

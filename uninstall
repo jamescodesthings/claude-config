@@ -8,6 +8,8 @@ info "Starting Agent Forge Master Uninstallation..."
 # Flags are forwarded verbatim to both sub-uninstallers:
 #   --no-purge  strip agent-forge's symlinks only, leave both CLIs installed
 #   --yes, -y   skip the typed confirmation
+#   --debug     stream captured command output to the console
+#   --trace     --debug plus zsh xtrace
 #
 # Each sub-uninstaller prompts separately with its own path list, on purpose:
 # the two sets are different and both are worth reading before agreeing to them.
@@ -39,3 +41,5 @@ if [[ -f "$zshrc" ]] && grep -q "AI_CONFIG_DIR" "$zshrc" &>/dev/null; then
 fi
 
 success "Agent Forge uninstalled."
+report_log_location
+prune_run_logs

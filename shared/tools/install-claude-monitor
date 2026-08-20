@@ -2,18 +2,27 @@
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 source "$SCRIPT_DIR/lib"
 
+LOG_LABEL="claude-monitor"
+
 if ! command -v uv &> /dev/null; then
   warn "uv not found: claude-monitor skipped (install uv first: https://docs.astral.sh/uv/getting-started/installation/)"
   exit 0
 fi
 
+# uv reports the installed version in its listing, which is the only place to
+# get it: claude-monitor's own --version needs the tool's venv on PATH.
+monitor_version() {
+  version_token "$(uv tool list 2>/dev/null | grep "^claude-monitor" | head -1)"
+}
+
 if uv tool list 2>/dev/null | grep -q "^claude-monitor"; then
-  info "Updating claude-monitor..."
-  uv tool upgrade claude-monitor &> /dev/null || warn "claude-monitor upgrade failed"
-  success "claude-monitor up to date"
+  info "Updating claude-monitor (currently $(monitor_version))..."
+  run_logged "$LOG_LABEL" uv tool upgrade claude-monitor || warn "claude-monitor upgrade failed"
+  success "claude-monitor up to date: $(monitor_version)"
   exit 0
 fi
 
 info "Installing claude-monitor..."
-uv tool install claude-monitor || error "claude-monitor install failed"
-success "claude-monitor installed: run: claude-monitor"
+run_logged "$LOG_LABEL" uv tool install claude-monitor \
+  || error "claude-monitor install failed (output: $LAST_RUN_LOG)"
+success "claude-monitor installed: $(monitor_version). Run it with: claude-monitor"

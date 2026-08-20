@@ -219,3 +219,7 @@ claude/config/env.local
 # Also matched by the node template's .cache/ line further up; spelled out here
 # so a template refresh cannot silently un-ignore it.
 .cache/installers/
+
+# Captured installer output, one directory per run. Local diagnostics only,
+# and they contain machine paths.
+.cache/logs/

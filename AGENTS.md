@@ -19,6 +19,9 @@
 
 ```shell
 make install            # Install or update all CLI configurations (re-run after git pull)
+make install-debug      # Same, streaming captured third-party output to the console
+make install-trace      # Same as --debug plus zsh xtrace
+make logs               # List the last run's captured logs
 make claude             # Install Claude Code CLI configuration only
 make antigravity        # Install Antigravity CLI configuration only
 make uninstall          # Remove both CLIs and every config directory they own
@@ -34,6 +37,35 @@ make uninstall-antigravity # Uninstall Antigravity CLI configuration
 Those scripts are downloaded into `.cache/installers/` and run from there, never piped into a shell. The trust model is identical either way (vendor URL, vendor script), but this leaves the exact bytes that ran on disk for after-the-fact inspection, and refuses to execute a download that is not a shell script, which is what a truncated transfer or an HTML error page served with a 200 would look like. The cache is re-fetched every run, so it can never pin a stale installer.
 
 `bootstrap-cli` is deliberately not named `install-*`: that glob would run it a second time.
+
+### Installer output and logs
+
+Every third-party command an installer runs goes through `run_logged` in `shared/tools/lib`. It captures both output streams to `.cache/logs/<run-id>/<label>.log`, closes stdin, and returns the command's own exit status, so the usual `run_logged label cmd || warn ...` idiom reads the same as a bare call.
+
+The console therefore only ever carries this repo's own `[info]`/`[ok]`/`[warn]` lines. Vendor bootstrappers, `claude plugin install`, `agy plugin install`, `npx skills add`, `uv` and `brew` all write banners, spinners and progress bars in their own formatting, and interleaving that with agent-forge's output made the actual install steps unreadable. The previous fix was `&> /dev/null`, which cured the noise by destroying the evidence: a failing step reported that it had failed and nothing anywhere said why.
+
+When a step fails, the tail of its output is printed inline, scoped to that step. Log files are appended to across every command a script runs, so `run_logged` records the file's line count before it starts and reports only from there; without that, the second failure in a script would show the first one's output alongside its own.
+
+- One directory per run, named for a timestamp. The id is exported, so sub-installers, which are separate processes, all write into the same directory.
+- `.cache/logs/latest` symlinks to the most recent run. `make logs` lists it.
+- The last 10 runs are kept (`AGENT_FORGE_LOG_KEEP_RUNS`), pruned newest-first at the end of a run.
+- `curl` diagnostics from `fetch_installer` land in `downloads.log` in the same directory rather than on the console.
+- Success messages carry the version (`Claude Code CLI up to date: 2.1.237`). `cli_version` pulls the first dotted-numeric token out of `--version` output, because CLIs pad it with their own name and a build tag and `rtk up to date (rtk 0.45.0)` reads badly.
+
+Two flags, accepted by `./install`, `./claude/install`, `./antigravity/install` and both uninstallers, and exported so they reach every child process:
+
+- `--debug` streams captured output to the console as well as to the log. The failure tail is suppressed in this mode, since the output has already been seen.
+- `--trace` implies `--debug` and adds `setopt xtrace`. Use it when the installer itself is the suspect rather than the thing it is installing.
+
+Both follow the `AGENT_FORGE_ASSUME_YES` convention: set but falsey (`0`, `no`, `false`, `off`) counts as off.
+
+Capturing output has one non-obvious consequence worth knowing. `claude plugin install` and `claude plugin update` document `-y` as **required when stdin or stdout is not a TTY**, which is now always the case, so both calls pass it. Without it, any plugin whose marketplace declares an install command fails on every run. `agy plugin install` takes no flags at all and is unaffected.
+
+`prune_run_logs` deletes with `rm -rf`, so the log root gets its own gate, `validate_log_root`: `ROOT_DIR` must not be `/`, must actually contain `shared/tools/lib`, and `AGENT_FORGE_LOG_ROOT` must be exactly `$ROOT_DIR/.cache/logs`. `ROOT_DIR` comes from this library's own location and is normally airtight, but `cd "/../.."` succeeds and prints `/`, so an empty `LIB_DIR` would silently aim the logging code at `/.cache/logs`. macOS refuses to create that; a root-run Linux container would not.
+
+There is no locking. Nothing needs one today: the run id carries the entry point's PID, so two concurrent `./install` runs get separate directories, and sub-installers within a run are invoked sequentially. Backgrounding the tool loop, or a wrapper exporting a fixed `AGENT_FORGE_RUN_ID` across parallel runs, would need a lock added first, because the per-step offset is computed per process and cannot see another writer.
+
+Two zsh traps are worth knowing before editing this code. `setopt xtrace` inside a **function** is silently undone when that function returns, because zsh saves and restores the option across every call, which is why tracing is switched on with a bare `trace_enabled && setopt xtrace` at the top level of a script rather than by a helper that does both. And in a glob qualifier, `^` inverts the sense of every qualifier that follows it, so `*(N/^@On)` negates the sort as well as the symlink test: `prune_run_logs` uses `*(N/On^@)` and keeping `^@` last is load-bearing, not cosmetic. Getting it wrong deletes the newest runs and keeps the stale ones.
 
 ### Uninstall is a full purge
 
@@ -119,6 +151,7 @@ All agents operating within Agent Forge MUST adhere to the shared session state 
 ```
 .
 ├── .cache/installers/   # Downloaded vendor CLI install scripts, gitignored, re-fetched every install
+├── .cache/logs/         # Captured installer output, one dir per run, gitignored, last 10 kept
 ├── .state/              # Active session state & timestamped handoff snapshots
 ├── antigravity/         # Antigravity CLI module (config/, hooks/, rules/, scripts/, tools/, install, uninstall)
 ├── claude/              # Claude Code CLI module (config/, hooks/, scripts/, tools/, install, uninstall)

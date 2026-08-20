@@ -11,7 +11,7 @@ source "$ROOT_DIR/shared/tools/lib"
 command -v agy &> /dev/null || { warn "agy not found, nothing to uninstall"; exit 0 }
 
 info "Uninstalling Superpowers plugin from Antigravity..."
-agy plugin uninstall https://github.com/obra/superpowers \
+run_logged antigravity-superpowers agy plugin uninstall https://github.com/obra/superpowers \
   || { warn "Superpowers uninstall from Antigravity failed"; exit 0 }
 
 success "Superpowers plugin uninstalled from Antigravity"

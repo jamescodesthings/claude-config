@@ -3,6 +3,15 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT_DIR="$SCRIPT_DIR"
 source "$ROOT_DIR/shared/tools/lib"
 
+# --debug streams every captured third-party command to the console as well as
+# to the run log; --trace adds zsh xtrace on top. Both are exported, so they
+# reach the sub-installers, which are separate processes.
+for arg in "$@"; do
+  parse_debug_arg "$arg" && continue
+  error "Unknown argument: $arg (accepted: --debug, --trace)"
+done
+trace_enabled && setopt xtrace
+
 info "Starting Agent Forge Master Installation..."
 
 # Install git pre-commit hook
@@ -39,3 +48,5 @@ if [[ -f "$zshrc" ]] && ! grep -q "AI_CONFIG_DIR" "$zshrc" &>/dev/null; then
 fi
 
 success "Agent Forge fully installed."
+report_log_location
+prune_run_logs

@@ -17,6 +17,8 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
 source "$ROOT_DIR/shared/tools/lib"
 
+LOG_LABEL="claude-plugins"
+
 command -v claude &> /dev/null || { warn "claude CLI not found, plugin install skipped"; exit 0 }
 
 # marketplace_ref:plugin_name: marketplace is registered on demand.
@@ -36,18 +38,21 @@ for entry in $plugins; do
 
   if ! print -r -- "$known" | grep -q "^ *❯ *$market\$"; then
     info "Adding marketplace $market ($repo)..."
-    claude plugin marketplace add "$repo" &> /dev/null \
+    run_logged "$LOG_LABEL" claude plugin marketplace add "$repo" \
       || { warn "could not add marketplace $repo, skipping $plugin"; continue }
     known=$(claude plugin marketplace list 2>/dev/null)
   fi
 
   if print -r -- "$installed" | grep -q "$plugin@$market"; then
     info "Updating $plugin@$market..."
-    claude plugin update "$plugin@$market" &> /dev/null \
+    # -y is not optional here. `claude plugin update --help`: "required when
+    # stdin or stdout is not a TTY", which run_logged guarantees. Without it a
+    # plugin whose marketplace declares an install command fails every time.
+    run_logged "$LOG_LABEL" claude plugin update -y "$plugin@$market" \
       || warn "$plugin@$market update failed"
   else
     info "Installing $plugin@$market..."
-    claude plugin install "$plugin@$market" &> /dev/null \
+    run_logged "$LOG_LABEL" claude plugin install -y "$plugin@$market" \
       || warn "$plugin@$market install failed"
   fi
 done

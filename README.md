@@ -39,6 +39,9 @@ make install            # Install or update all CLI configurations
 ```
 
 Additional Makefile targets:
+- `make install-debug`: Same install, with captured third-party output streamed to the console.
+- `make install-trace`: `--debug` plus zsh shell tracing, for when the installer itself is the suspect.
+- `make logs`: List the last run's captured logs.
 - `make claude`: Install Claude Code CLI configuration only.
 - `make antigravity`: Install Antigravity CLI configuration only.
 - `make uninstall`: Remove both CLIs and every config directory they own.
@@ -49,6 +52,19 @@ Additional Makefile targets:
 `make install` installs or updates the CLI binaries themselves, creates required target directories, processes declarative `manifest.txt` files, decrypts WIP skills, installs tool plugins, configures RTK, and adds shell alias sourcing (`AI_CONFIG_DIR`) to `~/.zshrc`.
 
 Nothing is piped from a URL into a shell. Vendor install scripts are downloaded to `.cache/installers/` and run from there, so the exact bytes that ran stay on disk and a download that is not a shell script is refused rather than executed.
+
+### Where the output went
+
+The console shows agent-forge's own lines and nothing else. Everything the installers themselves print, vendor bootstrappers included, is captured to `.cache/logs/<run-id>/`, with `latest` pointing at the most recent run and the last 10 kept.
+
+```shell
+make logs                        # what the last run wrote
+less .cache/logs/latest/claude-cli.log
+./install --debug                # stream it live as well
+./install --trace                # ...plus shell tracing
+```
+
+A step that fails prints the tail of its own output inline, so the usual case needs no digging. Success lines carry versions: `[ok]: Claude Code CLI up to date: 2.1.237`.
 
 ### Syncing Updates
 

@@ -173,8 +173,30 @@ fetch_installer() {
   local cache_dir="$ROOT_DIR/.cache/installers"
   local dest="$cache_dir/$name.sh"
   mkdir -p "$cache_dir" || return 1
-  if ! curl -fsSL "$url" -o "$dest.tmp"; then
-    warn "Failed to download $name installer from $url" >&2
+  # curl's own diagnostics ("curl: (56) ... 403") belong in the run log with
+  # the rest of the third-party output, not on the console next to this repo's
+  # formatting. run_log_dir may not be available (unwritable .cache), in which
+  # case the console is still better than nothing.
+  local log_dir download_log
+  if log_dir=$(run_log_dir); then
+    download_log="$log_dir/downloads.log"
+    print -r -- "=== $(date '+%H:%M:%S') \$ curl $url" >> "$download_log"
+  else
+    download_log=/dev/stderr
+  fi
+  local from=$(( $(_line_count "$download_log") ))
+  curl -fsSL "$url" -o "$dest.tmp" 2>> "$download_log"
+  local curl_rc=$?
+  # The same exit trailer run_logged writes. Without it, consecutive attempts
+  # in downloads.log run together with no way to see where one ended.
+  if [[ "$download_log" != /dev/stderr ]]; then
+    end_with_newline "$download_log"
+    print -r -- "=== exit $curl_rc" >> "$download_log"
+  fi
+  if (( curl_rc != 0 )); then
+    warn "Failed to download $name installer from $url. Full log: $download_log" >&2
+    # Same treatment as a failed run_logged step: say why, not just that.
+    [[ "$download_log" == /dev/stderr ]] || log_tail "$download_log" "$from" >&2
     rm -f "$dest.tmp"
     return 1
   fi
@@ -230,7 +252,11 @@ confirm_purge() {
     info "Nothing to purge for $label"
     return 1
   fi
-  print -P "%F{yellow}[warn]%f:  About to permanently delete $label:"
+  # Prefix through -P, message through -r, same as info/warn/success/error.
+  # The labels passed today are literals, but this is the one spot in the purge
+  # path still shaped like the prompt_subst hazard the log functions avoid.
+  print -Pn "%F{yellow}[warn]%f:  "
+  print -r -- "About to permanently delete $label:"
   for p in $present; do
     print -r -- "           $p"
   done
@@ -292,3 +318,274 @@ validate_purge_root() {
   fi
   print -r -- "$path"
 }
+
+# ---------------------------------------------------------------------------
+# Run logging
+# ---------------------------------------------------------------------------
+# Third-party installers write in their own formatting: vendor bootstrappers,
+# `claude plugin install`, npx, uv and brew all emit banners, spinners and
+# progress bars that drown out this repo's own output. The previous fix was
+# `&> /dev/null`, which cured the noise by destroying the evidence: when a step
+# failed, the warning said that it had failed and nothing anywhere said why.
+#
+# run_logged captures both streams to a per-run log file instead. Console stays
+# quiet, the full output lands on disk, and a tail of it is printed inline when
+# the step returns non-zero. --debug streams it live as well, --trace adds
+# shell tracing on top.
+
+AGENT_FORGE_LOG_ROOT="$ROOT_DIR/.cache/logs"
+AGENT_FORGE_LOG_TAIL_LINES="${AGENT_FORGE_LOG_TAIL_LINES:-20}"
+AGENT_FORGE_LOG_KEEP_RUNS="${AGENT_FORGE_LOG_KEEP_RUNS:-10}"
+
+# One log directory per install run, shared by every script in it. Exported so
+# sub-installers, which are separate processes, land in the same directory as
+# the master installer that spawned them. A sub-installer run on its own gets
+# its own run id.
+if [[ -z "$AGENT_FORGE_RUN_ID" ]]; then
+  export AGENT_FORGE_RUN_ID="$(date +%Y-%m-%d-%H-%M-%S)-$$"
+  # Whoever minted the id owns the run. Sub-installers inherit both, and only
+  # the owner reports the log location at the end, so `./install` says where
+  # the logs are once rather than three times.
+  export AGENT_FORGE_RUN_OWNER="$$"
+fi
+
+# Both flags follow the AGENT_FORGE_ASSUME_YES convention: set but falsey means
+# off, so `AGENT_FORGE_DEBUG=0` cannot read as on.
+_flag_enabled() {
+  case "${1:-}" in
+    ""|0|no|false|off) return 1 ;;
+    *) return 0 ;;
+  esac
+}
+
+debug_enabled() { _flag_enabled "${AGENT_FORGE_DEBUG:-}" }
+trace_enabled() { _flag_enabled "${AGENT_FORGE_TRACE:-}" }
+
+# Tracing is switched on with the two-token idiom
+#
+#   trace_enabled && setopt xtrace
+#
+# rather than a helper function that does both, because zsh saves and restores
+# the xtrace option across every function call: a `setopt xtrace` inside a
+# function is silently undone the moment that function returns. At the top
+# level of a sourced file or a script it persists, which is where both uses of
+# this idiom live.
+PS4='+%N:%i> '
+
+# Parses the shared debug arguments out of an entry point's argv. Returns 0 if
+# the argument was consumed, 1 if the caller should handle it itself.
+parse_debug_arg() {
+  case "$1" in
+    --debug|-d) export AGENT_FORGE_DEBUG=1; return 0 ;;
+    # --trace implies --debug: shell tracing with the command output still
+    # hidden would show the call and not its result.
+    --trace)    export AGENT_FORGE_DEBUG=1 AGENT_FORGE_TRACE=1; return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
+# prune_run_logs deletes with rm -rf, so the log root gets the same kind of
+# proof-before-deleting that validate_purge_root gives CLAUDE_CONFIG_DIR.
+#
+# ROOT_DIR is derived from this file's own location, which is normally
+# airtight. The gap is a `cd` that succeeds against a broken path: an empty
+# LIB_DIR makes `cd "/../.."` resolve to `/` and exit 0, at which point
+# AGENT_FORGE_LOG_ROOT is `/.cache/logs`, unrelated to this repo. macOS refuses
+# to create that, so the failure is inert here; a root-run Linux container is a
+# different story.
+validate_log_root() {
+  [[ -n "$ROOT_DIR" && "$ROOT_DIR" != "/" ]] || return 1
+  # Only the directory this library actually lives in counts as the repo.
+  [[ -f "$ROOT_DIR/shared/tools/lib" ]] || return 1
+  [[ "$AGENT_FORGE_LOG_ROOT" == "$ROOT_DIR/.cache/logs" ]] || return 1
+  return 0
+}
+
+# Absolute path of this run's log directory, created on first use. Prints
+# nothing and returns 1 if it cannot be created: logging is a convenience and
+# never a reason to fail an install.
+run_log_dir() {
+  validate_log_root || return 1
+  local dir="$AGENT_FORGE_LOG_ROOT/$AGENT_FORGE_RUN_ID"
+  mkdir -p "$dir" 2>/dev/null || return 1
+  # `latest` is what you actually want to open after a failed run.
+  ln -sfn "$AGENT_FORGE_RUN_ID" "$AGENT_FORGE_LOG_ROOT/latest" 2>/dev/null
+  print -r -- "$dir"
+}
+
+# log_tail <file> [start_line] [max_lines]
+#
+# Prints the tail of a log file, one indented line at a time, optionally from a
+# given line onward. The start offset is what keeps a failure report scoped to
+# the step that just failed: log files are appended to across every command a
+# script runs, so a plain tail of the file would show the previous step's
+# output alongside this one's.
+#
+# `print -r` per line because log content is third-party text: a line
+# containing a prompt escape or a command substitution must never be
+# interpreted.
+log_tail() {
+  local file="$1" start="${2:-1}" max="${3:-$AGENT_FORGE_LOG_TAIL_LINES}" line
+  [[ -s "$file" ]] || { print -r -- "           (log is empty)"; return 0 }
+  tail -n "+$start" "$file" 2>/dev/null | tail -n "$max" | while IFS= read -r line; do
+    print -r -- "           $line"
+  done
+}
+
+# Appends a newline if the file does not already end with one. Plenty of CLIs
+# finish on a progress line with no trailing newline, and without this the
+# "=== exit N" footer is glued onto the end of that line: invisible to a human
+# skimming the log and invisible to a `grep '^=== exit'`.
+end_with_newline() {
+  local file="$1"
+  [[ -s "$file" ]] || return 0
+  [[ -n "$(tail -c 1 "$file")" ]] && print -r -- "" >> "$file"
+  return 0
+}
+
+# Line count of a file, 0 if it does not exist yet.
+_line_count() {
+  [[ -f "$1" ]] || { print -r -- 0; return 0 }
+  local n
+  n=$(wc -l < "$1" 2>/dev/null) || n=0
+  print -r -- "${n// /}"
+}
+
+# run_logged <label> <command> [args...]
+#
+# Runs the command with stdin closed and both output streams captured to
+# .cache/logs/<run-id>/<label>.log, appending so every step a script runs ends
+# up in one readable file. Returns the command's own exit status, so the usual
+# `run_logged x foo || warn ...` idiom is unchanged.
+#
+# The log path is left in $LAST_RUN_LOG, which is how a caller gets at the
+# output afterwards (grep it for a version string, re-tail it, report it).
+#
+# There is no locking, and appends from two processes to the same log file
+# interleave mid-line rather than mid-file. Nothing here needs a lock today:
+# the run id carries the entry point's PID, so two concurrent `./install` runs
+# get separate directories, and within one run every sub-installer is invoked
+# sequentially. Anything that breaks either of those (backgrounding the
+# tool_script loop, or a wrapper exporting a fixed AGENT_FORGE_RUN_ID across
+# parallel invocations) needs a lock added here first, because the per-step
+# `from` offset below is computed per process and cannot see another writer.
+#
+# stdin is closed on purpose. An installer dropping into a TUI prompt that
+# nobody can see, because its output is captured, is exactly the bug that
+# wedged `make install` at the caveman step; there is no case here where a
+# third-party installer should be reading this terminal.
+run_logged() {
+  local label="$1"; shift
+  local safe="${label//[^A-Za-z0-9._-]/_}"
+  # `rc`, not `status`: $status is a zsh special parameter aliased to $? and is
+  # read-only, so `local status` is a runtime error, not a syntax one.
+  local dir file rc
+
+  if ! dir=$(run_log_dir); then
+    warn "Could not create log directory under $AGENT_FORGE_LOG_ROOT, running unlogged"
+    # Cleared, not left alone. A caller that reports "$LAST_RUN_LOG" on failure
+    # would otherwise point the reader at an earlier, unrelated, probably
+    # successful step's log while this step's output went nowhere at all.
+    typeset -g LAST_RUN_LOG=""
+    "$@" < /dev/null
+    return $?
+  fi
+
+  file="$dir/$safe.log"
+  typeset -g LAST_RUN_LOG="$file"
+  # Where this step's output starts, so a failure report can show this step
+  # rather than everything the script has run so far.
+  local from=$(( $(_line_count "$file") + 1 ))
+  print -r -- "=== $(date '+%H:%M:%S') \$ $*" >> "$file"
+
+  if debug_enabled; then
+    "$@" < /dev/null 2>&1 | tee -a "$file"
+    rc=${pipestatus[1]}
+  else
+    "$@" < /dev/null >> "$file" 2>&1
+    rc=$?
+  fi
+
+  # The tail is taken before the exit marker is appended, so a failure report
+  # spends all its lines on output rather than one on its own footer.
+  if (( rc != 0 )) && ! debug_enabled; then
+    warn "$label failed (exit $rc), last $AGENT_FORGE_LOG_TAIL_LINES lines below. Full log: $file"
+    log_tail "$file" "$from"
+  elif (( rc != 0 )); then
+    warn "$label failed (exit $rc), see $file"
+  fi
+
+  end_with_newline "$file"
+  print -r -- "=== exit $rc" >> "$file"
+  return $rc
+}
+
+# Keeps the last AGENT_FORGE_LOG_KEEP_RUNS run directories. Called by the entry
+# point installers once the run is done; the run ids sort chronologically
+# because they are timestamps.
+prune_run_logs() {
+  validate_log_root || return 0
+  [[ -d "$AGENT_FORGE_LOG_ROOT" ]] || return 0
+  local -a runs
+  # (/) directories only, (On) newest first (the run ids are timestamps, so a
+  # descending name sort is a descending time sort), (^@) not symlinks so the
+  # `latest` link is never a deletion candidate.
+  #
+  # Qualifier order matters and is not cosmetic: `^` inverts the sense of every
+  # qualifier that follows it, so the obvious-looking (N/^@On) negates the sort
+  # as well as the symlink test and hands back the OLDEST runs to keep. Keep
+  # `^@` last. Ascending order here would delete the newest runs and keep the
+  # stale ones.
+  runs=("$AGENT_FORGE_LOG_ROOT"/*(N/On^@))
+  (( ${#runs[@]} > AGENT_FORGE_LOG_KEEP_RUNS )) || return 0
+  local stale
+  for stale in "${runs[@]:$AGENT_FORGE_LOG_KEEP_RUNS}"; do
+    # Never the run currently being written, whatever the sort says.
+    [[ "${stale:t}" == "$AGENT_FORGE_RUN_ID" ]] && continue
+    rm -rf -- "$stale"
+  done
+}
+
+# Reports where this run's output went. Entry points call this at the end so
+# the path is on screen whether or not anything failed.
+report_log_location() {
+  [[ -d "$AGENT_FORGE_LOG_ROOT/$AGENT_FORGE_RUN_ID" ]] || return 0
+  # Sub-installers stay quiet unless they were the entry point.
+  [[ "$AGENT_FORGE_RUN_OWNER" == "$$" ]] || return 0
+  info "Full installer output: $AGENT_FORGE_LOG_ROOT/$AGENT_FORGE_RUN_ID (also linked as $AGENT_FORGE_LOG_ROOT/latest)"
+  debug_enabled || info "Re-run with --debug to stream it live, or --trace to add shell tracing."
+}
+
+# Best-effort version string for a CLI, for the success messages. Never fails:
+# a CLI that cannot report its own version is not a reason to fail an install.
+cli_version() {
+  local bin="$1" line
+  line=$("$bin" --version 2>/dev/null | head -1)
+  line="${line//$'\r'/}"
+  [[ -z "$line" ]] && { print -r -- "version unknown"; return 0 }
+  print -r -- "$(version_token "$line")"
+}
+
+# Pulls the first dotted-numeric token out of a version line. CLIs pad
+# --version with their own name and a build tag ("rtk 0.45.0", "2.1.237 (Claude
+# Code)"), which is noise in a one-line success message and produces things
+# like "rtk up to date (rtk 0.45.0)". Falls back to the whole line when there
+# is nothing version-shaped in it.
+version_token() {
+  local line="$1"
+  if [[ "$line" =~ '[0-9]+(\.[0-9]+)+' ]]; then
+    print -r -- "$MATCH"
+  else
+    print -r -- "$line"
+  fi
+}
+
+# A trace flag inherited from a parent process applies from here on. Entry
+# points repeat this after parsing their own --trace.
+#
+# The if-form rather than `trace_enabled && setopt xtrace` only because this is
+# the last line of the file: the bare form would make `source lib` itself
+# return non-zero whenever tracing is off.
+if trace_enabled; then
+  setopt xtrace
+fi

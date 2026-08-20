@@ -13,9 +13,11 @@ for arg in "$@"; do
     --yes|-y)   export AGENT_FORGE_ASSUME_YES=1 ;;
     # A silently ignored --nopurge or --dry-run would leave the destructive
     # default in force, which is the worst possible way to mistype a flag.
-    *) error "Unknown argument: $arg (accepted: --no-purge, --yes)" ;;
+    *) parse_debug_arg "$arg" \
+         || error "Unknown argument: $arg (accepted: --no-purge, --yes, --debug, --trace)" ;;
   esac
 done
+trace_enabled && setopt xtrace
 
 # Validated before anything is removed, including the symlink sweep below:
 # $GEMINI_DIR comes from the environment and everything downstream trusts it.
@@ -86,3 +88,5 @@ if (( purge )); then
 fi
 
 success "Antigravity CLI configuration uninstalled."
+report_log_location
+prune_run_logs

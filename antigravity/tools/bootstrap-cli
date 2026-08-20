@@ -1,18 +1,30 @@
 #!/usr/bin/env zsh
 # Installs or updates the Antigravity CLI binary itself. Mirror of
-# claude/tools/bootstrap-cli; see that file for why this is not named install-*.
+# claude/tools/bootstrap-cli; see that file for why this is not named install-*
+# and why both paths go through run_logged.
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
 source "$ROOT_DIR/shared/tools/lib"
 
 INSTALLER_URL="https://antigravity.google/cli/install.sh"
+LOG_LABEL="antigravity-cli"
+
+agy_version() {
+  if command -v agy &> /dev/null; then
+    cli_version agy
+  elif [[ -x "$HOME/.local/bin/agy" ]]; then
+    cli_version "$HOME/.local/bin/agy"
+  else
+    print -r -- "version unknown"
+  fi
+}
 
 if command -v agy &> /dev/null; then
-  info "Updating Antigravity CLI..."
-  if run_guarded 300 agy update < /dev/null; then
-    success "Antigravity CLI up to date"
+  info "Updating Antigravity CLI (currently $(agy_version))..."
+  if run_logged "$LOG_LABEL" run_guarded 300 agy update; then
+    success "Antigravity CLI up to date: $(agy_version)"
   else
-    warn "agy update failed, keeping the installed version"
+    warn "agy update failed, keeping the installed version: $(agy_version)"
   fi
   exit 0
 fi
@@ -21,7 +33,7 @@ info "Installing Antigravity CLI from $INSTALLER_URL..."
 installer=$(fetch_installer "$INSTALLER_URL" antigravity) \
   || error "Could not fetch the Antigravity installer"
 
-run_guarded 600 "$installer" < /dev/null \
-  || error "Antigravity installer failed (script kept at $installer)"
+run_logged "$LOG_LABEL" run_guarded 600 "$installer" \
+  || error "Antigravity installer failed (output: $LAST_RUN_LOG, script kept at $installer)"
 
-success "Antigravity CLI installed"
+success "Antigravity CLI installed: $(agy_version)"

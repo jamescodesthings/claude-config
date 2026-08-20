@@ -13,10 +13,12 @@
 #
 # A wall-clock guard is still applied when a timeout binary exists, so a
 # network stall degrades to a warning instead of a wedged installer. macOS has
-# no `timeout` in base, hence the gtimeout fallback.
+# no `timeout` in base, hence run_guarded's gtimeout fallback.
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
 source "$ROOT_DIR/shared/tools/lib"
+
+LOG_LABEL="antigravity-caveman"
 
 command -v npx &> /dev/null || { warn "npx not found, caveman-for-antigravity skipped"; exit 0 }
 
@@ -33,17 +35,13 @@ for skill in $caveman_skills; do
 done
 (( missing )) && verb=Installed || verb=Refreshed
 
-timeout_cmd=()
-if command -v timeout &> /dev/null; then
-  timeout_cmd=(timeout 300)
-elif command -v gtimeout &> /dev/null; then
-  timeout_cmd=(gtimeout 300)
-fi
-
 info "Syncing caveman skills into Antigravity..."
-if ! $timeout_cmd npx --yes skills add JuliusBrussee/caveman \
-      -a antigravity -g -s caveman -s caveman-help -s caveman-stats -y --copy \
-      < /dev/null &> /dev/null; then
+# run_logged closes stdin and captures npx's output to the run log; run_guarded
+# supplies the wall-clock cap. The local timeout_cmd array this replaced did
+# the same job as run_guarded, one copy behind.
+if ! run_logged "$LOG_LABEL" run_guarded 300 \
+      npx --yes skills add JuliusBrussee/caveman \
+      -a antigravity -g -s caveman -s caveman-help -s caveman-stats -y --copy; then
   warn "caveman install into Antigravity failed or timed out, skipping"
   exit 0
 fi
@@ -53,7 +51,7 @@ parent_dir="$ANTIGRAVITY_DIR/skills"
 mkdir -p "$parent_dir"
 for skill in $caveman_skills; do
   if [[ -d "$GEMINI_DIR/config/skills/$skill" && ! -e "$parent_dir/$skill" ]]; then
-    cp -r "$GEMINI_DIR/config/skills/$skill" "$parent_dir/$skill" &> /dev/null || true
+    cp -r "$GEMINI_DIR/config/skills/$skill" "$parent_dir/$skill" 2>> "${LAST_RUN_LOG:-/dev/null}" || true
   fi
 done
 
