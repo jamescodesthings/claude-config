@@ -41,11 +41,14 @@ make install            # Install or update all CLI configurations
 Additional Makefile targets:
 - `make claude`: Install Claude Code CLI configuration only.
 - `make antigravity`: Install Antigravity CLI configuration only.
-- `make uninstall`: Uninstall all CLI configurations.
+- `make uninstall`: Remove both CLIs and every config directory they own.
+- `make uninstall-config`: Remove agent-forge's symlinks only, leaving the CLIs installed.
 - `make uninstall-claude`: Uninstall Claude Code CLI configuration.
 - `make uninstall-antigravity`: Uninstall Antigravity CLI configuration.
 
-`make install` creates required target directories, processes declarative `manifest.txt` files, decrypts WIP skills, installs tool plugins, configures RTK, and adds shell alias sourcing (`AI_CONFIG_DIR`) to `~/.zshrc`.
+`make install` installs or updates the CLI binaries themselves, creates required target directories, processes declarative `manifest.txt` files, decrypts WIP skills, installs tool plugins, configures RTK, and adds shell alias sourcing (`AI_CONFIG_DIR`) to `~/.zshrc`.
+
+Nothing is piped from a URL into a shell. Vendor install scripts are downloaded to `.cache/installers/` and run from there, so the exact bytes that ran stay on disk and a download that is not a shell script is refused rather than executed.
 
 ### Syncing Updates
 
@@ -53,9 +56,15 @@ Additional Makefile targets:
 git pull && make install
 ```
 
-`make install` installs what is missing and updates what is already there, so re-running it after a pull is the whole update story. There is no separate update target.
+`make install` installs what is missing and updates what is already there, including the `claude` and `agy` binaries, so re-running it after a pull is the whole update story. There is no separate update target.
 
-Claude Code's own binary is the exception: it self-updates, and the result of its last attempt is in `~/.claude/.last-update-result.json`.
+### Starting Over
+
+```shell
+make uninstall && make install
+```
+
+`make uninstall` is a full purge, so a clean install can be tested and retested. It prints every path it is about to delete and makes you type `purge` before it does. Read the list: it includes `~/.claude/projects/`, which is every session transcript on the machine. `make uninstall-config` is the gentle version.
 
 ---
 

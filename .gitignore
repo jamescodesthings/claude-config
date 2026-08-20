@@ -213,3 +213,9 @@ claude/config/env.local
 
 # Local workspace agents folder
 .agents/
+
+# Downloaded vendor install scripts (claude.ai, antigravity.google), kept on
+# disk so the exact bytes that ran are auditable. Re-fetched every install.
+# Also matched by the node template's .cache/ line further up; spelled out here
+# so a template refresh cannot silently un-ignore it.
+.cache/installers/

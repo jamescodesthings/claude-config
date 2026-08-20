@@ -7,3 +7,5 @@
 - [Check off plan tasks immediately](feedback_check_off_plan_tasks.md): mark [ ] → [x] in spec/plan docs as each task completes, not at the end
 - [WIP memories](../memory-wip/MEMORY-WIP.md): encrypted, decrypt locally with `shared/tools/decrypt` before reading; see `memory-new`/`memory-graduate` (on PATH) to add or promote entries
 - [Graduate is human-only](feedback_graduate_is_human_only.md): never run skill-graduate/memory-graduate myself, hand James the command instead
+- [Late hour never defers work](feedback_late_hour_never_defers_work.md): self-care nudges remind James, they never license stopping early or trimming scope
+- [Verify, then push](feedback_verify_then_push.md): the hold-until-manual-review guard is relaxed; verify clean with a second agent, then commit and push

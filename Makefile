@@ -18,6 +18,11 @@ uninstall:
 	./uninstall
 .PHONY: uninstall
 
+# Symlinks only: leaves both CLI binaries and their state in place.
+uninstall-config:
+	./uninstall --no-purge
+.PHONY: uninstall-config
+
 uninstall-claude:
 	./claude/uninstall
 .PHONY: uninstall-claude

@@ -1,7 +1,28 @@
 #!/usr/bin/env zsh
+# Uninstalls Antigravity: the agent-forge symlinks first, then the CLI itself
+# and every config, cache, and state directory it owns. See claude/uninstall for
+# why the purge is the default; --no-purge strips only the symlinks.
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 source "$ROOT_DIR/shared/tools/lib"
+
+purge=1
+for arg in "$@"; do
+  case "$arg" in
+    --no-purge) purge=0 ;;
+    --yes|-y)   export AGENT_FORGE_ASSUME_YES=1 ;;
+    # A silently ignored --nopurge or --dry-run would leave the destructive
+    # default in force, which is the worst possible way to mistype a flag.
+    *) error "Unknown argument: $arg (accepted: --no-purge, --yes)" ;;
+  esac
+done
+
+# Validated before anything is removed, including the symlink sweep below:
+# $GEMINI_DIR comes from the environment and everything downstream trusts it.
+config_root=$(validate_purge_root "GEMINI_CONFIG_DIR" "$GEMINI_DIR") \
+  || error "Refusing to run against an unsafe GEMINI_CONFIG_DIR"
+GEMINI_DIR="$config_root"
+
 
 info "Uninstalling Antigravity CLI configuration..."
 clean_dead_symlinks "$GEMINI_DIR"
@@ -36,5 +57,32 @@ for tool_script in "$ROOT_DIR/shared/tools/uninstall-"*(N) "$SCRIPT_DIR/tools/un
   info "Running $(basename "$tool_script")..."
   "$tool_script" || warn "$(basename "$tool_script") failed"
 done
+
+if (( purge )); then
+  # $GEMINI_DIR covers $ANTIGRAVITY_DIR, which lives inside it.
+  #
+  # Google's standalone `gemini` CLI also keeps its config in ~/.gemini. If both
+  # are installed on a machine, purging Antigravity takes that CLI's config with
+  # it: check before answering the prompt.
+  purge_targets=(
+    "$GEMINI_DIR"
+    "$HOME/.cache/antigravity"
+  )
+  agy_bin=$(command -v agy 2>/dev/null)
+  if [[ -n "$agy_bin" ]]; then
+    if [[ "$agy_bin" == "$HOME/.local/bin/"* ]]; then
+      purge_targets+=("$agy_bin")
+    else
+      warn "agy lives at $agy_bin, outside ~/.local/bin: leaving the binary alone"
+    fi
+  fi
+
+  if confirm_purge "the Antigravity CLI and all of its state" "${purge_targets[@]}"; then
+    for target in "${purge_targets[@]}"; do
+      purge_path "$target"
+    done
+    success "Antigravity CLI purged"
+  fi
+fi
 
 success "Antigravity CLI configuration uninstalled."

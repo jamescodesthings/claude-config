@@ -21,10 +21,38 @@
 make install            # Install or update all CLI configurations (re-run after git pull)
 make claude             # Install Claude Code CLI configuration only
 make antigravity        # Install Antigravity CLI configuration only
-make uninstall          # Uninstall all CLI configurations
+make uninstall          # Remove both CLIs and every config directory they own
+make uninstall-config   # Remove agent-forge's symlinks only, leave the CLIs installed
 make uninstall-claude   # Uninstall Claude Code CLI configuration
 make uninstall-antigravity # Uninstall Antigravity CLI configuration
 ```
+
+### The CLI binaries
+
+`claude/install` and `antigravity/install` each begin by installing or updating the CLI they configure, via `<cli>/tools/bootstrap-cli`. Present means `claude update` / `agy update`; absent means the vendor bootstrapper from `https://claude.ai/install.sh` / `https://antigravity.google/cli/install.sh`.
+
+Those scripts are downloaded into `.cache/installers/` and run from there, never piped into a shell. The trust model is identical either way (vendor URL, vendor script), but this leaves the exact bytes that ran on disk for after-the-fact inspection, and refuses to execute a download that is not a shell script, which is what a truncated transfer or an HTML error page served with a 200 would look like. The cache is re-fetched every run, so it can never pin a stale installer.
+
+`bootstrap-cli` is deliberately not named `install-*`: that glob would run it a second time.
+
+### Uninstall is a full purge
+
+`make uninstall` exists so a completely clean install can be tested and retested, which only works if nothing survives it. It removes agent-forge's symlinks, runs every `uninstall-*` tool, then deletes the CLI binary and all of its state:
+
+- Claude Code: `~/.claude/`, `~/.claude.json` and its backups and tmp files, `~/.local/share/claude/`, `~/.cache/claude/`, `~/Library/Caches/claude-cli-nodejs/`, and the `~/.local/bin/claude` launcher
+- Antigravity: `~/.gemini/` (which contains `antigravity-cli/`), `~/.cache/antigravity/`, and the `~/.local/bin/agy` binary
+
+Left alone on purpose: `~/Library/Application Support/Claude` is the Claude **desktop app**, a different product that happens to share a name, and `~/.claude-monitor` belongs to a separate tool with its own uninstaller. A CLI binary found outside `~/.local/bin` is reported and skipped rather than deleted, since agent-forge did not put it there.
+
+Each half prints its exact path list and requires you to type `purge` before deleting anything. `--yes` skips the prompt; a non-interactive shell without `AGENT_FORGE_ASSUME_YES=1` always refuses, so an unattended run cannot wipe a machine. Set-but-falsey values (`0`, `no`, `false`, `off`) count as no. `--no-purge` (or `make uninstall-config`) strips the symlinks only, and an unrecognised flag is a hard error rather than a silent fall-through to the destructive default.
+
+`CLAUDE_CONFIG_DIR` and `GEMINI_CONFIG_DIR` come from the ambient environment and feed straight into `rm -rf`, so `validate_purge_root` in `shared/tools/lib` checks them before anything is removed, including the symlink sweep. It refuses an empty value, a relative path (which would resolve against the caller's working directory), `/`, `$HOME`, any top-level directory, and any path containing the agent-forge repo, since deleting an ancestor of the repo would take this tool's own source with it. Trailing slashes are stripped: a trailing slash makes the kernel resolve through a symlink before `lstat`, which would empty the link's target instead of unlinking the link.
+
+Two related habits in the same library. `purge_path` uses `rm -rf --` so a path starting with a dash is a path, never a flag. `info`/`warn`/`success`/`error` paint only their colour prefix with `print -P` and pass the message through `print -r`, because these take filenames and `print -P` performs command substitution under `prompt_subst`.
+
+What the confirmation does not prove is that a human typed it: `[[ -t 0 ]]` establishes a terminal, and anything allocating a pty can answer. It is a guard against accident, not against an automated caller that means it.
+
+Two things worth knowing before agreeing: purging Claude Code deletes `~/.claude/projects/`, which is every session transcript on the machine, and Google's standalone `gemini` CLI also keeps its config in `~/.gemini`, so on a machine with both, purging Antigravity takes that CLI's config with it.
 
 ### Where a sub-installer belongs
 
@@ -35,7 +63,7 @@ make uninstall-antigravity # Uninstall Antigravity CLI configuration
 
 Putting a CLI-specific installer in `shared/tools/` is what previously left Claude Code without Superpowers: the script only ever called `agy plugin install`, but ran during both installs, so the Claude pass looked like it had done something and hadn't. Guard every sub-installer on the state it actually manages, never on a proxy (`command -v caveman` never passes: caveman is a plugin, not a binary).
 
-Every sub-installer is install-or-update: absent means install, present means update to latest. There is no separate `make update`, deliberately. A split entry point lets the two halves drift, and the "already installed" early return then pins a version forever, which is how this repo ended up shipping stale tooling in the first place. Claude Code's own binary is the one exception: it self-updates, and the result of its last attempt is in `~/.claude/.last-update-result.json`.
+Every sub-installer is install-or-update: absent means install, present means update to latest. That now includes the CLI binaries themselves, via `bootstrap-cli` above. There is no separate `make update`, deliberately. A split entry point lets the two halves drift, and the "already installed" early return then pins a version forever, which is how this repo ended up shipping stale tooling in the first place.
 
 ### Shell Aliases (`zsh/aliases.zsh`)
 When installed, `make install` adds the following sourcing block to `~/.zshrc`:
@@ -90,6 +118,7 @@ All agents operating within Agent Forge MUST adhere to the shared session state 
 
 ```
 .
+├── .cache/installers/   # Downloaded vendor CLI install scripts, gitignored, re-fetched every install
 ├── .state/              # Active session state & timestamped handoff snapshots
 ├── antigravity/         # Antigravity CLI module (config/, hooks/, rules/, scripts/, tools/, install, uninstall)
 ├── claude/              # Claude Code CLI module (config/, hooks/, scripts/, tools/, install, uninstall)

@@ -1,0 +1,27 @@
+#!/usr/bin/env zsh
+# Installs or updates the Antigravity CLI binary itself. Mirror of
+# claude/tools/bootstrap-cli; see that file for why this is not named install-*.
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+ROOT_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
+source "$ROOT_DIR/shared/tools/lib"
+
+INSTALLER_URL="https://antigravity.google/cli/install.sh"
+
+if command -v agy &> /dev/null; then
+  info "Updating Antigravity CLI..."
+  if run_guarded 300 agy update < /dev/null; then
+    success "Antigravity CLI up to date"
+  else
+    warn "agy update failed, keeping the installed version"
+  fi
+  exit 0
+fi
+
+info "Installing Antigravity CLI from $INSTALLER_URL..."
+installer=$(fetch_installer "$INSTALLER_URL" antigravity) \
+  || error "Could not fetch the Antigravity installer"
+
+run_guarded 600 "$installer" < /dev/null \
+  || error "Antigravity installer failed (script kept at $installer)"
+
+success "Antigravity CLI installed"

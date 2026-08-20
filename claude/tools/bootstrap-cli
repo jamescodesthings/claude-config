@@ -1,0 +1,37 @@
+#!/usr/bin/env zsh
+# Installs or updates the Claude Code CLI binary itself.
+#
+# Everything else in claude/ configures a CLI that is assumed to already exist,
+# so this runs first, from claude/install directly rather than from the
+# install-* glob. It is deliberately NOT named install-* : the glob would pick
+# it up and run it a second time.
+#
+# Present means `claude update` (the CLI self-updates and knows its own channel).
+# Absent means the vendor bootstrapper, fetched to .cache/installers/ first so
+# the bytes that ran stay on disk.
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+ROOT_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
+source "$ROOT_DIR/shared/tools/lib"
+
+INSTALLER_URL="https://claude.ai/install.sh"
+
+if command -v claude &> /dev/null; then
+  info "Updating Claude Code CLI..."
+  # stdin closed: the updater can drop into a TUI, and a prompt nobody can see
+  # blocks the whole install run.
+  if run_guarded 300 claude update < /dev/null; then
+    success "Claude Code CLI up to date ($(claude --version 2>/dev/null || print -r -- 'version unknown'))"
+  else
+    warn "claude update failed, keeping the installed version"
+  fi
+  exit 0
+fi
+
+info "Installing Claude Code CLI from $INSTALLER_URL..."
+installer=$(fetch_installer "$INSTALLER_URL" claude) \
+  || error "Could not fetch the Claude Code installer"
+
+run_guarded 600 "$installer" < /dev/null \
+  || error "Claude Code installer failed (script kept at $installer)"
+
+success "Claude Code CLI installed"

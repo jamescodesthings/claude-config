@@ -3,6 +3,10 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 source "$ROOT_DIR/shared/tools/lib"
 
+# The CLI binary comes before anything that configures it. Install-or-update:
+# absent installs from the vendor bootstrapper, present runs `agy update`.
+"$SCRIPT_DIR/tools/bootstrap-cli" || warn "Antigravity CLI bootstrap failed"
+
 info "Installing Antigravity CLI configuration..."
 mkdir -p "$GEMINI_DIR/config/hooks" "$GEMINI_DIR/config/skills" "$GEMINI_DIR/config/rules" "$ANTIGRAVITY_DIR"
 

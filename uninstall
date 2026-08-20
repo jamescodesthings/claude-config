@@ -5,12 +5,18 @@ source "$ROOT_DIR/shared/tools/lib"
 
 info "Starting Agent Forge Master Uninstallation..."
 
+# Flags are forwarded verbatim to both sub-uninstallers:
+#   --no-purge  strip agent-forge's symlinks only, leave both CLIs installed
+#   --yes, -y   skip the typed confirmation
+#
+# Each sub-uninstaller prompts separately with its own path list, on purpose:
+# the two sets are different and both are worth reading before agreeing to them.
 if [[ -x "$ROOT_DIR/claude/uninstall" ]]; then
-  "$ROOT_DIR/claude/uninstall" || warn "Claude uninstaller failed"
+  "$ROOT_DIR/claude/uninstall" "$@" || warn "Claude uninstaller failed"
 fi
 
 if [[ -x "$ROOT_DIR/antigravity/uninstall" ]]; then
-  "$ROOT_DIR/antigravity/uninstall" || warn "Antigravity uninstaller failed"
+  "$ROOT_DIR/antigravity/uninstall" "$@" || warn "Antigravity uninstaller failed"
 fi
 
 # Remove pre-commit hook

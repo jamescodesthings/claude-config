@@ -12,10 +12,15 @@ CLAUDE_DIR="${CLAUDE_CONFIG_DIR:-$HOME/.claude}"
 GEMINI_DIR="${GEMINI_CONFIG_DIR:-$HOME/.gemini}"
 ANTIGRAVITY_DIR="$GEMINI_DIR/antigravity-cli"
 
-info()    { print -P "%F{blue}[info]%f:  $1" }
-success() { print -P "%F{green}[ok]%f:    $1" }
-warn()    { print -P "%F{yellow}[warn]%f:  $1" }
-error()   { print -P "%F{red}[error]%f $1" && exit 1 }
+# The colour prefix goes through print -P, the message never does. Paths reach
+# these functions, and under prompt_subst `print -P` performs command
+# substitution, so a file named `$(...)` inside a directory being cleaned would
+# otherwise execute. prompt_subst is not set in this repo's script environment
+# today, but it is one .zshenv edit away and the cost of being safe is nil.
+info()    { print -Pn "%F{blue}[info]%f:  "; print -r -- "$1" }
+success() { print -Pn "%F{green}[ok]%f:    "; print -r -- "$1" }
+warn()    { print -Pn "%F{yellow}[warn]%f:  "; print -r -- "$1" }
+error()   { print -Pn "%F{red}[error]%f "; print -r -- "$1"; exit 1 }
 
 symlink() {
   local src=$1 dest=$2
@@ -152,4 +157,138 @@ wip_pairs() {
     [[ -z "$wip" || "$wip" == "#"* ]] && continue
     print -r -- "$ROOT_DIR/$wip $ROOT_DIR/$enc"
   done < "$pairs_file"
+}
+
+# Downloads a vendor install script into the repo's gitignored .cache/ and
+# prints the path, instead of piping the URL straight into a shell. Same trust
+# model either way (vendor URL, vendor script), but this leaves the exact bytes
+# that ran on disk, auditable after the fact. Re-fetched on every run so the
+# cache can never pin a stale installer.
+#
+# Called via $(...), so this runs in a subshell: never call `error` here (its
+# exit would only kill the subshell) and keep diagnostics on stderr, or they
+# corrupt the returned path.
+fetch_installer() {
+  local url="$1" name="$2"
+  local cache_dir="$ROOT_DIR/.cache/installers"
+  local dest="$cache_dir/$name.sh"
+  mkdir -p "$cache_dir" || return 1
+  if ! curl -fsSL "$url" -o "$dest.tmp"; then
+    warn "Failed to download $name installer from $url" >&2
+    rm -f "$dest.tmp"
+    return 1
+  fi
+  # A truncated download or an HTML error page served with a 200 is worse than
+  # no download at all, because the next line would execute it.
+  if [[ ! -s "$dest.tmp" ]] || ! head -1 "$dest.tmp" | grep -q '^#!'; then
+    warn "Downloaded $name installer is not a shell script, refusing to run it" >&2
+    rm -f "$dest.tmp"
+    return 1
+  fi
+  mv "$dest.tmp" "$dest" || return 1
+  chmod +x "$dest"
+  print -r -- "$dest"
+}
+
+# Runs a command with a wall-clock cap when coreutils' timeout is available.
+# macOS ships no `timeout`, so without gtimeout this is a plain passthrough:
+# the guard is a nice-to-have, never a dependency.
+run_guarded() {
+  local seconds="$1"; shift
+  if command -v gtimeout &> /dev/null; then
+    gtimeout "$seconds" "$@"
+  else
+    "$@"
+  fi
+}
+
+# Deletes a path and reports it, skipping anything already gone. Globs are the
+# caller's job: pass expanded paths.
+purge_path() {
+  local target="$1"
+  [[ -e "$target" || -L "$target" ]] || return 0
+  # `--` so a target beginning with a dash is a path, never a flag.
+  rm -rf -- "$target" && info "Purged $target"
+}
+
+# Prints every path a purge is about to delete and requires a typed
+# confirmation. Returns 0 to proceed, 1 to skip. Set AGENT_FORGE_ASSUME_YES=1
+# (or pass --yes to the uninstaller) to skip the prompt; a non-interactive
+# shell without that variable always refuses, so an unattended run can never
+# wipe a machine by accident.
+#
+# Paths that do not exist are filtered out first, so the list shown is exactly
+# what will go.
+confirm_purge() {
+  local label="$1"; shift
+  local -a present
+  local p
+  for p in "$@"; do
+    [[ -e "$p" || -L "$p" ]] && present+=("$p")
+  done
+  if (( ${#present[@]} == 0 )); then
+    info "Nothing to purge for $label"
+    return 1
+  fi
+  print -P "%F{yellow}[warn]%f:  About to permanently delete $label:"
+  for p in $present; do
+    print -r -- "           $p"
+  done
+  # Set but falsey means no. `AGENT_FORGE_ASSUME_YES=0` reading as yes is the
+  # kind of surprise that only surfaces once, destructively.
+  case "${AGENT_FORGE_ASSUME_YES:-}" in
+    ""|0|no|false|off) ;;
+    *) return 0 ;;
+  esac
+  if [[ ! -t 0 ]]; then
+    warn "Not an interactive shell and AGENT_FORGE_ASSUME_YES is unset: skipping purge"
+    return 1
+  fi
+  local reply
+  print -n -P "%F{yellow}[warn]%f:  Type 'purge' to confirm: "
+  read -r reply
+  [[ "$reply" == "purge" ]] && return 0
+  info "Purge skipped"
+  return 1
+}
+
+# Refuses a config root that is unsafe to hand to rm -rf. Prints the normalised
+# path and returns 0, or explains the refusal on stderr and returns 1.
+#
+# CLAUDE_CONFIG_DIR and GEMINI_CONFIG_DIR come from the ambient environment and
+# feed straight into the purge. Every check below closes a route an adversarial
+# review found from "someone set that variable oddly" to "the wrong tree is
+# gone". Called via $(...), so diagnostics go to stderr and it never calls
+# `error`, whose exit would only kill the subshell.
+validate_purge_root() {
+  local label="$1" path="$2"
+  if [[ -z "$path" ]]; then
+    warn "$label is empty, refusing to touch anything" >&2
+    return 1
+  fi
+  # A trailing slash makes the kernel resolve through a symlink before lstat
+  # returns, so rm descends into the target and empties it instead of unlinking
+  # the link. Strip trailing slashes before anything else reads the path.
+  while [[ "$path" == */ && "$path" != "/" ]]; do
+    path="${path%/}"
+  done
+  if [[ "$path" != /* ]]; then
+    warn "$label is not absolute ($path): it would resolve against the caller's working directory" >&2
+    return 1
+  fi
+  if [[ "$path" == "/" || "$path" == "$HOME" ]]; then
+    warn "$label resolves to $path, refusing" >&2
+    return 1
+  fi
+  # A real config root is never a top-level directory.
+  if [[ "${path:h}" == "/" ]]; then
+    warn "$label ($path) is a top-level directory, refusing" >&2
+    return 1
+  fi
+  # Deleting an ancestor of the repo would take this tool's own source with it.
+  if [[ "$ROOT_DIR" == "$path" || "$ROOT_DIR" == "$path"/* ]]; then
+    warn "$label ($path) contains the agent-forge repo, refusing" >&2
+    return 1
+  fi
+  print -r -- "$path"
 }

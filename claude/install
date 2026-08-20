@@ -3,6 +3,10 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 source "$ROOT_DIR/shared/tools/lib"
 
+# The CLI binary comes before anything that configures it. Install-or-update:
+# absent installs from the vendor bootstrapper, present runs `claude update`.
+"$SCRIPT_DIR/tools/bootstrap-cli" || warn "Claude Code CLI bootstrap failed"
+
 info "Installing Claude CLI configuration..."
 mkdir -p "$CLAUDE_DIR/hooks" "$CLAUDE_DIR/skills"
 

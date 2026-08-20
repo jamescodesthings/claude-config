@@ -27,20 +27,23 @@ last_bed=$(grep -o '"last_bed_nudge": *[0-9]*' "$state_file" | grep -o '[0-9]*$'
 [[ -n "$last_dinner" ]] || last_dinner=0
 [[ -n "$last_bed" ]] || last_bed=0
 
+# Every line below is addressed to James, never to the model. It is a reminder
+# to him, not an instruction to wind down: the model finishes the work it was
+# asked for regardless of the hour. See rule 12 of the ADHD-mode skill.
 messages=()
 
 if (( now - last_rabbithole >= 9000 )); then
-  messages+=("SELF-CARE: 2.5h+ into this session. Drink water, eat something, take a bathroom break.")
+  messages+=("SELF-CARE: tell James he is 2.5h+ into this session: water, food, bathroom. Reminder only: keep working the task to completion.")
   last_rabbithole=$now
 fi
 
 if { [[ "$hhmm" > "1200" ]] || [[ "$hhmm" == "1200" ]]; } && [[ "$hhmm" < "1300" ]] && (( now - last_lunch >= COOLDOWN )); then
-  messages+=("SELF-CARE: it's lunchtime. Go eat.")
+  messages+=("SELF-CARE: tell James it is lunchtime. Reminder only: keep working the task to completion.")
   last_lunch=$now
 fi
 
 if { [[ "$hhmm" > "1700" ]] || [[ "$hhmm" == "1700" ]]; } && [[ "$hhmm" < "1800" ]] && (( now - last_dinner >= COOLDOWN )); then
-  messages+=("SELF-CARE: sort dinner and feed the dogs.")
+  messages+=("SELF-CARE: tell James to sort dinner and feed the dogs. Reminder only: keep working the task to completion.")
   last_dinner=$now
 fi
 
@@ -48,7 +51,7 @@ fi
 # bookkeeping is needed for the midnight rollover: it just keeps retrying
 # every COOLDOWN seconds for as long as the window is open.
 if { { [[ "$hhmm" > "2300" ]] || [[ "$hhmm" == "2300" ]]; } || [[ "$hhmm" < "0500" ]]; } && (( now - last_bed >= COOLDOWN )); then
-  messages+=("SELF-CARE: it's past 11pm. Go to bed.")
+  messages+=("SELF-CARE: tell James it is past 11pm. Reminder only: keep working the task to completion.")
   last_bed=$now
 fi
 
