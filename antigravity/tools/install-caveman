@@ -24,15 +24,14 @@ export NPM_CONFIG_ALLOW_GIT=all
 
 caveman_skills=(caveman caveman-help caveman-stats)
 
-# Already present in the Antigravity skills tree: nothing to do.
+# Absent means install, present means refresh. `skills add --copy` overwrites in
+# place, so the same call serves both and there is no separate update path to
+# drift out of sync.
 missing=0
 for skill in $caveman_skills; do
   [[ -d "$GEMINI_DIR/config/skills/$skill" ]] || missing=1
 done
-if (( ! missing )); then
-  success "caveman skills already present in Antigravity"
-  exit 0
-fi
+(( missing )) && verb=Installed || verb=Refreshed
 
 timeout_cmd=()
 if command -v timeout &> /dev/null; then
@@ -41,7 +40,7 @@ elif command -v gtimeout &> /dev/null; then
   timeout_cmd=(gtimeout 300)
 fi
 
-info "Installing caveman skills into Antigravity..."
+info "Syncing caveman skills into Antigravity..."
 if ! $timeout_cmd npx --yes skills add JuliusBrussee/caveman \
       -a antigravity -g -s caveman -s caveman-help -s caveman-stats -y --copy \
       < /dev/null &> /dev/null; then
@@ -58,4 +57,4 @@ for skill in $caveman_skills; do
   fi
 done
 
-success "caveman skills installed into Antigravity"
+success "$verb caveman skills in Antigravity"

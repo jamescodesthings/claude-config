@@ -18,8 +18,7 @@
 ## Installation & Management
 
 ```shell
-make install            # Install all CLI configurations (idempotent, re-run after git pull)
-make update             # Move already-installed plugins/tools to their latest versions
+make install            # Install or update all CLI configurations (re-run after git pull)
 make claude             # Install Claude Code CLI configuration only
 make antigravity        # Install Antigravity CLI configuration only
 make uninstall          # Uninstall all CLI configurations
@@ -35,6 +34,8 @@ make uninstall-antigravity # Uninstall Antigravity CLI configuration
 - `<cli>/tools/install-*`: anything CLI-specific. Superpowers and caveman both live here, because each installs by a different mechanism per CLI (`claude plugin install` vs `agy plugin install` vs `npx skills add`).
 
 Putting a CLI-specific installer in `shared/tools/` is what previously left Claude Code without Superpowers: the script only ever called `agy plugin install`, but ran during both installs, so the Claude pass looked like it had done something and hadn't. Guard every sub-installer on the state it actually manages, never on a proxy (`command -v caveman` never passes: caveman is a plugin, not a binary).
+
+Every sub-installer is install-or-update: absent means install, present means update to latest. There is no separate `make update`, deliberately. A split entry point lets the two halves drift, and the "already installed" early return then pins a version forever, which is how this repo ended up shipping stale tooling in the first place. Claude Code's own binary is the one exception: it self-updates, and the result of its last attempt is in `~/.claude/.last-update-result.json`.
 
 ### Shell Aliases (`zsh/aliases.zsh`)
 When installed, `make install` adds the following sourcing block to `~/.zshrc`:

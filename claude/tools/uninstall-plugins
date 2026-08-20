@@ -11,7 +11,6 @@ command -v claude &> /dev/null || { warn "claude CLI not found, nothing to unins
 plugins=(
   "superpowers@superpowers-dev"
   "commit-commands@claude-plugins-official"
-  "context7@claude-plugins-official"
 )
 
 installed=$(claude plugin list 2>/dev/null)

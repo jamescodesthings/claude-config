@@ -1,0 +1,70 @@
+#!/usr/bin/env zsh
+# Works around an upstream caveman bug that makes Claude Code refuse to load
+# the plugin entirely.
+#
+# caveman commit 902eba34 added an `agents` array to .claude-plugin/plugin.json
+# using bare relative paths. Claude Code's manifest validator requires
+# plugin-relative component paths to be explicitly relative, so it rejects the
+# whole manifest with "agents: Invalid input" and the plugin installs but never
+# loads. Tracked upstream as JuliusBrussee/caveman#871 and #872, both open and
+# unanswered as of 2026-08-19.
+#
+# The fix is purely the path form, so prefixing each entry with ./ restores
+# loading without touching behaviour. This runs against every cached revision
+# because `claude plugin update` writes a new cache directory and leaves the
+# old ones in place.
+#
+# Self-retiring: it only rewrites entries that lack the ./ prefix, so once
+# upstream ships the fix this becomes a silent no-op and can be deleted.
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+ROOT_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
+source "$ROOT_DIR/shared/tools/lib"
+
+command -v python3 &> /dev/null || { warn "python3 not found, caveman manifest patch skipped"; exit 0 }
+
+cache_root="$CLAUDE_DIR/plugins/cache/caveman/caveman"
+[[ -d "$cache_root" ]] || exit 0
+
+manifests=("$cache_root"/*/.claude-plugin/plugin.json(N))
+(( ${#manifests[@]} )) || exit 0
+
+patched=$(python3 - "${manifests[@]}" <<'PYEOF'
+import json, sys
+
+count = 0
+for path in sys.argv[1:]:
+    try:
+        with open(path) as f:
+            data = json.load(f)
+    except Exception:
+        continue
+
+    agents = data.get("agents")
+    if not isinstance(agents, list):
+        continue
+
+    fixed = [
+        f"./{a}" if isinstance(a, str) and not a.startswith(("./", "/")) else a
+        for a in agents
+    ]
+    if fixed == agents:
+        continue
+
+    data["agents"] = fixed
+    try:
+        with open(path, "w") as f:
+            json.dump(data, f, indent=2)
+            f.write("\n")
+        count += 1
+    except Exception:
+        pass
+
+print(count)
+PYEOF
+)
+
+if [[ "$patched" == "0" ]]; then
+  exit 0
+fi
+
+success "Patched caveman manifest in $patched cached revision(s) (upstream bug JuliusBrussee/caveman#872)"

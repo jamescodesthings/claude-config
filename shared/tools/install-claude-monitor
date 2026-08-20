@@ -8,7 +8,9 @@ if ! command -v uv &> /dev/null; then
 fi
 
 if uv tool list 2>/dev/null | grep -q "^claude-monitor"; then
-  success "claude-monitor already installed"
+  info "Updating claude-monitor..."
+  uv tool upgrade claude-monitor &> /dev/null || warn "claude-monitor upgrade failed"
+  success "claude-monitor up to date"
   exit 0
 fi
 

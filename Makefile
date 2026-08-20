@@ -14,10 +14,6 @@ antigravity:
 	./antigravity/install
 .PHONY: antigravity
 
-update:
-	./shared/tools/update-all
-.PHONY: update
-
 uninstall:
 	./uninstall
 .PHONY: uninstall

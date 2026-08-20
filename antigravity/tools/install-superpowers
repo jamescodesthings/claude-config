@@ -13,13 +13,18 @@ source "$ROOT_DIR/shared/tools/lib"
 
 command -v agy &> /dev/null || { warn "agy not found, Superpowers-for-Antigravity skipped"; exit 0 }
 
+# Absent means install, present means update. `agy plugin` has no update verb
+# (list/import/install/uninstall/enable/disable/validate/link only), so
+# re-running install is the upgrade path.
 if agy plugin list 2>/dev/null | grep -q '"superpowers"'; then
-  success "Superpowers already installed in Antigravity"
-  exit 0
+  info "Updating Superpowers in Antigravity..."
+  verb=Updated
+else
+  info "Installing Superpowers plugin in Antigravity..."
+  verb=Installed
 fi
 
-info "Installing Superpowers plugin in Antigravity..."
 agy plugin install https://github.com/obra/superpowers &> /dev/null \
   || { warn "Superpowers install into Antigravity failed"; exit 0 }
 
-success "Superpowers plugin installed in Antigravity"
+success "$verb Superpowers plugin in Antigravity"

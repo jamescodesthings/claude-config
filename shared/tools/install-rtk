@@ -1,19 +1,40 @@
 #!/usr/bin/env zsh
+# Installs or updates rtk. Absent means install, present means update.
+#
+# rtk has no self-update subcommand, and the update path depends on how it got
+# there: a Homebrew-owned binary must go through brew or the two installs fight
+# over the same name. This mirrors uninstall-rtk, which already refuses to
+# delete a binary it does not own.
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 source "$SCRIPT_DIR/lib"
 
+install_from_upstream() {
+  local tmp_script="${TMPDIR:-/tmp}/rtk-install.$$.sh"
+  curl -fsSL https://raw.githubusercontent.com/rtk-ai/rtk/refs/heads/master/install.sh \
+    -o "$tmp_script" || { warn "Failed to download rtk installer"; return 1 }
+  chmod +x "$tmp_script"
+  "$tmp_script" || { rm -f "$tmp_script"; warn "rtk installer failed"; return 1 }
+  rm -f "$tmp_script"
+}
+
 if command -v rtk &> /dev/null; then
-  success "rtk already installed"
+  rtk_bin=$(command -v rtk)
+  if [[ "$rtk_bin" == *"/homebrew/"* || "$rtk_bin" == "/usr/local/bin/"* ]] \
+     && command -v brew &> /dev/null && brew list rtk &> /dev/null; then
+    info "Updating rtk via Homebrew..."
+    brew upgrade rtk &> /dev/null || info "rtk already at the latest Homebrew version"
+  else
+    info "Updating rtk from upstream installer..."
+    install_from_upstream || warn "rtk update failed, keeping the existing binary"
+  fi
+  success "rtk up to date ($(rtk --version 2>/dev/null || print -r -- 'version unknown'))"
   exit 0
 fi
 
 info "Installing rtk..."
-curl -fsSL https://raw.githubusercontent.com/rtk-ai/rtk/refs/heads/master/install.sh \
-  -o /tmp/rtk-install.sh || error "Failed to download rtk installer"
+install_from_upstream || error "rtk install failed"
 
-chmod +x /tmp/rtk-install.sh
-/tmp/rtk-install.sh || error "rtk installer failed"
-rm -f /tmp/rtk-install.sh
-
+# Global config init is a first-install step only; re-running it on an existing
+# install would overwrite local configuration.
 rtk init -g || error "rtk init -g failed"
 success "rtk installed"

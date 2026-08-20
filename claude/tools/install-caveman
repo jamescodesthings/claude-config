@@ -13,14 +13,20 @@ command -v claude &> /dev/null || { warn "claude CLI not found, caveman skipped"
 
 # The old guard here was `command -v caveman`. caveman is a Claude Code plugin,
 # not a binary on PATH, so that test never passed and every install re-ran the
-# whole flow from scratch. Ask the plugin registry instead.
+# whole flow from scratch. Ask the plugin registry instead, and treat "present"
+# as update rather than skip.
 if claude plugin list 2>/dev/null | grep -q "caveman@caveman"; then
-  success "caveman already installed"
+  info "Updating caveman..."
+  claude plugin update caveman@caveman &> /dev/null || warn "caveman update failed"
 else
   info "Installing caveman..."
   claude plugin marketplace add JuliusBrussee/caveman &> /dev/null
   claude plugin install caveman@caveman &> /dev/null || warn "caveman install failed"
 fi
+
+# Must run after every install or update: each one writes a fresh cache
+# directory carrying the unpatched upstream manifest.
+"$SCRIPT_DIR/patch-caveman-manifest"
 
 # Normalize absolute hook paths written by caveman installer to portable ~/... form.
 # Handles two formats:
@@ -88,11 +94,10 @@ if [[ -n "$config_dir" && -d "$config_dir" && -f "$settings" && ! -L "$settings"
     || warn "settings.json symlink restore failed, check $config_dir/claude/config/settings.json manually"
 fi
 
-# caveman ships an `agents` array in its plugin manifest that current Claude
-# Code rejects ("agents: Invalid input"), so the plugin installs but fails to
-# load. Surface that rather than reporting a clean install.
+# Report the real load state rather than assuming the install succeeded. If the
+# manifest patch above stops being enough, this is where it shows up.
 if claude plugin list 2>/dev/null | grep -A4 "caveman@caveman" | grep -q "failed to load"; then
-  warn "caveman is installed but Claude Code refuses to load it (upstream manifest bug). Run 'claude plugin list' for detail."
+  warn "caveman is installed but Claude Code refuses to load it. Run 'claude plugin list' for detail; see JuliusBrussee/caveman#872."
 else
-  success "caveman installed"
+  success "caveman installed and loading"
 fi

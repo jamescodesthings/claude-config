@@ -1,11 +1,14 @@
 #!/usr/bin/env zsh
-# Installs the Claude Code plugins that ~/.claude/CLAUDE.md depends on.
+# Installs or updates the Claude Code plugins that ~/.claude/CLAUDE.md depends
+# on: absent means install, present means update. There is no separate update
+# entry point, because a split one leaves the two halves free to drift and the
+# "already installed" branch then pins a version forever.
 #
-# CLAUDE.md routes work to `superpowers:*` skills, `commit-commands:clean_gone`
-# and `context7`. None of those ship with Claude Code, so if the plugins are
-# missing the rules silently route to nothing: the model reads the instruction,
-# finds no such skill, and carries on. Keeping this installer aligned with the
-# skills CLAUDE.md names is what stops that.
+# CLAUDE.md routes work to `superpowers:*` skills and `commit-commands:clean_gone`.
+# Neither ships with Claude Code, so if the plugins are missing the rules
+# silently route to nothing: the model reads the instruction, finds no such
+# skill, and carries on. Keeping this installer aligned with the skill names
+# CLAUDE.md uses is what stops that.
 #
 # Claude-specific on purpose. It used to live in shared/tools/, which both
 # claude/install and antigravity/install glob, so every Claude-only step also
@@ -20,7 +23,6 @@ command -v claude &> /dev/null || { warn "claude CLI not found, plugin install s
 plugins=(
   "obra/superpowers:superpowers-dev:superpowers"
   "anthropics/claude-plugins-official:claude-plugins-official:commit-commands"
-  "anthropics/claude-plugins-official:claude-plugins-official:context7"
 )
 
 installed=$(claude plugin list 2>/dev/null)
@@ -40,13 +42,14 @@ for entry in $plugins; do
   fi
 
   if print -r -- "$installed" | grep -q "$plugin@$market"; then
-    success "$plugin already installed"
-    continue
+    info "Updating $plugin@$market..."
+    claude plugin update "$plugin@$market" &> /dev/null \
+      || warn "$plugin@$market update failed"
+  else
+    info "Installing $plugin@$market..."
+    claude plugin install "$plugin@$market" &> /dev/null \
+      || warn "$plugin@$market install failed"
   fi
-
-  info "Installing $plugin@$market..."
-  claude plugin install "$plugin@$market" &> /dev/null \
-    || warn "$plugin@$market install failed"
 done
 
-success "Claude plugins checked"
+success "Claude plugins installed and up to date"

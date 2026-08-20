@@ -35,13 +35,12 @@
 ```shell
 git clone git@github.com:jamescodesthings/claude-config.git agent-forge
 cd agent-forge
-make install            # Install all CLI configurations
+make install            # Install or update all CLI configurations
 ```
 
 Additional Makefile targets:
 - `make claude`: Install Claude Code CLI configuration only.
 - `make antigravity`: Install Antigravity CLI configuration only.
-- `make update`: Move already-installed plugins and tools to their latest versions.
 - `make uninstall`: Uninstall all CLI configurations.
 - `make uninstall-claude`: Uninstall Claude Code CLI configuration.
 - `make uninstall-antigravity`: Uninstall Antigravity CLI configuration.
@@ -54,13 +53,9 @@ Additional Makefile targets:
 git pull && make install
 ```
 
-`make install` is deliberately a no-op for anything already present, so it will not move a plugin or tool to a newer version. Use `make update` for that:
+`make install` installs what is missing and updates what is already there, so re-running it after a pull is the whole update story. There is no separate update target.
 
-```shell
-make update
-```
-
-Claude Code's own binary is left alone by both; it self-updates, and the result of its last attempt is in `~/.claude/.last-update-result.json`.
+Claude Code's own binary is the exception: it self-updates, and the result of its last attempt is in `~/.claude/.last-update-result.json`.
 
 ---
 
